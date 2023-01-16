@@ -53,9 +53,11 @@ class ReadWrite:
     @staticmethod
     def write_arr(arr, path): np.save(path.with_suffix('.npy'), arr, allow_pickle=False)
 
-    def read_list(self, path): return list(self.read_arr(path))
+    @classmethod
+    def read_list(cls, path): return list(cls.read_arr(path))
 
-    def write_list(self, lst, path): self.write_arr(lst, path)
+    @classmethod
+    def write_list(cls, lst, path): cls.write_arr(lst, path)
 
     def __init__(self):
         pass
