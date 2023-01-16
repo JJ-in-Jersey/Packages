@@ -1,19 +1,33 @@
 import os
+import shutil
 from pathlib import Path
 import site
-from os import makedirs, getcwd
+from shutil import copytree
 
 if __name__ == '__main__':
 
     print(f'>> package installer')
 
-    us = Path(site.USER_SITE)
-    if not us.exists(): makedirs(us)
+    source = os.getcwd()
+    source_packages = [dir if Path(os.path.join(os.path.join(source,dir), '__init__.py')).exists() else None for dir in os.listdir(source)]
+    while None in source_packages: source_packages.remove(None)
 
-    cwd = Path(getcwd())
-    for i in os.listdir(cwd):
-        if os.path.isdir(i):
-            print(type(i))
+    destination = Path(site.USER_SITE)
+    destination_packages = [dir for dir in os.listdir(destination)]
+
+    for package in destination_packages:
+        print(f'Delete package {package} from {destination}')
+        shutil.rmtree(os.path.join(destination, package))
+
+    for package in source_packages:
+        print(f'Copying package {package} from {source} to {destination}')
+        shutil.copytree(os.path.join(source,package), os.path.join(destination,package))
+
+
+
+
+
+
 
 
 
