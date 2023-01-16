@@ -33,24 +33,25 @@ class ReadWrite:
     @staticmethod
     def write_df_hdf(df, path): df.to_hdf(path.with_suffix('.hdf'), key='gonzo', mode='w', index=False)
 
-    def read_df(self, path):
-        if path.with_suffix('.csv').exists(): return self.read_df_csv(path)
-        elif path.with_suffix('.pkl').exists(): return self.read_df_pkl(path)
-        elif path.with_suffix('.hdf').exists(): return self.read_df_hdf(path)
+    @classmethod
+    def read_df(cls, path):
+        if path.with_suffix('.csv').exists(): return cls.read_df_csv(path)
+        elif path.with_suffix('.pkl').exists(): return cls.read_df_pkl(path)
+        elif path.with_suffix('.hdf').exists(): return cls.read_df_hdf(path)
         else: print('Unrecognizable extension')
 
-    def write_df(self, df, path, extension):
-        if extension == 'csv': self.write_df_csv(df, path)
-        elif extension == 'pkl': self.write_df_pkl(df, path)
-        elif extension == 'hdf': self.write_df_hdf(df, path)
+    @classmethod
+    def write_df(cls, df, path, extension):
+        if extension == 'csv': cls.write_df_csv(df, path)
+        elif extension == 'pkl': cls.write_df_pkl(df, path)
+        elif extension == 'hdf': cls.write_df_hdf(df, path)
         else: print('Unrecognizable extension')
 
     @staticmethod
     def read_arr(path): return np.load(path.with_suffix('.npy'))
 
     @staticmethod
-    def write_arr(arr, path):
-        np.save(path.with_suffix('.npy'), arr, allow_pickle=False)
+    def write_arr(arr, path): np.save(path.with_suffix('.npy'), arr, allow_pickle=False)
 
     def read_list(self, path): return list(self.read_arr(path))
 
