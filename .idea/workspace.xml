@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
   <component name="ChangeListManager">
-    <list default="true" id="92abecc8-f3dc-4a2f-9c4c-10c9e5df5932" name="Changes" comment="can't reference read_df, trying classmethod">
-      <change afterPath="$PROJECT_DIR$/install.py" afterDir="false" />
+    <list default="true" id="92abecc8-f3dc-4a2f-9c4c-10c9e5df5932" name="Changes" comment="install delete and copy work">
+      <change afterPath="$PROJECT_DIR$/FileUtilities/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23,9 +27,7 @@
     <option name="stateVersion" value="1" />
   </component>
   <component name="ProjectId" id="2KO73wyCaGOmOpzpuhaP7bL21Q4" />
-  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
-    <ConfirmationsSetting value="2" id="Add" />
-  </component>
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -52,11 +54,27 @@
       <option name="project" value="LOCAL" />
       <updated>1673834142334</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="can't reference read_df, trying classmethods">
+      <created>1673834327334</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1673834327334</updated>
+    </task>
+    <task id="LOCAL-00003" summary="install delete and copy work">
+      <created>1673893101281</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1673893101281</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="can't reference read_df, trying classmethod" />
-    <option name="LAST_COMMIT_MESSAGE" value="can't reference read_df, trying classmethod" />
+    <MESSAGE value="can't reference read_df, trying classmethods" />
+    <MESSAGE value="install delete and copy work" />
+    <option name="LAST_COMMIT_MESSAGE" value="install delete and copy work" />
   </component>
 </project>
