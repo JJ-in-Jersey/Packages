@@ -1,7 +1,7 @@
 from pathlib import Path
 from os import environ, remove
 
-class Simple_Semaphore:
+class SimpleSemaphore:
 
     @staticmethod
     def on(name): Path(environ['TEMP']).joinpath(name).with_suffix('.tmp').touch()
