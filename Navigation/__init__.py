@@ -7,6 +7,9 @@ class Navigation:
     directionLookup = {'SN': 'South to North', 'NS': 'North to South', 'EW': 'East to West', 'WE': 'West to East'}
 
     @staticmethod
+    def distance(start_coords, end_coords): return hvs(start_coords, end_coords, unit=Unit.NAUTICAL_MILES)
+
+    @staticmethod
     def direction(start_coords, end_coords):
         #                                  (y,x)
         # corner(e lat,s lon)---------end(lat,lon)
@@ -20,8 +23,8 @@ class Navigation:
         lat_sign = sign(end_coords[0] - start_coords[0])
         lon_sign = sign(end_coords[1] - start_coords[1])
 
-        lat_dist = hvs(corner, start_coords, unit=Unit.NAUTICAL_MILES)
-        lon_dist = hvs(end_coords, corner, unit=Unit.NAUTICAL_MILES)
+        lat_dist = Navigation.distance(corner, start_coords)
+        lon_dist = Navigation.distance(end_coords, corner)
 
         if lon_dist > lat_dist:
             if lon_sign > 0: code = 'WE'
