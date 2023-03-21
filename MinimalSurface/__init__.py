@@ -1,5 +1,5 @@
 from GPX import Waypoint
-import Navigation as nav
+from Navigation import Navigation as nav
 import numpy as np
 from scipy.interpolate import Rbf as RBF
 from matplotlib import pyplot as plt
@@ -25,6 +25,6 @@ class MinimalSurface:
         return new_points
 
     def __init__(self, waypoints):
-        points= []
+        self.points= []
         for pt in waypoints:
-            points.append(pt.coords)
+            self.points.append(pt.coords)
