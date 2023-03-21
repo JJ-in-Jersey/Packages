@@ -9,14 +9,14 @@ if __name__ == '__main__':
 
     source = os.getcwd()
     source_packages = [folder if Path(os.path.join(os.path.join(source, folder), '__init__.py')).exists() else None for folder in os.listdir(source)]
-    while None in source_packages: source_packages.remove(None)
+    source_packages = list(filter(lambda n: n is not None, source_packages))
 
     destination = Path(site.USER_SITE)
-    if destination.exists():
-        destination_packages = [folder for folder in os.listdir(destination)]
+    os.makedirs(destination, exist_ok=True)
 
-        for package in destination_packages:
-            print(f'Delete package {package} from {destination}')
+    for package in source_packages:
+        if os.path.exists(os.path.join(destination, package)):
+            print(f'Deleting package {package} from {destination}')
             shutil.rmtree(os.path.join(destination, package))
 
     for package in source_packages:
