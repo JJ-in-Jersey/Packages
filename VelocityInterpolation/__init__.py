@@ -6,7 +6,7 @@ from scipy.interpolate import RBFInterpolator, Rbf
 from matplotlib import pyplot as plot
 
 # noinspection PyArgumentList
-class VelocitySurface:
+class VelocityInterpolator:
 
     scale = 1000
     mesh_density = 300
