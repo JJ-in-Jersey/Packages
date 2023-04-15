@@ -6,7 +6,7 @@ from scipy.interpolate import RBFInterpolator, Rbf
 from matplotlib import pyplot as plot
 
 # noinspection PyArgumentList
-class VelocityInterpolator:
+class Interpolator:
 
     scale = 1000
     mesh_density = 300
@@ -34,20 +34,20 @@ class VelocityInterpolator:
         self.ax.scatter(point.x, point.y, point.z, c=color, marker=mark)
 
     def show_plot(self):
-        xi = np.linspace(min(self.x_limits), max(self.x_limits), VelocitySurface.mesh_density)
-        yi = np.linspace(min(self.y_limits), max(self.y_limits), VelocitySurface.mesh_density)
+        xi = np.linspace(min(self.x_limits), max(self.x_limits), Interpolator.mesh_density)
+        yi = np.linspace(min(self.y_limits), max(self.y_limits), Interpolator.mesh_density)
         XI, YI = np.meshgrid(xi, yi)
 
         self.ax = plot.axes(projection="3d")
         self.ax.scatter(self.edge_plot_points[0], self.edge_plot_points[1], self.edge_plot_points[2], c='orange', marker='.')
         self.ax.scatter(self.input_plot_points[0], self.input_plot_points[1], self.input_plot_points[2], c='black', marker='.')
 
-        if self.shape == VelocitySurface.LINE:
-            z_intercept = VelocitySurface.XY_PLANE.intersection(Line(self.linear_range))[0]
+        if self.shape == Interpolator.LINE:
+            z_intercept = Interpolator.XY_PLANE.intersection(Line(self.linear_range))[0]
             self.__plot_point(z_intercept, 'black', '.')
             self.__plot_segment(Segment(z_intercept, self.linear_range.p2), 'grey', '--', 0.5)
             self.__plot_segment(Segment(z_intercept, self.input_point), 'grey', '--', 0.5)
-        if self.shape == VelocitySurface.SURFACE:
+        if self.shape == Interpolator.SURFACE:
             self.ax.plot_wireframe(XI, YI, self.surface(XI, YI), rstride=10, cstride=10, color='grey', linewidth=0.25)
 
         self.__plot_segment(Segment(self.input_point, self.output_point), 'grey', '--', 0.5)
@@ -58,9 +58,9 @@ class VelocityInterpolator:
     def get_velocity(self, point: Point):
         if not isinstance(point, Point): raise TypeError
         self.input_point = point
-        if self.shape == VelocitySurface.SURFACE:
+        if self.shape == Interpolator.SURFACE:
             self.output_point = Point(point.x, point.y, self.surface(point.x, point.y).tolist()).evalf()
-        elif self.shape == VelocitySurface.LINE:
+        elif self.shape == Interpolator.LINE:
             self.output_point = Line(self.linear_range).projection(point)
         return self.output_point
 
@@ -76,11 +76,11 @@ class VelocityInterpolator:
             if not isinstance(pt, Point): raise TypeError
 
         if len(points) == 2:
-            self.shape = VelocitySurface.LINE
+            self.shape = Interpolator.LINE
         else:
-            self.shape = VelocitySurface.SURFACE
+            self.shape = Interpolator.SURFACE
 
-        scaled_point_list = [pt.scale(VelocitySurface.scale, VelocitySurface.scale, 1) for pt in points]
+        scaled_point_list = [pt.scale(Interpolator.scale, Interpolator.scale, 1) for pt in points]
         closed_figure = scaled_point_list + [scaled_point_list[0]]
         segments = [Segment(pt, closed_figure[index+1]) for index, pt in enumerate(closed_figure[:-1])]
         self.linear_range = segments[0]
@@ -93,5 +93,5 @@ class VelocityInterpolator:
         self.x_limits = [int(round(self.input_plot_points[0].min(), 0)), int(round(self.input_plot_points[0].max(), 0))]
         self.y_limits = [int(round(self.input_plot_points[1].min(), 0)), int(round(self.input_plot_points[1].max(), 0))]
 
-        if self.shape == VelocitySurface.SURFACE:
+        if self.shape == Interpolator.SURFACE:
             self.surface = Rbf(self.edge_plot_points[0], self.edge_plot_points[1], self.edge_plot_points[2], function='thin_plate', smooth=100.0)
