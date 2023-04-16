@@ -94,7 +94,7 @@ class ElapsedTimeSegment:
 class Path:
 
     def total_length(self): return round(sum([edge.length for edge in self.edges]), 4)
-    def direction(self): return nav.direction(self.waypoints[0].coords, self.waypoints[-1].coords)
+    def direction(self): return NV.direction(self.waypoints[0].coords, self.waypoints[-1].coords)
 
     def __init__(self, waypoints):
         self.waypoints = [wp for wp in waypoints if not isinstance(wp, InterpolationDataWP)]  # filter out data waypoints
