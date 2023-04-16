@@ -119,10 +119,8 @@ class Path:
     def edges(self): return self.edges
 
     def __init__(self, waypoints):
-        self.waypoints = waypoints
-        self.edges = []
-        for i, waypoint in enumerate(self.waypoints[:-1]):
-            self.edges.append(Edge(self, waypoint, self.waypoints[i+1]))
+        self.waypoints = [wp for wp in waypoints if not isinstance(wp, InterpolationDataWP)]
+        self.edges = [Edge(self, waypoint, self.waypoints[i+1]) for i, waypoint in enumerate(self.waypoints[:-1])]
 
     def print_path(self, direction=None):
         print(self.name(), self.total_length(), self.direction())
