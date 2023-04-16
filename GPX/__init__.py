@@ -78,8 +78,8 @@ class Edge:
 class ElapsedTimeSegment:
 
     def add_endpoint_velocities(self):
-        self.start_velo = self.start.velo_array()
-        self.end_velo = self.end.velo_array()
+        self.start_velo = self.start.velo_array
+        self.end_velo = self.end.velo_array
 
     def __init__(self, path, start, end):
         self.start = start
