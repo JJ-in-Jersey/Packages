@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup as Soup
-from Navigation import Navigation as nav
+from Navigation import Navigation as NV
 
 class Waypoint:
 
@@ -71,7 +71,7 @@ class Edge:
         self.start = start
         self.end = end
         self.name = '[' + str(self.start.number) + '-' + str(self.end.number) + ']'
-        self.length = round(nav.distance(self.start.coords, self.end.coords), 4)
+        self.length = round(NV.distance(self.start.coords, self.end.coords), 4)
         start.next_edge(path, self)
         end.prev_edge(path, self)
 
@@ -139,7 +139,6 @@ class Route:
         self.path = None
         self.elapsed_time_segments = []
 
-
         with open(filepath, 'r') as f: gpxfile = f.read()
         tree = Soup(gpxfile, 'xml')
 
@@ -164,4 +163,3 @@ class Route:
         print('\nElapsed time waypoints:')
         for wp in self.elapsed_time_waypoints:
             print(f'    {wp.number} {wp.name}')
-
