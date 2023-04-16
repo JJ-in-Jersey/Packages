@@ -4,7 +4,7 @@ from Navigation import Navigation as nav
 class Waypoint:
     # get everything that is available from the tag
 
-    type = {'CurrentStationWP': 'Symbol-Spot-Orange', 'PlaceHolderWP': 'Symbol-Spot-Green', 'InterpolationWP': 'Symbol-Spot-Blue'}
+    type = {'CurrentStationWP': 'Symbol-Spot-Orange', 'PlaceHolderWP': 'Symbol-Spot-Green', 'InterpolationWP': 'Symbol-Spot-Blue', 'InterpolationDataWP': 'Symbol-Spot-Black'}
     ordinal_number = 0
     number_lookup = {}
 
@@ -36,15 +36,23 @@ class PlaceHolderWP(Waypoint):
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
 
-
-class InterpolationPoint:
-
-    def __init__(self, link):
-        self.code = link.find('text').text
-        self.url = link.attrs['href']
-        self.coords = tuple([float(string) for string in link.find('type').contents[0].split()])
-        self.distance_from_waypoint = 0
-        self.velo_arr = None
+# class InterpolationPoint:
+#
+#     def __init__(self, link):
+#         self.code = link.find('text').text
+#         self.url = link.attrs['href']
+#         self.coords = tuple([float(string) for string in link.find('type').contents[0].split()])
+#         self.distance_from_waypoint = 0
+#         self.velo_arr = None
+#
+# class InterpolationWP(Waypoint):
+#
+#     def has_velocity(self): return True
+#
+#     def __init__(self, gpxtag):
+#         super().__init__(gpxtag)
+#         self.interpolation_points = [InterpolationPoint(link) for link in gpxtag.find_all('link')]
+#         self.velo_arr = None
 
 class InterpolationWP(Waypoint):
 
@@ -52,10 +60,19 @@ class InterpolationWP(Waypoint):
 
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
-        self.interpolation_points = [InterpolationPoint(link) for link in gpxtag.find_all('link')]
         self.velo_arr = None
 
 class CurrentStationWP(Waypoint):
+
+    def has_velocity(self): return True
+
+    def __init__(self, gpxtag):
+        super().__init__(gpxtag)
+        self.noaa_url = gpxtag.find('link').attrs['href'] if gpxtag.link else None
+        self.noaa_code = gpxtag.find('link').find('text').text
+        self.velo_arr = None
+
+class InterpolationDataWP(Waypoint):
 
     def has_velocity(self): return True
 
@@ -155,6 +172,7 @@ class Route:
             if waypoint.sym.text == Waypoint.type['CurrentStationWP']: self.waypoints.append(CurrentStationWP(waypoint))
             elif waypoint.sym.text == Waypoint.type['PlaceHolderWP']: self.waypoints.append(PlaceHolderWP(waypoint))
             elif waypoint.sym.text == Waypoint.type['InterpolationWP']: self.waypoints.append(InterpolationWP(waypoint))
+            elif waypoint.sym.text == Waypoint.type['InterpolationDataWP']: self.waypoints.append(InterpolationDataWP(waypoint))
 
         self._path = Path(self.waypoints)
         # base_path.print_path()
