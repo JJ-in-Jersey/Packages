@@ -77,7 +77,7 @@ class Edge:
 
 class ElapsedTimeSegment:
 
-    def update(self):
+    def add_endpoint_velocities(self):
         self.start_velo = self.start.velo_array()
         self.end_velo = self.end.velo_array()
 
@@ -107,10 +107,10 @@ class Path:
         for edge in self.edges:
             print(f'{edge.name}  {edge.start.name} - type:{type(edge.start).__name__} - {edge.end.name} - type:{type(edge.end).__name__} - {edge.length}')
 
-    def length(self, start_wp, end_wp):
+    def length(self, start, end):
         length = 0
-        if start_wp == end_wp: return length
-        wp_range = range(start_wp.number, end_wp.number) if start_wp.number < end_wp.number else range(end_wp.number, start_wp.number)
+        if start == end: return length
+        wp_range = range(start.number, end.number) if start.number < end.number else range(end.number, start.number)
         for i in wp_range:
             length += Waypoint.number_lookup[i].next_edge(self).length
         return length
