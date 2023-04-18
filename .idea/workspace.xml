@@ -6,6 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="92abecc8-f3dc-4a2f-9c4c-10c9e5df5932" name="Changes" comment="install delete and copy work">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GPX/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/GPX/__init__.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -180,7 +181,21 @@
       <option name="project" value="LOCAL" />
       <updated>1681679163555</updated>
     </task>
-    <option name="localTasksCounter" value="16" />
+    <task id="LOCAL-00016" summary="install delete and copy work">
+      <created>1681679392828</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1681679392828</updated>
+    </task>
+    <task id="LOCAL-00017" summary="install delete and copy work">
+      <created>1681679401097</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1681679401097</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">

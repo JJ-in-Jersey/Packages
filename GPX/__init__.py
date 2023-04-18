@@ -56,7 +56,7 @@ class CurrentStationWP(Waypoint):
 
 class InterpolationDataWP(Waypoint):
 
-    def has_velocity(self): return True
+    def has_velocity(self): return Truef
 
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
