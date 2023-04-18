@@ -1,7 +1,7 @@
 from glob import glob
 from os.path import join, getctime
 
-class FileUtilities:
+class FileTools:
 
     @staticmethod
     def newest_file(folder):
