@@ -1,5 +1,6 @@
 from glob import glob
 from os.path import join, getctime
+from pathlib import Path
 from os import makedirs
 
 class FileTools:
@@ -13,7 +14,7 @@ class FileTools:
 
     @staticmethod
     def make_folder(parent, child):
-        if isinstance(parent, str): parent = Path(parent)
+        if not isinstance(parent, Path): raise TypeError
         path = parent.joinpath(child)
         makedirs(path, exist_ok=True)
         return path
