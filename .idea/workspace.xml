@@ -1,21 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="AutoImportSettings">
-    <option name="autoReloadType" value="SELECTIVE" />
-  </component>
   <component name="ChangeListManager">
-    <list default="true" id="92abecc8-f3dc-4a2f-9c4c-10c9e5df5932" name="Changes" comment="install delete and copy work" />
+    <list default="true" id="bf1ade6b-0a73-4a16-932f-33100f7fd22b" name="Changes" comment="current stations list">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GPX/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/GPX/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/VelocityInterpolation/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/VelocityInterpolation/__init__.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
-  </component>
-  <component name="FileTemplateManagerImpl">
-    <option name="RECENT_TEMPLATES">
-      <list>
-        <option value="Python Script" />
-      </list>
-    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -23,7 +17,7 @@
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
-  <component name="ProjectId" id="2KO73wyCaGOmOpzpuhaP7bL21Q4" />
+  <component name="ProjectId" id="2P9xuh47baj2jy5HlsWcsXl5nPz" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -32,187 +26,30 @@
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
     &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;
   }
 }</component>
-  <component name="RunManager">
-    <configuration name="install" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="Packages" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/install.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <recent_temporary>
-      <list>
-        <item itemvalue="Python.install" />
-      </list>
-    </recent_temporary>
-  </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="92abecc8-f3dc-4a2f-9c4c-10c9e5df5932" name="Changes" comment="" />
-      <created>1673833582259</created>
+      <changelist id="bf1ade6b-0a73-4a16-932f-33100f7fd22b" name="Changes" comment="" />
+      <created>1682883664307</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1673833582259</updated>
+      <updated>1682883664307</updated>
     </task>
-    <task id="LOCAL-00001" summary="can't reference read_df, trying classmethod">
-      <created>1673834142334</created>
+    <task id="LOCAL-00001" summary="current stations list">
+      <created>1682883770786</created>
       <option name="number" value="00001" />
       <option name="presentableId" value="LOCAL-00001" />
       <option name="project" value="LOCAL" />
-      <updated>1673834142334</updated>
+      <updated>1682883770786</updated>
     </task>
-    <task id="LOCAL-00002" summary="can't reference read_df, trying classmethods">
-      <created>1673834327334</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
-      <option name="project" value="LOCAL" />
-      <updated>1673834327334</updated>
-    </task>
-    <task id="LOCAL-00003" summary="install delete and copy work">
-      <created>1673893101281</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
-      <option name="project" value="LOCAL" />
-      <updated>1673893101281</updated>
-    </task>
-    <task id="LOCAL-00004" summary="install delete and copy work">
-      <created>1674238549279</created>
-      <option name="number" value="00004" />
-      <option name="presentableId" value="LOCAL-00004" />
-      <option name="project" value="LOCAL" />
-      <updated>1674238549279</updated>
-    </task>
-    <task id="LOCAL-00005" summary="install delete and copy work">
-      <created>1679423817241</created>
-      <option name="number" value="00005" />
-      <option name="presentableId" value="LOCAL-00005" />
-      <option name="project" value="LOCAL" />
-      <updated>1679423817242</updated>
-    </task>
-    <task id="LOCAL-00006" summary="install delete and copy work">
-      <created>1679426042991</created>
-      <option name="number" value="00006" />
-      <option name="presentableId" value="LOCAL-00006" />
-      <option name="project" value="LOCAL" />
-      <updated>1679426042991</updated>
-    </task>
-    <task id="LOCAL-00007" summary="install delete and copy work">
-      <created>1681578560210</created>
-      <option name="number" value="00007" />
-      <option name="presentableId" value="LOCAL-00007" />
-      <option name="project" value="LOCAL" />
-      <updated>1681578560210</updated>
-    </task>
-    <task id="LOCAL-00008" summary="install delete and copy work">
-      <created>1681590803418</created>
-      <option name="number" value="00008" />
-      <option name="presentableId" value="LOCAL-00008" />
-      <option name="project" value="LOCAL" />
-      <updated>1681590803418</updated>
-    </task>
-    <task id="LOCAL-00009" summary="install delete and copy work">
-      <created>1681590925637</created>
-      <option name="number" value="00009" />
-      <option name="presentableId" value="LOCAL-00009" />
-      <option name="project" value="LOCAL" />
-      <updated>1681590925637</updated>
-    </task>
-    <task id="LOCAL-00010" summary="install delete and copy work">
-      <created>1681661475434</created>
-      <option name="number" value="00010" />
-      <option name="presentableId" value="LOCAL-00010" />
-      <option name="project" value="LOCAL" />
-      <updated>1681661475434</updated>
-    </task>
-    <task id="LOCAL-00011" summary="install delete and copy work">
-      <created>1681667950459</created>
-      <option name="number" value="00011" />
-      <option name="presentableId" value="LOCAL-00011" />
-      <option name="project" value="LOCAL" />
-      <updated>1681667950459</updated>
-    </task>
-    <task id="LOCAL-00012" summary="install delete and copy work">
-      <created>1681678111921</created>
-      <option name="number" value="00012" />
-      <option name="presentableId" value="LOCAL-00012" />
-      <option name="project" value="LOCAL" />
-      <updated>1681678111921</updated>
-    </task>
-    <task id="LOCAL-00013" summary="install delete and copy work">
-      <created>1681678178643</created>
-      <option name="number" value="00013" />
-      <option name="presentableId" value="LOCAL-00013" />
-      <option name="project" value="LOCAL" />
-      <updated>1681678178643</updated>
-    </task>
-    <task id="LOCAL-00014" summary="install delete and copy work">
-      <created>1681678326526</created>
-      <option name="number" value="00014" />
-      <option name="presentableId" value="LOCAL-00014" />
-      <option name="project" value="LOCAL" />
-      <updated>1681678326526</updated>
-    </task>
-    <task id="LOCAL-00015" summary="install delete and copy work">
-      <created>1681679163555</created>
-      <option name="number" value="00015" />
-      <option name="presentableId" value="LOCAL-00015" />
-      <option name="project" value="LOCAL" />
-      <updated>1681679163555</updated>
-    </task>
-    <task id="LOCAL-00016" summary="install delete and copy work">
-      <created>1681679392828</created>
-      <option name="number" value="00016" />
-      <option name="presentableId" value="LOCAL-00016" />
-      <option name="project" value="LOCAL" />
-      <updated>1681679392828</updated>
-    </task>
-    <task id="LOCAL-00017" summary="install delete and copy work">
-      <created>1681679401097</created>
-      <option name="number" value="00017" />
-      <option name="presentableId" value="LOCAL-00017" />
-      <option name="project" value="LOCAL" />
-      <updated>1681679401097</updated>
-    </task>
-    <task id="LOCAL-00018" summary="install delete and copy work">
-      <created>1681826947662</created>
-      <option name="number" value="00018" />
-      <option name="presentableId" value="LOCAL-00018" />
-      <option name="project" value="LOCAL" />
-      <updated>1681826947662</updated>
-    </task>
-    <task id="LOCAL-00019" summary="install delete and copy work">
-      <created>1681827546345</created>
-      <option name="number" value="00019" />
-      <option name="presentableId" value="LOCAL-00019" />
-      <option name="project" value="LOCAL" />
-      <updated>1681827546345</updated>
-    </task>
-    <option name="localTasksCounter" value="20" />
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="can't reference read_df, trying classmethod" />
-    <MESSAGE value="can't reference read_df, trying classmethods" />
-    <MESSAGE value="install delete and copy work" />
-    <option name="LAST_COMMIT_MESSAGE" value="install delete and copy work" />
+    <MESSAGE value="current stations list" />
+    <option name="LAST_COMMIT_MESSAGE" value="current stations list" />
   </component>
 </project>
