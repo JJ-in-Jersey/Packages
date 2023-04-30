@@ -133,7 +133,6 @@ class Route:
         velo_wps = [wp for wp in waypoints if type(wp) == CurrentStationWP or type(wp) == InterpolationWP]
         velo_edges = []
         for i, wp in enumerate(velo_wps[:-1]):
-            print(wp.name, type(wp), velo_wps[i+1].name, type(velo_wps[i+1]))
             if wp.index+1 == velo_wps[i+1].index:  # adjacent points
                 velo_edges.append(HaversineEdge(wp, velo_wps[i+1]))
             elif type(wp) == InterpolationWP or type(velo_wps[i+1]) == InterpolationWP:  # skip data points
