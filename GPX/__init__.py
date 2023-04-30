@@ -8,10 +8,10 @@ class Waypoint:
     index_lookup = {}
 
     def __init__(self, gpxtag):
-        lat = round(float(gpxtag.attrs['lat']), 4)
-        lon = round(float(gpxtag.attrs['lon']), 4)
+        self.lat = round(float(gpxtag.attrs['lat']), 4)
+        self.lon = round(float(gpxtag.attrs['lon']), 4)
         self.index = Waypoint.ordinal_number
-        self.coords = tuple([lat, lon])
+        self.coords = tuple([self.lat, self.lon])
         self.symbol = gpxtag.sym.text
         self.name = gpxtag.find('name').text.strip('\n')
         self.short_name = self.name.split(',')[0].split('(')[0].replace('.', '').strip()
@@ -56,11 +56,13 @@ class Edge:
 class HaversineEdge(Edge):
     def __init__(self, start, end):
         super().__init__(start, end)
+        self.dataframe = None
         self.length = round(NV.distance(self.start.coords, self.end.coords), 4)
 
 class LengthSumEdge(Edge):
     def __init__(self, start, end):
         super().__init__(start, end)
+        self.dataframe = None
         self.length = 0
         wp_range = range(start.index, end.index) if start.index < end.index else range(end.index, start.index)
         for i in wp_range:
@@ -133,7 +135,8 @@ class Route:
                 group = [waypoints[i]] + [waypoints[j] for j in range(i+1, wp_len) if isinstance(waypoints[j], InterpolationDataWP)]
                 self.interpolation_groups.append(group)
 
-        velo_wps = [wp for wp in waypoints if type(wp) == CurrentStationWP or type(wp) == InterpolationWP]
+        # velo_wps = [wp for wp in waypoints if type(wp) == CurrentStationWP or type(wp) == InterpolationWP]
+        velo_wps = [wp for wp in waypoints if type(wp) == CurrentStationWP]
         velo_edges = []
         for i, wp in enumerate(velo_wps[:-1]):
             if wp.index+1 == velo_wps[i+1].index:  # adjacent points

@@ -8,7 +8,7 @@ from matplotlib import pyplot as plot
 # noinspection PyArgumentList
 class Interpolator:
 
-    scale = 1000
+    scale = 10000
     mesh_density = 300
     LINE = 'LINE'
     SURFACE = 'SURFACE'
@@ -68,7 +68,7 @@ class Interpolator:
         self.input_point = self.output_point = self.shape = self.linear_range = None
         self.input_plot_points = self.edge_plot_points = self.x_limits = self.y_limits = None
         self.ax = self.surface = None
-        self.initialize(points)
+        self.initialize([*points][0])
 
     def initialize(self, points):
         if len(points) < 2: raise ValueError
