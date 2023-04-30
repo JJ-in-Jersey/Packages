@@ -5,49 +5,32 @@ class Waypoint:
 
     type = {'CurrentStationWP': 'Symbol-Spot-Orange', 'PlaceHolderWP': 'Symbol-Spot-Green', 'InterpolationWP': 'Symbol-Spot-Blue', 'InterpolationDataWP': 'Symbol-Spot-Black'}
     ordinal_number = 0
-    number_lookup = {}
-
-    def prev_edge(self, path, edge=None):
-        if edge is not None: self.__prev_edges[path] = edge  # set edge value
-        else: return self.__prev_edges[path]  # return edge value
-
-    def next_edge(self, path, edge=None):
-        if edge is not None: self.__next_edges[path] = edge  # set edge value
-        else: return self.__next_edges[path]  # return edge value
-    def has_velocity(self): return False
+    index_lookup = {}
 
     def __init__(self, gpxtag):
         lat = round(float(gpxtag.attrs['lat']), 4)
         lon = round(float(gpxtag.attrs['lon']), 4)
-        self.number = Waypoint.ordinal_number
+        self.index = Waypoint.ordinal_number
         self.coords = tuple([lat, lon])
         self.symbol = gpxtag.sym.text
         self.name = gpxtag.find('name').text.strip('\n')
         self.short_name = self.name.split(',')[0].split('(')[0].replace('.', '').strip()
-        self.__prev_edges = {}
-        self.__next_edges = {}
-        self.velo_array = None
+        self.prev_edge = None
+        self.next_edge = None
 
-        Waypoint.number_lookup[Waypoint.ordinal_number] = self
+        Waypoint.index_lookup[Waypoint.ordinal_number] = self
         Waypoint.ordinal_number += 1
 
 class PlaceHolderWP(Waypoint):
-
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
 
 class InterpolationWP(Waypoint):
-
-    def has_velocity(self): return True
-
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
         self.velo_arr = None
 
 class CurrentStationWP(Waypoint):
-
-    def has_velocity(self): return True
-
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
         self.noaa_url = gpxtag.find('link').attrs['href'] if gpxtag.link else None
@@ -55,9 +38,6 @@ class CurrentStationWP(Waypoint):
         self.velo_arr = None
 
 class InterpolationDataWP(Waypoint):
-
-    def has_velocity(self): return Truef
-
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
         self.noaa_url = gpxtag.find('link').attrs['href'] if gpxtag.link else None
@@ -65,55 +45,47 @@ class InterpolationDataWP(Waypoint):
         self.velo_arr = None
 
 class Edge:
-
-    def __init__(self, path, start, end):
-        self.path = path
+    def __init__(self, start, end):
+        if start == end: raise IndexError
         self.start = start
         self.end = end
-        self.name = '[' + str(self.start.number) + '-' + str(self.end.number) + ']'
+        self.name = '[' + str(self.start.index) + '-' + str(self.end.index) + ']'
+        start.next_edge = self
+        end.prev_edge = self
+
+class HaversineEdge(Edge):
+    def __init__(self, start, end):
+        super().__init__(start, end)
         self.length = round(NV.distance(self.start.coords, self.end.coords), 4)
-        start.next_edge(path, self)
-        end.prev_edge(path, self)
 
-class ElapsedTimeSegment:
-
-    def add_endpoint_velocities(self):
-        self.start_velo = self.start.velo_array
-        self.end_velo = self.end.velo_array
-
-    def __init__(self, path, start, end):
-        self.start = start
-        self.end = end
-        self.path = path
-        self.name = 'segment ' + str(start.number) + '-' + str(end.number)
-        self.start_velo = None
-        self.end_velo = None
-        self.length = path.length(start, end)
-        self.elapsed_times_df = None
+class LengthSumEdge(Edge):
+    def __init__(self, start, end):
+        super().__init__(start, end)
+        self.length = 0
+        wp_range = range(start.index, end.index) if start.index < end.index else range(end.index, start.index)
+        for i in wp_range:
+            start_coords = Waypoint.index_lookup[i].coords
+            end_coords = Waypoint.index_lookup[i+1].coords
+            self.length += round(NV.distance(start_coords, end_coords), 4)
 
 class Path:
 
-    def total_length(self): return round(sum([edge.length for edge in self.edges]), 4)
-    def direction(self): return NV.direction(self.waypoints[0].coords, self.waypoints[-1].coords)
+    def path_integrity(self):
+        for i, edge in enumerate(self.edges[:-1]):
+            if not edge.end == self.edges[i+1].start:
+                raise RecursionError
 
-    def __init__(self, waypoints):
-        self.waypoints = [wp for wp in waypoints if not isinstance(wp, InterpolationDataWP)]  # filter out data waypoints
-        self.edges = [Edge(self, waypoint, self.waypoints[i+1]) for i, waypoint in enumerate(self.waypoints[:-1])]
-        self.name = '{' + str(self.waypoints[0].number) + '-' + str(self.waypoints[-1].number) + '}'
+    def __init__(self, edges):
+        self.edges = edges
+        self.path_integrity()
+        self.name = '{' + str(self.edges[0].start.index) + '-' + str(self.edges[-1].end.index) + '}'
+        self.length = round(sum([edge.length for edge in self.edges]), 4)
+        self.direction = NV.direction(self.edges[0].start.coords, self.edges[-1].end.coords)
 
     def print_path(self):
-
-        print(f'{self.name} #wps:{len(self.waypoints)} #edges:{len(self.edges)} total length:{self.total_length()}')
+        print(f'{self.name} "{self.direction}" {self.length}')
         for edge in self.edges:
-            print(f'{edge.name}  {edge.start.name} - type:{type(edge.start).__name__} - {edge.end.name} - type:{type(edge.end).__name__} - {edge.length}')
-
-    def length(self, start, end):
-        length = 0
-        if start == end: return length
-        wp_range = range(start.number, end.number) if start.number < end.number else range(end.number, start.number)
-        for i in wp_range:
-            length += Waypoint.number_lookup[i].next_edge(self).length
-        return length
+            print(f'{edge.name} [{edge.start.name} ({type(edge.start).__name__})]--{edge.length}--[{edge.end.name} ({type(edge.end).__name__})] {type(edge)}')
 
 class Route:
 
@@ -133,33 +105,46 @@ class Route:
         self.name = filepath.stem
         self.__transit_time_dict = {}
         self.__elapsed_time_dict = {}
-        self.waypoints = []
-        self.path_waypoints = []
-        self.elapsed_time_waypoints = []
-        self.path = None
-        self.elapsed_time_segments = []
+        self.whole_path = None
+        self.velo_path = None
+        self.interpolation_groups = []
 
         with open(filepath, 'r') as f: gpxfile = f.read()
         tree = Soup(gpxfile, 'xml')
 
         # build ordered list of all waypoints
+        waypoints = []
         for waypoint in tree.find_all('rtept'):
-            if waypoint.sym.text == Waypoint.type['CurrentStationWP']: self.waypoints.append(CurrentStationWP(waypoint))
-            elif waypoint.sym.text == Waypoint.type['PlaceHolderWP']: self.waypoints.append(PlaceHolderWP(waypoint))
-            elif waypoint.sym.text == Waypoint.type['InterpolationWP']: self.waypoints.append(InterpolationWP(waypoint))
-            elif waypoint.sym.text == Waypoint.type['InterpolationDataWP']: self.waypoints.append(InterpolationDataWP(waypoint))
+            if waypoint.sym.text == Waypoint.type['CurrentStationWP']: waypoints.append(CurrentStationWP(waypoint))
+            elif waypoint.sym.text == Waypoint.type['PlaceHolderWP']: waypoints.append(PlaceHolderWP(waypoint))
+            elif waypoint.sym.text == Waypoint.type['InterpolationWP']: waypoints.append(InterpolationWP(waypoint))
+            elif waypoint.sym.text == Waypoint.type['InterpolationDataWP']: waypoints.append(InterpolationDataWP(waypoint))
 
-        self.path = Path(self.waypoints)
+        edges = [HaversineEdge(waypoint, waypoints[i+1]) for i, waypoint in enumerate(waypoints[:-1])]
+        self.whole_path = Path(edges)
 
-        self.elapsed_time_waypoints = [wp for wp in self.waypoints if not isinstance(wp, PlaceHolderWP) and not isinstance(wp, InterpolationDataWP)]  # filter out placeholder waypoints and data waypoints
-        self.elapsed_time_waypoints = [wp for wp in self.elapsed_time_waypoints if not isinstance(wp, InterpolationWP)]  # temporarily remove InterpolationWP
-        self.elapsed_time_segments = [ElapsedTimeSegment(self.path, wp, self.elapsed_time_waypoints[i+1]) for i, wp in enumerate(self.elapsed_time_waypoints[:-1])]
+        #  calculate interpolation groups
+        wp_len = len(waypoints)
+        for i in range(0, wp_len):
+            if isinstance(waypoints[i], InterpolationWP):
+                group = [waypoints[i]] + [waypoints[j] for j in range(i+1, wp_len) if isinstance(waypoints[j], InterpolationDataWP)]
+                self.interpolation_groups.append(group)
+
+        velo_wps = [wp for wp in waypoints if type(wp) == CurrentStationWP or type(wp) == InterpolationWP]
+        velo_edges = []
+        for i, wp in enumerate(velo_wps[:-1]):
+            print(wp.name, type(wp), velo_wps[i+1].name, type(velo_wps[i+1]))
+            if wp.index+1 == velo_wps[i+1].index:  # adjacent points
+                velo_edges.append(HaversineEdge(wp, velo_wps[i+1]))
+            elif type(wp) == InterpolationWP or type(velo_wps[i+1]) == InterpolationWP:  # skip data points
+                velo_edges.append(HaversineEdge(wp, velo_wps[i + 1]))
+            else:  # add placeholder points
+                velo_edges.append(LengthSumEdge(wp, velo_wps[i + 1]))
+        self.velo_path = Path(velo_edges)
 
     def print_route(self):
-        print(f'{self.name}\n')
-        print(f'All waypoints:')
-        for wp in self.waypoints:
-            print(f'    {wp.number} {wp.name}')
-        print('\nElapsed time waypoints:')
-        for wp in self.elapsed_time_waypoints:
-            print(f'    {wp.number} {wp.name}')
+        print(f'\n{self.name}')
+        print(f'\nwhole path')
+        self.whole_path.print_path()
+        print(f'\nvelocity path')
+        self.velo_path.print_path()
