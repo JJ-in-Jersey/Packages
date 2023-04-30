@@ -108,6 +108,7 @@ class Route:
         self.whole_path = None
         self.velo_path = None
         self.interpolation_groups = []
+        self.current_stations = None
 
         with open(filepath, 'r') as f: gpxfile = f.read()
         tree = Soup(gpxfile, 'xml')
@@ -119,6 +120,8 @@ class Route:
             elif waypoint.sym.text == Waypoint.type['PlaceHolderWP']: waypoints.append(PlaceHolderWP(waypoint))
             elif waypoint.sym.text == Waypoint.type['InterpolationWP']: waypoints.append(InterpolationWP(waypoint))
             elif waypoint.sym.text == Waypoint.type['InterpolationDataWP']: waypoints.append(InterpolationDataWP(waypoint))
+
+        self.current_stations = [wp for wp in waypoints if isinstance(wp, CurrentStationWP)]
 
         edges = [HaversineEdge(waypoint, waypoints[i+1]) for i, waypoint in enumerate(waypoints[:-1])]
         self.whole_path = Path(edges)
