@@ -63,30 +63,9 @@ class Interpolator:
         if self.output_point is None: return ValueError
         if self.ax is None: self.ax = plot.axes(projection="3d")
         self.__plot_point(self.output_point, 'red', 'o')
+        self.__plot_segment(Segment(self.input_point, self.output_point), 'black', '--', 0.25)
         plot.show(block=False)
         plot.pause(0.001)
-
-    # def show_plot(self):
-    #     xi = np.linspace(min(self.x_limits), max(self.x_limits), Interpolator.mesh_density)
-    #     yi = np.linspace(min(self.y_limits), max(self.y_limits), Interpolator.mesh_density)
-    #     XI, YI = np.meshgrid(xi, yi)
-    #
-    #     self.ax = plot.axes(projection="3d")
-    #     self.ax.scatter(self.edge_plot_points[0], self.edge_plot_points[1], self.edge_plot_points[2], c='orange', marker='.')
-    #     self.ax.scatter(self.input_plot_points[0], self.input_plot_points[1], self.input_plot_points[2], c='black', marker='.')
-    #
-    #     if self.shape == Interpolator.LINE:
-    #         z_intercept = Interpolator.XY_PLANE.intersection(Line(self.linear_range))[0]
-    #         self.__plot_point(z_intercept, 'black', '.')
-    #         self.__plot_segment(Segment(z_intercept, self.linear_range.p2), 'grey', '--', 0.5)
-    #         self.__plot_segment(Segment(z_intercept, self.input_point), 'grey', '--', 0.5)
-    #     if self.shape == Interpolator.SURFACE:
-    #         self.ax.plot_wireframe(XI, YI, self.surface(XI, YI), rstride=10, cstride=10, color='grey', linewidth=0.25)
-    #
-    #     self.__plot_segment(Segment(self.input_point, self.output_point), 'grey', '--', 0.5)
-    #     self.__plot_point(self.output_point, 'red', 'o')
-    #     plot.show(block=False)
-    #     plot.pause(0.001)
 
     def set_interpolation_point(self, point: Point):
         if not isinstance(point, Point): raise TypeError
