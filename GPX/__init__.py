@@ -42,7 +42,7 @@ class InterpolationDataWP(Waypoint):
         super().__init__(gpxtag)
         self.noaa_url = gpxtag.find('link').attrs['href'] if gpxtag.link else None
         self.noaa_code = gpxtag.find('link').find('text').text
-        self.velo_arr = None
+        self.download_velo_arr = None
 
 class Edge:
     def __init__(self, start, end):

@@ -9,13 +9,14 @@ from matplotlib import pyplot as plot
 class Interpolator:
 
     scale = 10000
+    num_edge_points = 10
     mesh_density = 300
     LINE = 'LINE'
     SURFACE = 'SURFACE'
     XY_PLANE = Plane(Point(0, 0, 0), normal_vector=[0, 0, 1])
 
     @staticmethod
-    def __step_size(segments): return np.array([s.length for s in segments]).min()/10
+    def __step_size(segments): return np.array([s.length for s in segments]).min()/Interpolator.num_edge_points
 
     @staticmethod
     def __edge_points(segments, ss):
@@ -69,7 +70,6 @@ class Interpolator:
 
     def set_interpolation_point(self, point: Point):
         if not isinstance(point, Point): raise TypeError
-        print(self.scale)
         self.input_point = point.scale(Interpolator.scale, Interpolator.scale, 1)
 
     def get_interpolated_point(self):
