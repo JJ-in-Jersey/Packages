@@ -23,8 +23,10 @@ class Waypoint:
         self.next_edge = None
 
         if Waypoint.velocity_folder is None: raise TypeError
-        makedirs(Waypoint.velocity_folder.joinpath(self.short_name), exist_ok=True)
-        self.velo_file = Waypoint.velocity_folder.joinpath(self.short_name + '_array')
+        self.folder = Waypoint.velocity_folder.joinpath(self.short_name)
+        self.file = self.folder.joinpath(self.short_name + '_array')
+        self.data = None
+        makedirs(self.folder, exist_ok=True)
 
         Waypoint.index_lookup[Waypoint.ordinal_number] = self
         Waypoint.ordinal_number += 1
@@ -44,21 +46,18 @@ class LocationWP(PseudoWP):
 class InterpolationWP(Waypoint):
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
-        self.velo_arr = None
 
 class CurrentStationWP(Waypoint):
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
         self.noaa_url = gpxtag.find('link').attrs['href'] if gpxtag.link else None
         self.noaa_code = gpxtag.find('link').find('text').text
-        self.velo_arr = None
 
 class DataWP(ArtificialWP):
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
         self.noaa_url = gpxtag.find('link').attrs['href'] if gpxtag.link else None
         self.noaa_code = gpxtag.find('link').find('text').text
-        self.velo_arr = None
 
 class Edge:
 
@@ -69,13 +68,14 @@ class Edge:
         self.name = '[' + str(start.index) + '-' + str(end.index) + ']'
         self.start = start
         self.end = end
-        self.et_df = None
         start.next_edge = self
         end.prev_edge = self
 
         if Edge.elapsed_time_folder is None: raise TypeError
-        makedirs(Edge.elapsed_time_folder.joinpath(self.name), exist_ok=True)
-        self.et_file = Edge.elapsed_time_folder.joinpath(self.name + '_array')
+        self.folder = Edge.elapsed_time_folder.joinpath(self.name)
+        self.file = self.folder.joinpath(self.name + '_array')
+        self.data = None
+        makedirs(self.folder, exist_ok=True)
 
 class SimpleEdge(Edge):
     def __init__(self, start, end):
@@ -129,7 +129,8 @@ class Route:
         self.__transit_time_dict = {}
         self.__elapsed_time_dict = {}
         self.whole_path = self.velo_path = None
-        self.interpolation_groups = []
+        self.interpolation_groups = None
+        self.waypoints = None
 
         with open(filepath, 'r') as f: gpxfile = f.read()
         tree = Soup(gpxfile, 'xml')
@@ -142,11 +143,14 @@ class Route:
             elif waypoint.sym.text == Waypoint.type['InterpolationWP']: waypoints.append(InterpolationWP(waypoint))
             elif waypoint.sym.text == Waypoint.type['DataWP']: waypoints.append(DataWP(waypoint))
 
+        self.waypoints = waypoints
+
         # create all the edges and the whole path
         edges = [SimpleEdge(wp, Waypoint.index_lookup[wp.index+1]) for wp in waypoints[:-1]]
         self.whole_path = GPXPath(edges)
 
         # create interpolation groups
+        self.interpolation_groups = []
         wp_len = len(waypoints)
         for i in range(0, wp_len):
             if isinstance(waypoints[i], InterpolationWP):
