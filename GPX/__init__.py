@@ -108,7 +108,7 @@ class GPXPath:
     def print_path(self):
         print(f'{self.name} "{self.direction}" {self.length}')
         for edge in self.edges:
-            print(f'{edge.name} [{edge.start.name} ({type(edge.start).__name__})]--{edge.length}--[{edge.end.name} ({type(edge.end).__name__})] {type(edge)}')
+            print(f'{edge.length} {edge.name} [{edge.start.name} ({type(edge.start).__name__})]-----[{edge.end.name} ({type(edge.end).__name__})] {type(edge)}')
 
 class Route:
 
