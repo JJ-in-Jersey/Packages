@@ -28,6 +28,7 @@ class Interpolator:
         return np.array(edge_points).astype(float)
 
     def __plot_segment(self, segment: Segment, color: str, style: str, weight: float):
+        if segment.length == 0: return
         points = np.array(segment.points).astype(float)
         self.ax.plot3D(points[:, 0], points[:, 1], points[:, 2], c=color, linestyle=style, linewidth=weight)
 
@@ -50,8 +51,8 @@ class Interpolator:
             self.__plot_segment(Segment(z_intercept, self.input_point), 'grey', '--', 0.5)
         if self.shape == Interpolator.SURFACE:
             self.ax.plot_wireframe(XI, YI, self.surface(XI, YI), rstride=10, cstride=10, color='grey', linewidth=0.25)
-        plot.show(block=False)
-        plot.pause(0.001)
+            self.__plot_point(self.output_point, 'red', 'o')
+        plot.show(block=True)
 
     def show_interpolation_point(self):
         if self.input_point is None: return ValueError
@@ -67,6 +68,9 @@ class Interpolator:
         self.__plot_segment(Segment(self.input_point, self.output_point), 'black', '--', 0.25)
         plot.show(block=False)
         plot.pause(0.001)
+
+    def close_plot(self):
+        plot.close('all')
 
     def set_interpolation_point(self, point: Point):
         if not isinstance(point, Point): raise TypeError
