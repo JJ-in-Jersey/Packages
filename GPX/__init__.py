@@ -46,18 +46,19 @@ class LocationWP(PseudoWP):
 class InterpolationWP(Waypoint):
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
+        self.code = 'IP_' + str(self.index)
 
 class CurrentStationWP(Waypoint):
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
         self.noaa_url = gpxtag.find('link').attrs['href'] if gpxtag.link else None
-        self.noaa_code = gpxtag.find('link').find('text').text
+        self.code = gpxtag.find('link').find('text').text
 
 class DataWP(ArtificialWP):
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
         self.noaa_url = gpxtag.find('link').attrs['href'] if gpxtag.link else None
-        self.noaa_code = gpxtag.find('link').find('text').text
+        self.code = gpxtag.find('link').find('text').text
 
 class Edge:
 
