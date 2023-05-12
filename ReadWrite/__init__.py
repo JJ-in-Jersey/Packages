@@ -14,7 +14,7 @@ class ReadWrite:
         if len(df) > excel_size:
             num_of_spreadsheets = len(df)/excel_size
             whole_spreadsheets = len(df)//excel_size
-            for i in range(0, whole_spreadsheets):
+            for i in range(whole_spreadsheets):
                 temp = df.loc[i*excel_size: i*excel_size+excel_size-1]
                 temp.to_csv(path.parent.joinpath(path.name+'_excel_'+str(i)).with_suffix('.csv'), index=include_index)
             if num_of_spreadsheets > whole_spreadsheets:

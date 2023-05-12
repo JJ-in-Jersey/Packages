@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
   <component name="ChangeListManager">
-    <list default="true" id="bf1ade6b-0a73-4a16-932f-33100f7fd22b" name="Changes" comment="current stations list">
+    <list default="true" id="bf1ade6b-0a73-4a16-932f-33100f7fd22b" name="Changes" comment="new commit">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/GPX/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/GPX/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/VelocityInterpolation/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/VelocityInterpolation/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ReadWrite/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/ReadWrite/__init__.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -29,6 +32,34 @@
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;
   }
 }</component>
+  <component name="RunManager">
+    <configuration name="install" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="Packages" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/install.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.install" />
+      </list>
+    </recent_temporary>
+  </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
@@ -45,11 +76,103 @@
       <option name="project" value="LOCAL" />
       <updated>1682883770786</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="new commit">
+      <created>1682898597072</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1682898597072</updated>
+    </task>
+    <task id="LOCAL-00003" summary="new commit">
+      <created>1682898635573</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1682898635573</updated>
+    </task>
+    <task id="LOCAL-00004" summary="new commit">
+      <created>1683036291890</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1683036291891</updated>
+    </task>
+    <task id="LOCAL-00005" summary="new commit">
+      <created>1683064344766</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1683064344766</updated>
+    </task>
+    <task id="LOCAL-00006" summary="new commit">
+      <created>1683162803847</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1683162803847</updated>
+    </task>
+    <task id="LOCAL-00007" summary="new commit">
+      <created>1683327466302</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1683327466303</updated>
+    </task>
+    <task id="LOCAL-00008" summary="new commit">
+      <created>1683387298549</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1683387298549</updated>
+    </task>
+    <task id="LOCAL-00009" summary="new commit">
+      <created>1683387413891</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1683387413892</updated>
+    </task>
+    <task id="LOCAL-00010" summary="new commit">
+      <created>1683549349178</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1683549349178</updated>
+    </task>
+    <task id="LOCAL-00011" summary="new commit">
+      <created>1683686809931</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1683686809931</updated>
+    </task>
+    <task id="LOCAL-00012" summary="new commit">
+      <created>1683686854350</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1683686854350</updated>
+    </task>
+    <task id="LOCAL-00013" summary="new commit">
+      <created>1683720432166</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1683720432166</updated>
+    </task>
+    <task id="LOCAL-00014" summary="new commit">
+      <created>1683857788418</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1683857788418</updated>
+    </task>
+    <option name="localTasksCounter" value="15" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="current stations list" />
-    <option name="LAST_COMMIT_MESSAGE" value="current stations list" />
+    <MESSAGE value="new commit" />
+    <option name="LAST_COMMIT_MESSAGE" value="new commit" />
   </component>
 </project>
