@@ -24,8 +24,10 @@ class Waypoint:
 
         if Waypoint.velocity_folder is None: raise TypeError
         self.folder = Waypoint.velocity_folder.joinpath(self.short_name)
-        self.file = self.folder.joinpath(self.short_name + '_array')
-        self.data = None
+        self.interpolation_data_file = self.folder.joinpath(self.short_name.replace(" ", "_") + '_array')
+        self.output_data_file = self.folder.joinpath(self.short_name.replace(" ", "_") + '_interpolation_table')
+        self.interpolation_data = None
+        self.output_data = None
         makedirs(self.folder, exist_ok=True)
 
         Waypoint.index_lookup[Waypoint.ordinal_number] = self
