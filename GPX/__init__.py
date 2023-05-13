@@ -6,8 +6,7 @@ from os import makedirs
 class Waypoint:
 
     velocity_folder = None
-    start = None
-    end = None
+
     type = {'CurrentStationWP': 'Symbol-Spot-Orange', 'LocationWP': 'Symbol-Spot-Green', 'InterpolationWP': 'Symbol-Spot-Blue', 'DataWP': 'Symbol-Spot-Black'}
     ordinal_number = 0
     index_lookup = {}
@@ -33,34 +32,40 @@ class Waypoint:
         Waypoint.index_lookup[Waypoint.ordinal_number] = self
         Waypoint.ordinal_number += 1
 
-class PseudoWP(Waypoint):
+class DistanceWP(Waypoint):  # required for distance calculations
     def __init__(self, *args):
         super().__init__(*args)
 
-class ArtificialWP(PseudoWP):
+class ElapsedTimeWP(DistanceWP):  # required for elapsed time calculations
     def __init__(self, *args):
         super().__init__(*args)
 
-class LocationWP(PseudoWP):
+class LocationWP(DistanceWP):
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
 
-class InterpolationWP(Waypoint):
-    def __init__(self, gpxtag):
+class InterpolationWP(ElapsedTimeWP):
+    def __init__(self, gpxtag, start_index, end_index):
         super().__init__(gpxtag)
         makedirs(self.folder, exist_ok=True)
+        self.start_index = start_index
+        self.end_index = end_index
 
-class CurrentStationWP(Waypoint):
-    def __init__(self, gpxtag):
+class CurrentStationWP(ElapsedTimeWP):
+    def __init__(self, gpxtag, start_index, end_index):
         super().__init__(gpxtag)
         makedirs(self.folder, exist_ok=True)
+        self.start_index = start_index
+        self.end_index = end_index
         self.noaa_url = gpxtag.find('link').attrs['href'] if gpxtag.link else None
         self.code = gpxtag.find('link').find('text').text
 
-class DataWP(ArtificialWP):
-    def __init__(self, gpxtag):
+class DataWP(Waypoint):
+    def __init__(self, gpxtag, start_index, end_index):
         super().__init__(gpxtag)
         makedirs(self.folder, exist_ok=True)
+        self.start_index = start_index
+        self.end_index = end_index
         self.noaa_url = gpxtag.find('link').attrs['href'] if gpxtag.link else None
         self.code = gpxtag.find('link').find('text').text
 
@@ -92,7 +97,7 @@ class CompositeEdge(Edge):
         super().__init__(start, end)
         self.length = 0
         wp_range = range(start.index, end.index+1)
-        waypoints = [Waypoint.index_lookup[i] for i in wp_range if not isinstance(Waypoint.index_lookup[i], ArtificialWP)]
+        waypoints = [Waypoint.index_lookup[i] for i in wp_range if isinstance(Waypoint.index_lookup[i], DistanceWP)]
         for i, wp in enumerate(waypoints[:-1]):
             self.length += round(NV.distance(wp.coords, waypoints[i+1].coords), 4)
 
@@ -129,7 +134,7 @@ class Route:
         else:
             return self.__elapsed_time_dict[key]
 
-    def __init__(self, filepath):
+    def __init__(self, filepath, wp_si, wp_ei):
         self.name = filepath.stem
         self.__transit_time_dict = {}
         self.__elapsed_time_dict = {}
@@ -142,11 +147,11 @@ class Route:
 
         # build ordered list of all waypoints
         waypoints = []
-        for waypoint in tree.find_all('rtept'):
-            if waypoint.sym.text == Waypoint.type['CurrentStationWP']: waypoints.append(CurrentStationWP(waypoint))
-            elif waypoint.sym.text == Waypoint.type['LocationWP']: waypoints.append(LocationWP(waypoint))
-            elif waypoint.sym.text == Waypoint.type['InterpolationWP']: waypoints.append(InterpolationWP(waypoint))
-            elif waypoint.sym.text == Waypoint.type['DataWP']: waypoints.append(DataWP(waypoint))
+        for tag in tree.find_all('rtept'):
+            if tag.sym.text == Waypoint.type['CurrentStationWP']: waypoints.append(CurrentStationWP(tag, wp_si, wp_ei))
+            elif tag.sym.text == Waypoint.type['LocationWP']: waypoints.append(LocationWP(tag))
+            elif tag.sym.text == Waypoint.type['InterpolationWP']: waypoints.append(InterpolationWP(tag, wp_si, wp_ei))
+            elif tag.sym.text == Waypoint.type['DataWP']: waypoints.append(DataWP(tag, wp_si, wp_ei))
 
         self.waypoints = waypoints
 
@@ -162,19 +167,19 @@ class Route:
                 group = [waypoints[i]] + [waypoints[j] for j in range(i+1, wp_len) if isinstance(waypoints[j], DataWP)]
                 self.interpolation_groups.append(group)
 
-        # create velocity path
-        velo_wps = [wp for wp in waypoints if not isinstance(wp, PseudoWP)]
-        velo_edges = []
-        for i, wp in enumerate(velo_wps[:-1]):
-            if wp.index+1 == velo_wps[i+1]:
-                velo_edges.append(SimpleEdge(wp, velo_wps[i+1]))
+        # create elapsed time path - exclude waypoints not required for elapsed time calculations
+        elapsed_time_wps = [wp for wp in waypoints if isinstance(wp, ElapsedTimeWP)]
+        elapsed_time_edges = []
+        for i, wp in enumerate(elapsed_time_wps[:-1]):
+            if wp.index+1 == elapsed_time_wps[i+1]:
+                elapsed_time_edges.append(SimpleEdge(wp, elapsed_time_wps[i+1]))
             else:
-                velo_edges.append(CompositeEdge(wp, velo_wps[i + 1]))
-        self.velo_path = GPXPath(velo_edges)
+                elapsed_time_edges.append(CompositeEdge(wp, elapsed_time_wps[i + 1]))
+        self.elapsed_time_path = GPXPath(elapsed_time_edges)
 
     def print_route(self):
         print(f'\n{self.name}')
         print(f'\nwhole path')
         self.whole_path.print_path()
         print(f'\nvelocity path')
-        self.velo_path.print_path()
+        self.elapsed_time_path.print_path()
