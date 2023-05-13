@@ -18,17 +18,16 @@ class Waypoint:
         self.coords = tuple([self.lat, self.lon])
         self.symbol = gpxtag.sym.text
         self.name = gpxtag.find('name').text.strip('\n')
-        self.short_name = self.name.split(',')[0].split('(')[0].replace('.', '').strip()
+        short_name = self.name.split(',')[0].split('(')[0].replace('.', '').strip()
+        self.unique_name = short_name + ' ' + str(self.index)
         self.prev_edge = None
         self.next_edge = None
 
-        if Waypoint.velocity_folder is None: raise TypeError
-        self.folder = Waypoint.velocity_folder.joinpath(self.short_name)
-        self.interpolation_data_file = self.folder.joinpath(self.short_name.replace(" ", "_") + '_array')
-        self.output_data_file = self.folder.joinpath(self.short_name.replace(" ", "_") + '_interpolation_table')
+        self.folder = Waypoint.velocity_folder.joinpath(self.unique_name)
+        self.interpolation_data_file = self.folder.joinpath(self.unique_name.replace(" ", "_") + '_interpolation')
+        self.output_data_file = self.folder.joinpath(self.unique_name.replace(" ", "_") + '_output')
         self.interpolation_data = None
         self.output_data = None
-        makedirs(self.folder, exist_ok=True)
 
         Waypoint.index_lookup[Waypoint.ordinal_number] = self
         Waypoint.ordinal_number += 1
@@ -48,17 +47,19 @@ class LocationWP(PseudoWP):
 class InterpolationWP(Waypoint):
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
-        self.code = 'IP_' + str(self.index)
+        makedirs(self.folder, exist_ok=True)
 
 class CurrentStationWP(Waypoint):
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
+        makedirs(self.folder, exist_ok=True)
         self.noaa_url = gpxtag.find('link').attrs['href'] if gpxtag.link else None
         self.code = gpxtag.find('link').find('text').text
 
 class DataWP(ArtificialWP):
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
+        makedirs(self.folder, exist_ok=True)
         self.noaa_url = gpxtag.find('link').attrs['href'] if gpxtag.link else None
         self.code = gpxtag.find('link').find('text').text
 
