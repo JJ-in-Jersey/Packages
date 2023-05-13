@@ -73,7 +73,7 @@ class Edge:
 
     elapsed_time_folder = None
 
-    def __init__(self, start, end):
+    def __init__(self, start, end, edge_range):
         if start == end: raise IndexError
         self.name = '[' + str(start.index) + '-' + str(end.index) + ']'
         self.start = start
@@ -83,18 +83,20 @@ class Edge:
 
         if Edge.elapsed_time_folder is None: raise TypeError
         self.folder = Edge.elapsed_time_folder.joinpath(self.name)
+        makedirs(self.folder, exist_ok=True)
         self.file = self.folder.joinpath(self.name + '_array')
         self.data = None
-        makedirs(self.folder, exist_ok=True)
+        self.edge_range = edge_range
+
 
 class SimpleEdge(Edge):
-    def __init__(self, start, end):
-        super().__init__(start, end)
+    def __init__(self, start, end, edge_range):
+        super().__init__(start, end, edge_range)
         self.length = round(NV.distance(self.start.coords, self.end.coords), 4)
 
 class CompositeEdge(Edge):
-    def __init__(self, start, end):
-        super().__init__(start, end)
+    def __init__(self, start, end, edge_range):
+        super().__init__(start, end, edge_range)
         self.length = 0
         wp_range = range(start.index, end.index+1)
         waypoints = [Waypoint.index_lookup[i] for i in wp_range if isinstance(Waypoint.index_lookup[i], DistanceWP)]
@@ -134,7 +136,7 @@ class Route:
         else:
             return self.__elapsed_time_dict[key]
 
-    def __init__(self, filepath, wp_si, wp_ei):
+    def __init__(self, filepath, wp_si, wp_ei, e_r):
         self.name = filepath.stem
         self.__transit_time_dict = {}
         self.__elapsed_time_dict = {}
@@ -156,7 +158,7 @@ class Route:
         self.waypoints = waypoints
 
         # create all the edges and the whole path
-        edges = [SimpleEdge(wp, Waypoint.index_lookup[wp.index+1]) for wp in waypoints[:-1]]
+        edges = [SimpleEdge(wp, Waypoint.index_lookup[wp.index+1], e_r) for wp in waypoints[:-1]]
         self.whole_path = GPXPath(edges)
 
         # create interpolation groups
@@ -172,9 +174,9 @@ class Route:
         elapsed_time_edges = []
         for i, wp in enumerate(elapsed_time_wps[:-1]):
             if wp.index+1 == elapsed_time_wps[i+1]:
-                elapsed_time_edges.append(SimpleEdge(wp, elapsed_time_wps[i+1]))
+                elapsed_time_edges.append(SimpleEdge(wp, elapsed_time_wps[i+1], e_r))
             else:
-                elapsed_time_edges.append(CompositeEdge(wp, elapsed_time_wps[i + 1]))
+                elapsed_time_edges.append(CompositeEdge(wp, elapsed_time_wps[i + 1], e_r))
         self.elapsed_time_path = GPXPath(elapsed_time_edges)
 
     def print_route(self):
