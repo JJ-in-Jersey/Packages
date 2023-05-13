@@ -6,6 +6,8 @@ from os import makedirs
 class Waypoint:
 
     velocity_folder = None
+    start = None
+    end = None
     type = {'CurrentStationWP': 'Symbol-Spot-Orange', 'LocationWP': 'Symbol-Spot-Green', 'InterpolationWP': 'Symbol-Spot-Blue', 'DataWP': 'Symbol-Spot-Black'}
     ordinal_number = 0
     index_lookup = {}
@@ -18,14 +20,13 @@ class Waypoint:
         self.coords = tuple([self.lat, self.lon])
         self.symbol = gpxtag.sym.text
         self.name = gpxtag.find('name').text.strip('\n')
-        short_name = self.name.split(',')[0].split('(')[0].replace('.', '').strip()
-        self.unique_name = short_name + ' ' + str(self.index)
+        self.unique_name = self.name.split(',')[0].split('(')[0].replace('.', '').strip().replace(" ", "_") + '_' + str(self.index)
         self.prev_edge = None
         self.next_edge = None
 
         self.folder = Waypoint.velocity_folder.joinpath(self.unique_name)
-        self.interpolation_data_file = self.folder.joinpath(self.unique_name.replace(" ", "_") + '_interpolation')
-        self.output_data_file = self.folder.joinpath(self.unique_name.replace(" ", "_") + '_output')
+        self.interpolation_data_file = self.folder.joinpath(self.unique_name + '_interpolation')
+        self.output_data_file = self.folder.joinpath(self.unique_name + '_output')
         self.interpolation_data = None
         self.output_data = None
 
