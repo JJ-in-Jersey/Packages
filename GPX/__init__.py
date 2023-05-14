@@ -75,16 +75,16 @@ class Edge:
 
     def __init__(self, start, end, edge_range):
         if start == end: raise IndexError
-        self.name = '[' + str(start.index) + '-' + str(end.index) + ']'
+        self.unique_name = '[' + str(start.index) + '-' + str(end.index) + ']'
         self.start = start
         self.end = end
         start.next_edge = self
         end.prev_edge = self
 
         if Edge.elapsed_time_folder is None: raise TypeError
-        self.folder = Edge.elapsed_time_folder.joinpath(self.name)
+        self.folder = Edge.elapsed_time_folder.joinpath(self.unique_name)
         makedirs(self.folder, exist_ok=True)
-        self.output_data_file = self.folder.joinpath(self.name + '_output')
+        self.output_data_file = self.folder.joinpath(self.unique_name + '_output')
         self.output_data = None
         self.edge_range = edge_range
 
