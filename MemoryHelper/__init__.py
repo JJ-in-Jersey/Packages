@@ -1,7 +1,5 @@
-from bs4 import BeautifulSoup as Soup
-from Navigation import Navigation as NV
-from pathlib import Path
-from os import makedirs
+import pandas as pd
+import numpy as np
 
 class MemoryHelper:
 
