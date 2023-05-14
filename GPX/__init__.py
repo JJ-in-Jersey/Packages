@@ -25,8 +25,8 @@ class Waypoint:
 
         self.folder = Waypoint.velocity_folder.joinpath(self.unique_name)
         self.interpolation_data_file = self.folder.joinpath(self.unique_name + '_interpolation')
-        self.output_data_file = self.folder.joinpath(self.unique_name + '_output')
         self.interpolation_data = None
+        self.output_data_file = self.folder.joinpath(self.unique_name + '_output')
         self.output_data = None
 
         Waypoint.index_lookup[Waypoint.ordinal_number] = self
@@ -84,8 +84,8 @@ class Edge:
         if Edge.elapsed_time_folder is None: raise TypeError
         self.folder = Edge.elapsed_time_folder.joinpath(self.name)
         makedirs(self.folder, exist_ok=True)
-        self.file = self.folder.joinpath(self.name + '_array')
-        self.data = None
+        self.output_data_file = self.folder.joinpath(self.name + '_output')
+        self.output_data = None
         self.edge_range = edge_range
 
 
