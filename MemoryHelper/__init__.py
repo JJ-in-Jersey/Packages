@@ -9,7 +9,7 @@ class MemoryHelper:
             if dataframe[col].dtype == np.int64:
                 dataframe[col] = dataframe[col].astype(np.int32)
             elif dataframe[col].dtype == np.float64:
-                dataframe[col] = dataframe[col].astype(np.half)
+                dataframe[col] = dataframe[col].astype(np.float32)
         return dataframe
 
     def __init__(self):
