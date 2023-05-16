@@ -1,4 +1,5 @@
 from haversine import haversine as hvs, Unit
+import numpy as np
 
 def sign(value): return value/abs(value)
 
