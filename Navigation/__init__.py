@@ -35,5 +35,12 @@ class Navigation:
 
         return Navigation.directionLookup[code]
 
+    @staticmethod
+    def heading(start_coords, end_coords):
+        corner = (end_coords[0], start_coords[1])
+        lat_dist = Navigation.distance(corner, start_coords)
+        lon_dist = Navigation.distance(end_coords, corner)
+        return np.rad2deg(np.arctan(lon_dist/lat_dist))
+
     def __init__(self):
         pass

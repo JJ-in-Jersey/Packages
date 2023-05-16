@@ -116,6 +116,7 @@ class GPXPath:
         self.name = '{' + str(self.edges[0].start.index) + '-' + str(self.edges[-1].end.index) + '}'
         self.length = round(sum([edge.length for edge in self.edges]), 4)
         self.direction = NV.direction(self.edges[0].start.coords, self.edges[-1].end.coords)
+        self.heading = NV.heading(self.edges[0].start.coords, self.edges[-1].end.coords)
 
     def print_path(self):
         print(f'{self.name} "{self.direction}" {self.length}')

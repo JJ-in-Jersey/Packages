@@ -39,13 +39,13 @@ class FileTools:
     @staticmethod
     def write_arr(arr, path): np.save(path.with_suffix('.npy'), arr, allow_pickle=False)
 
-    @classmethod
-    def read_list(cls, path): return list(cls.read_arr(path))
+    @staticmethod
+    def read_list(path): return list(read_arr(path))
 
-    @classmethod
-    def write_list(cls, lst, path): cls.write_arr(lst, path)
+    @staticmethod
+    def write_list(lst, path): write_arr(lst, path)
 
-    @classmethod
+    @staticmethod
     def file_exists(path): return True if path.with_suffix('.csv').exists() or path.with_suffix('.npy').exists() else False
 
     def __init__(self):
