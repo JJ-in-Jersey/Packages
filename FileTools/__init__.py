@@ -45,5 +45,8 @@ class FileTools:
     @classmethod
     def write_list(cls, lst, path): cls.write_arr(lst, path)
 
+    @classmethod
+    def file_exists(path): return True if path.with_suffix('.csv').exists() or path.with_suffix('.npy').exists() else False
+
     def __init__(self):
         pass
