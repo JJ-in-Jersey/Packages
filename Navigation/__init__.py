@@ -41,7 +41,7 @@ class Navigation:
         corner = (end_coords[0], start_coords[1])
         lat_dist = Navigation.distance(corner, start_coords)
         lon_dist = Navigation.distance(end_coords, corner)
-        return np.rad2deg(np.arctan(lon_dist/lat_dist))
+        return int(round(np.rad2deg(np.arctan(lon_dist/lat_dist)), 0))
 
     def __init__(self):
         pass
