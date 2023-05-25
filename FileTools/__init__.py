@@ -20,7 +20,6 @@ class FileTools:
 
     @staticmethod
     def write_df(df, path, include_index=False):
-        # df.to_csv(path.with_suffix('.csv'), index=include_index)
         df.to_csv(path.with_suffix('.csv'), index=False)
         excel_size = 1000000
         if len(df) > excel_size:
