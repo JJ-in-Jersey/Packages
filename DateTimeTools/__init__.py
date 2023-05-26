@@ -19,7 +19,7 @@ class DateTimeTools:
     def round_dt_quarter_hour(timestamp): return dt.min + round((timestamp.to_pydatetime() - dt.min) / td(minutes=15)) * td(minutes=15)
 
     @staticmethod
-    def time_to_degrees(time): return int(time.hour * 15 + time.minute * 0.25)
+    def time_to_degrees(time): return time.hour * 15 + time.minute * 0.25
 
     def __init__(self):
         pass
