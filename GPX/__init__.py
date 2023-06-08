@@ -125,22 +125,10 @@ class GPXPath:
 
 class Route:
 
-    # def transit_time_lookup(self, key, array=None):
-    #     if key not in self.__transit_time_dict and array is not None:
-    #         self.__transit_time_dict[key] = array
-    #     else:
-    #         return self.__transit_time_dict[key]
-
-    # def elapsed_time_lookup(self, key, array=None):
-    #     if key not in self.__elapsed_time_dict and array is not None:
-    #         self.__elapsed_time_dict[key] = array
-    #     else:
-    #         return self.__elapsed_time_dict[key]
-
     def __init__(self, filepath, wp_si, wp_ei, e_r):
         self.name = filepath.stem
-        self.__transit_time_dict = {}
-        self.__elapsed_time_dict = {}
+        self.transit_time_lookup = {}
+        self.elapsed_time_lookup = {}
         self.whole_path = self.velo_path = None
         self.interpolation_groups = None
         self.waypoints = None
