@@ -38,7 +38,14 @@ class Arc:
 
 class RoundedArc:
 
+    def angle_list(self):
+        return [self.start_angle, self.min_angle, self.end_angle]
+
+    def time_list(self):
+        return [self.start_time, self.min_time, self.end_time]
+
     def __init__(self, arc: Arc, minutes):
+        self.fractured = arc.fractured
         self.arc = arc
         self.min_time = None
         self.min_angle = None
