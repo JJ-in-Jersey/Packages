@@ -9,58 +9,49 @@ def round_time_to(timestamp, mins):
 
 class Arc:
 
-    def angle_list(self):
-        return [self.start_angle, self.min_angle, self.end_angle]
+    columns = ['date', 'start', 'min', 'end', 'name']
+    round_to = 15
+    name = None
 
-    def time_list(self):
-        return [self.start_time, self.min_time, self.end_time]
+    def angles(self): return pd.Series([self.date(), self.start_angle, self.min_angle, self.end_angle, Arc.name])
+    def times(self): return pd.Series([self.date(), self.start_time, self.min_time, self.end_time, Arc.name])
 
     def arc_name(self, name):
         self.name = name
 
     def __init__(self, *args):
-        self.fractured = False
-        self.name = None
         self.tts = args[0]
         self.start_index = args[1]
         self.min_index = args[2]
         self.end_index = args[3]
+        self.name = None
         self.min_time = None
         self.min_angle = None
+        self.date = None
 
-        self.start_time = pd.to_datetime(self.start_index, unit='s').round('min')
-        self.end_time = pd.to_datetime(self.end_index, unit='s').round('min')
-
-        if self.start_time.date() != self.end_time.date(): self.fractured = True
-
-        self.start_angle = time_to_degrees(self.start_time)
-        self.end_angle = time_to_degrees(self.end_time)
+        self.base_start_time = pd.to_datetime(self.start_index, unit='s').round('min')
+        self.base_end_time = pd.to_datetime(self.end_index, unit='s').round('min')
+        self.base_date = self.base_start_time.date
 
         if self.min_index is not None:
-            self.min_time = pd.to_datetime(self.min_index, unit='s').round('min')
-            self.min_angle = time_to_degrees(self.min_time)
+            self.base_min_time = pd.to_datetime(self.min_index, unit='s').round('min')
 
-class RoundedArc:
+class RoundedArc(Arc):
 
-    def angle_list(self):
-        return [self.start_angle, self.min_angle, self.end_angle]
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.fractured = False
+        self.has_minimum = False
 
-    def time_list(self):
-        return [self.start_time, self.min_time, self.end_time]
+        self.start_time = round_time_to(self.base_start_time, Arc.round_to)
+        self.end_time = round_time_to(self.base_end_time, Arc.round_to)
 
-    def __init__(self, arc: Arc, minutes):
-        self.fractured = arc.fractured
-        self.name = arc.name
-        self.arc = arc
-        self.min_time = None
-        self.min_angle = None
-
-        self.start_time = round_time_to(self.arc.start_time, minutes)
-        self.end_time = round_time_to(self.arc.end_time, minutes)
+        if self.start_time.date() != self.end_time.date(): self.fractured = True
+        self.date = self.start_time.date
 
         self.start_angle = time_to_degrees(self.start_time)
         self.end_angle = time_to_degrees(self.end_time)
 
-        if arc.min_time is not None:
-            self.min_time = round_time_to(self.arc.min_time, minutes)
+        if self.base_min_time is not None:
+            self.min_time = round_time_to(self.base_min_time, Arc.round_to)
             self.min_angle = time_to_degrees(self.min_time)
