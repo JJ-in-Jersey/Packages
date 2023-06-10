@@ -15,8 +15,12 @@ class Arc:
     def time_list(self):
         return [self.start_time, self.min_time, self.end_time]
 
+    def arc_name(self, name):
+        self.name = name
+
     def __init__(self, *args):
         self.fractured = False
+        self.name = None
         self.tts = args[0]
         self.start_index = args[1]
         self.min_index = args[2]
@@ -46,6 +50,7 @@ class RoundedArc:
 
     def __init__(self, arc: Arc, minutes):
         self.fractured = arc.fractured
+        self.name = arc.name
         self.arc = arc
         self.min_time = None
         self.min_angle = None
