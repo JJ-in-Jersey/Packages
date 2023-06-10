@@ -152,10 +152,13 @@ class Route:
 
         # create interpolation groups
         self.interpolation_groups = []
-        wp_len = len(waypoints)
-        for i in range(wp_len):
-            if isinstance(waypoints[i], InterpolationWP):
-                group = [waypoints[i]] + [waypoints[j] for j in range(i+1, wp_len) if isinstance(waypoints[j], DataWP)]
+        for i, wp in enumerate(waypoints):
+            if isinstance(wp, InterpolationWP):
+                group = [wp]
+                count = i+1
+                while count < len(waypoints) and isinstance(waypoints[count], DataWP):
+                    group.append(waypoints[count])
+                    count += 1
                 self.interpolation_groups.append(group)
 
         # create elapsed time path - exclude waypoints not required for elapsed time calculations
