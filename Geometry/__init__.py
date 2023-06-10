@@ -21,6 +21,8 @@ class Arc:
         self.start_index = args[1]
         self.min_index = args[2]
         self.end_index = args[3]
+        self.min_time = None
+        self.min_angle = None
 
         self.start_time = pd.to_datetime(self.start_index, unit='s').round('min')
         self.end_time = pd.to_datetime(self.end_index, unit='s').round('min')
@@ -47,6 +49,6 @@ class RoundedArc:
         self.start_angle = time_to_degrees(self.start_time)
         self.end_angle = time_to_degrees(self.end_time)
 
-        if m_index is not None:
+        if arc.min_time is not None:
             self.min_time = round_time_to(self.arc.min_time, minutes)
             self.min_angle = time_to_degrees(self.min_time)
