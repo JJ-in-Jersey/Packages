@@ -51,11 +51,13 @@ class RoundedArc(Arc):
         self.end_angle = time_to_degrees(self.end)
         self.min_angle = time_to_degrees(self.min)
 
-        if self.start_date != self.end_date and self.end_angle != 0:
-            self.fractured = True
-        else:
-            self.end_angle = 360
-            if self.min_angle == 0: self.min_angle = 360
+        if self.start_date != self.end_date:
+            if self.end_angle == 0:
+                self.end_angle = 360
+                if self.min_angle == 0:
+                    self.min_angle = 360
+            else:
+                self.fractured = True
 
 class FractionalArc:
 
@@ -80,5 +82,6 @@ class FractionalArcEndDay(FractionalArc):
     def __init__(self, *args):
         super().__init__(*args)
 
+        self.start_date = self.start_date + td(days=1)
         self.start_angle = 0
         if 360 > self.min_angle > 180: self.min_angle = None
