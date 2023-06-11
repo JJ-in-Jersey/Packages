@@ -55,3 +55,12 @@ class RoundedArc(Arc):
         if self.base_min_time is not None:
             self.min_time = round_time_to(self.base_min_time, Arc.round_to)
             self.min_angle = time_to_degrees(self.min_time)
+
+def fractured_arc_clone(arc: Arc):
+    if not arc.fractured: raise TypeError
+    if arc.min_angle == 0:
+        print('min is zero')
+    elif 360 > arc.min_angle > 180:
+        print('min on left')
+    else:
+        print('min on right')
