@@ -9,7 +9,7 @@ def round_time_to(timestamp, mins):
 
 class Arc:
 
-    columns = ['date', 'start', 'min', 'end', 'name']
+    columns = ['date_time', 'date', 'start', 'min', 'end', 'name']
     round_to = 15
     name = None
 
