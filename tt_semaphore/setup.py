@@ -3,5 +3,5 @@ from setuptools import setup, find_packages
 setup(
     name='tt_semaphore',
     version='1.0',
-    packages=find_packages(include=['simple_semaphore'])
+    packages=find_packages(include=['tt_semaphore', 'tt_semaphore.*']),
 )

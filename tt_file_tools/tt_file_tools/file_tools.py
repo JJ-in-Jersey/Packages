@@ -2,7 +2,7 @@ from glob import glob
 from os.path import join, getctime
 import numpy as np
 import pandas as pd
-from tt_memory_helper import shrink_dataframe
+from tt_memory_helper.reduce_memory import shrink_dataframe
 
 def newest_file(folder):
     types = ['*.txt', '*.csv']

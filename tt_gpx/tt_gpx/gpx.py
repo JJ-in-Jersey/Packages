@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup as Soup
-from tt_navigation import distance, direction, heading
+from tt_navigation.navigation import distance, direction, heading
 from os import makedirs
 
 class Waypoint:
