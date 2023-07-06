@@ -1,5 +1,6 @@
-import logging
 from os import environ
+
+import logging
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service

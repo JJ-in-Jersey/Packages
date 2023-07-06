@@ -3,5 +3,5 @@ from setuptools import setup, find_packages
 setup(
     name='tt_memory_helper',
     version='1.0',
-    packages=find_packages(include=['reduce_memory'])
+    install_requires=['pandas', 'numpy']
 )
