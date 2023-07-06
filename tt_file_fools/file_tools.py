@@ -2,7 +2,7 @@ from glob import glob
 from os.path import join, getctime
 import numpy as np
 import pandas as pd
-from MemoryHelper import MemoryHelper as mh
+from tt_memory_helper import MemoryHelper as mh
 
 def newest_file(folder):
     types = ['*.txt', '*.csv']

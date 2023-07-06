@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup as Soup
-from Navigation import Navigation as NV
+from tt_navigation import Navigation as NV
 from os import makedirs
 
 class Waypoint:
