@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup as Soup
-from tt_navigation import Navigation as NV
+from tt_navigation import distance, direction, heading
 from os import makedirs
 
 class Waypoint:
@@ -91,7 +91,7 @@ class Edge:
 class SimpleEdge(Edge):
     def __init__(self, start, end, edge_range):
         super().__init__(start, end, edge_range)
-        self.length = round(NV.distance(self.start.coords, self.end.coords), 4)
+        self.length = round(distance(self.start.coords, self.end.coords), 4)
 
 class CompositeEdge(Edge):
     def __init__(self, start, end, edge_range):
@@ -100,7 +100,7 @@ class CompositeEdge(Edge):
         wp_range = range(start.index, end.index+1)
         waypoints = [Waypoint.index_lookup[i] for i in wp_range if isinstance(Waypoint.index_lookup[i], DistanceWP)]
         for i, wp in enumerate(waypoints[:-1]):
-            self.length += round(NV.distance(wp.coords, waypoints[i+1].coords), 4)
+            self.length += round(distance(wp.coords, waypoints[i+1].coords), 4)
 
 class GPXPath:
 
@@ -114,8 +114,8 @@ class GPXPath:
         self.path_integrity()
         self.name = '{' + str(self.edges[0].start.index) + '-' + str(self.edges[-1].end.index) + '}'
         self.length = round(sum([edge.length for edge in self.edges]), 4)
-        self.direction = NV.direction(self.edges[0].start.coords, self.edges[-1].end.coords)
-        self.heading = NV.heading(self.edges[0].start.coords, self.edges[-1].end.coords)
+        self.direction = direction(self.edges[0].start.coords, self.edges[-1].end.coords)
+        self.heading = heading(self.edges[0].start.coords, self.edges[-1].end.coords)
 
     def print_path(self):
         print(f'{self.name} "{self.direction}" {self.length}')
