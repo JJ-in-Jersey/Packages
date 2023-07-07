@@ -3,12 +3,12 @@ from os import environ, remove
 import platform
 
 if platform.system() == 'Windows':
-    TEMP = environ['TEMP']
+    temp = environ['TEMP']
 elif platform.system() == 'Darwin':
-    TEMP = environ['TMPDIR']
+    temp = environ['TMPDIR']
 
-def on(name): Path(TEMP).joinpath(name).with_suffix('.tmp').touch()
+def on(name): Path(temp).joinpath(name).with_suffix('.tmp').touch()
 
-def off(name): remove(Path(TEMP).joinpath(name).with_suffix('.tmp'))
+def off(name): remove(Path(temp).joinpath(name).with_suffix('.tmp'))
 
-def is_on(name): return True if Path(TEMP).joinpath(name).with_suffix('.tmp').exists() else False
+def is_on(name): return True if Path(temp).joinpath(name).with_suffix('.tmp').exists() else False
