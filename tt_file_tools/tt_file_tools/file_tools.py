@@ -1,3 +1,4 @@
+from time import sleep
 from glob import glob
 from os.path import join, getctime
 import numpy as np
@@ -29,7 +30,10 @@ def write_df(df, path, include_index=False):
 
 def read_arr(path): return np.load(path.with_suffix('.npy'))
 
-def write_arr(arr, path): np.save(path.with_suffix('.npy'), arr, allow_pickle=False)
+def write_arr(arr, path):
+    np.save(path.with_suffix('.npy'), arr, allow_pickle=False)
+    while not csv_npy_file_exists(path):
+        sleep(0.1)
 
 def read_arr_to_list(path): return list(read_arr(path))
 
