@@ -14,7 +14,6 @@ def get_driver(download_dir=None):
     my_options.add_experimental_option('excludeSwitches', ['enable-logging'])
     if download_dir is not None:
         my_options.add_experimental_option("prefs", {'download.default_directory': str(download_dir)})
-    # driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=my_options)
     driver = webdriver.Chrome(options=my_options)
     driver.implicitly_wait(10)  # seconds
     driver.minimize_window()
