@@ -9,3 +9,5 @@ pip uninstall tt_geometry -y
 pip uninstall tt_gpx -y
 pip uninstall tt_interpolation -y
 pip uninstall tt_semaphore -y
+
+pause

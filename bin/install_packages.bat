@@ -20,3 +20,5 @@ pip install ./tt_geometry
 pip install ./tt_gpx
 pip install ./tt_interpolation
 pip install ./tt_semaphore
+
+pause
