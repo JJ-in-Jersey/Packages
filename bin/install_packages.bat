@@ -9,6 +9,7 @@ pip uninstall tt_geometry -y
 pip uninstall tt_gpx -y
 pip uninstall tt_interpolation -y
 pip uninstall tt_semaphore -y
+pip uninstall tt_os_tools -y
 
 
 pip install ./tt_memory_helper
@@ -20,5 +21,6 @@ pip install ./tt_geometry
 pip install ./tt_gpx
 pip install ./tt_interpolation
 pip install ./tt_semaphore
+pip install ./tt_os_tools
 
 pause
