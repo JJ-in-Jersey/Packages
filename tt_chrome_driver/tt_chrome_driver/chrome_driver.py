@@ -1,15 +1,16 @@
-from os import environ
 from pathlib import Path
 
 import logging
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
+from tt_os_tools.os_tools import Temp
+
 logger = logging.getLogger('selenium')
 logger.setLevel(logging.DEBUG)
-profile = environ['USERPROFILE']
-handler = logging.FileHandler(Path(environ['USERPROFILE'] + '/Developer Workspace/log'))
+handler = logging.FileHandler(Path(Temp.TEMP))
 logger.addHandler(handler)
+
 
 def get_driver(download_dir=None):
     my_options = Options()

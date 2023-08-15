@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup as Soup
 from tt_navigation.navigation import distance, direction, heading
 from os import makedirs
 
+
 class Waypoint:
 
     velocity_folder = None
@@ -30,6 +31,7 @@ class Waypoint:
 
         Waypoint.index_lookup[Waypoint.ordinal_number] = self
         Waypoint.ordinal_number += 1
+
 
 class DistanceWP(Waypoint):  # required for distance calculations
     def __init__(self, *args):

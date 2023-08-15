@@ -1,14 +1,11 @@
 from pathlib import Path
-from os import environ, remove
-import platform
+from os import remove
 
-if platform.system() == 'Windows':
-    temp = environ['TEMP']
-elif platform.system() == 'Darwin':
-    temp = environ['TMPDIR']
+from tt_os_tools.os_tools import Temp
 
-def on(name): Path(temp).joinpath(name).with_suffix('.tmp').touch()
 
-def off(name): remove(Path(temp).joinpath(name).with_suffix('.tmp'))
+def on(name): Path(Temp.TEMP).joinpath(name).with_suffix('.tmp').touch()
 
-def is_on(name): return True if Path(temp).joinpath(name).with_suffix('.tmp').exists() else False
+def off(name): remove(Path(Temp.TEMP).joinpath(name).with_suffix('.tmp'))
+
+def is_on(name): return True if Path(Temp.TEMP).joinpath(name).with_suffix('.tmp').exists() else False
