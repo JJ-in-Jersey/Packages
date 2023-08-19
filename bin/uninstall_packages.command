@@ -11,5 +11,5 @@ pip3 uninstall tt_geometry -y
 pip3 uninstall tt_gpx -y
 pip3 uninstall tt_interpolation -y
 pip3 uninstall tt_semaphore -y
-pip3 uninstall tt_os_tools -y
+pip3 uninstall tt_os_abstraction -y
 

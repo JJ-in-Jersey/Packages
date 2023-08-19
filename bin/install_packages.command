@@ -10,7 +10,7 @@ pip3 uninstall tt_geometry -y
 pip3 uninstall tt_gpx -y
 pip3 uninstall tt_interpolation -y
 pip3 uninstall tt_semaphore -y
-pip3 uninstall tt_os_tools -y
+pip3 uninstall tt_os_abstraction -y
 pip3 uninstall tt_chrome_driver -y
 
 pip3 install ./tt_memory_helper
@@ -21,5 +21,5 @@ pip3 install ./tt_geometry
 pip3 install ./tt_gpx
 pip3 install ./tt_interpolation
 pip3 install ./tt_semaphore
-pip3 install ./tt_os_tools
+pip3 install ./tt_os_abstraction
 pip3 install ./tt_chrome_driver
