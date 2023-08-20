@@ -3,14 +3,15 @@ from os import listdir
 import re
 import platform
 import requests
-from bs4 import BeautifulSoup as soup
+from bs4 import BeautifulSoup as Soup
 from distutils.version import LooseVersion
+from urllib.request import urlretrieve
 
 import logging
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
-from tt_os_abstraction.os_abstraction import temp
+from tt_os_abstraction.os_abstraction import temp, user_profile
 
 logger = logging.getLogger('selenium')
 logger.setLevel(logging.DEBUG)
@@ -21,7 +22,9 @@ logger.addHandler(handler)
 def get_driver(download_dir=None):
     print(f'is_chrome_installed: {is_chrome_installed()}')
     print(f'get_installed_chrome_version: {get_installed_chrome_version()}')
-    get_latest_chrome_version()
+    print(f'get_latest_stable_chrome_version: {get_latest_stable_chrome_version()}')
+    print(f'download_latest_stable_chrome_version: {download_latest_stable_chrome_version()}')
+    print(f'download_latest_stable_chromedriver_version: {download_latest_stable_chromedriver_version()}')
     my_options = Options()
     if download_dir is not None:
         my_options.add_experimental_option("prefs", {'download.default_directory': str(download_dir)})
@@ -57,15 +60,36 @@ def get_installed_chrome_version():
     return file_list[-1]
 
 
-def get_latest_chrome_version():
-    file_list = None
+def get_latest_stable_chrome_version():
     stable_version_url = 'https://googlechromelabs.github.io/chrome-for-testing/#stable'
+    tree = Soup(requests.get(stable_version_url).text, 'html.parser')
+    version = tree.find(id='stable').find('p').find('code').text
+    return version
 
-    tree = soup(requests.get(stable_version_url).text, 'html.parser')
 
+def download_latest_stable_chrome_version():
+    stable_version_url = 'https://googlechromelabs.github.io/chrome-for-testing/#stable'
+    url = None
+
+    tree = Soup(requests.get(stable_version_url).text, 'html.parser')
     if platform.system() == 'Darwin':
-        file_list = [s for s in listdir(apple_version_path) if re.search(regex_pattern, s) is not None]
+        url = tree.find(id='stable').find(text='chrome').find_next(text='mac-arm64').find_next('code').text
     elif platform.system() == 'Windows':
-        file_list = [s for s in listdir(windows_version_path) if re.search(regex_pattern, s) is not None]
+        url = tree.find(id='stable').find(text='chrome').find_next(text='win64').find_next('code').text
 
-    pass
+    filename = Path(user_profile() + '/Downloads/' + url.rpartition('/')[2])
+    return urlretrieve(url, filename)[0]
+
+
+def download_latest_stable_chromedriver_version():
+    stable_version_url = 'https://googlechromelabs.github.io/chrome-for-testing/#stable'
+    url = None
+
+    tree = Soup(requests.get(stable_version_url).text, 'html.parser')
+    if platform.system() == 'Darwin':
+        url = tree.find(id='stable').find(text='chromedriver').find_next(text='mac-arm64').find_next('code').text
+    elif platform.system() == 'Windows':
+        url = tree.find(id='stable').find(text='chromedriver').find_next(text='win64').find_next('code').text
+
+    filename = Path(user_profile() + '/Downloads/' + url.rpartition('/')[2])
+    return urlretrieve(url, filename)[0]
