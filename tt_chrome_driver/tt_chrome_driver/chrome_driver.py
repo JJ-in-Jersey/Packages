@@ -2,7 +2,9 @@ from pathlib import Path
 from os import listdir
 import re
 import platform
-import chromedriver_autoinstaller
+import requests
+from bs4 import BeautifulSoup as soup
+from distutils.version import LooseVersion
 
 import logging
 from selenium import webdriver
@@ -17,10 +19,9 @@ logger.addHandler(handler)
 
 
 def get_driver(download_dir=None):
-    print(f'chrome version: {chromedriver_autoinstaller.get_chrome_version()}')
     print(f'is_chrome_installed: {is_chrome_installed()}')
-    get_installed_chrome_version()
-    chromedriver_autoinstaller.install()
+    print(f'get_installed_chrome_version: {get_installed_chrome_version()}')
+    get_latest_chrome_version()
     my_options = Options()
     if download_dir is not None:
         my_options.add_experimental_option("prefs", {'download.default_directory': str(download_dir)})
@@ -43,8 +44,24 @@ def is_chrome_installed():
 def get_installed_chrome_version():
     apple_version_path = Path('/Applications/Google Chrome.app/Contents/Frameworks/Google Chrome Framework.framework/Versions')
     windows_version_path = Path('C:/Program Files/Google/Chrome/Application')
-
     regex_pattern = '^[0-9\.]*$'
+    file_list = None
+
+    if platform.system() == 'Darwin':
+        file_list = [s for s in listdir(apple_version_path) if re.search(regex_pattern, s) is not None]
+    elif platform.system() == 'Windows':
+        file_list = [s for s in listdir(windows_version_path) if re.search(regex_pattern, s) is not None]
+
+    file_list.sort(key=LooseVersion)
+
+    return file_list[-1]
+
+
+def get_latest_chrome_version():
+    file_list = None
+    stable_version_url = 'https://googlechromelabs.github.io/chrome-for-testing/#stable'
+
+    tree = soup(requests.get(stable_version_url).text, 'html.parser')
 
     if platform.system() == 'Darwin':
         file_list = [s for s in listdir(apple_version_path) if re.search(regex_pattern, s) is not None]
@@ -52,4 +69,3 @@ def get_installed_chrome_version():
         file_list = [s for s in listdir(windows_version_path) if re.search(regex_pattern, s) is not None]
 
     pass
-
