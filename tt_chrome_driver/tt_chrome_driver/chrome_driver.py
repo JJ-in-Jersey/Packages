@@ -26,7 +26,7 @@ def get_driver(download_dir=None):
     if platform.system() == 'Darwin':
         driver_path = Path('/usr/local/bin/chromedriver/chromedriver')
     elif platform.system() == 'Windows':
-        driver_path = user_profile().join('/AppData/local/Google/chromedriver')
+        driver_path = Path(user_profile() + '/AppData/local/Google/chromedriver/chromedriver.exe')
 
     my_options = Options()
     if download_dir is not None:
@@ -81,7 +81,7 @@ def download_latest_stable_chrome_version():
     elif platform.system() == 'Windows':
         url = tree.find(id='stable').find(text='chrome').find_next(text='win64').find_next('code').text
 
-    filename = user_profile().join('/Downloads/' + url.rpartition('/')[2])
+    filename = Path(user_profile() + '/Downloads/' + url.rpartition('/')[2])
     return urlretrieve(url, filename)[0]
 
 
@@ -95,5 +95,5 @@ def download_latest_stable_chromedriver_version():
     elif platform.system() == 'Windows':
         url = tree.find(id='stable').find(text='chromedriver').find_next(text='win64').find_next('code').text
 
-    filename = user_profile().join('/Downloads/' + url.rpartition('/')[2])
+    filename = Path(user_profile() + '/Downloads/' + url.rpartition('/')[2])
     return urlretrieve(url, filename)[0]
