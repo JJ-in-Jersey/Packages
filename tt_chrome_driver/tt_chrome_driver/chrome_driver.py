@@ -20,6 +20,11 @@ logger.addHandler(handler)
 
 
 def get_driver(download_dir=None):
+    if platform.system() == 'Darwin':
+        driver_path = Path('/usr/local/bin/chromedriver/chromedriver')
+    elif platform.system() == 'Windows':
+        driver_path = Path(user_profile())
+
     print(f'is_chrome_installed: {is_chrome_installed()}')
     print(f'get_installed_chrome_version: {get_installed_chrome_version()}')
     print(f'get_latest_stable_chrome_version: {get_latest_stable_chrome_version()}')
@@ -28,7 +33,7 @@ def get_driver(download_dir=None):
     my_options = Options()
     if download_dir is not None:
         my_options.add_experimental_option("prefs", {'download.default_directory': str(download_dir)})
-    driver = webdriver.Chrome(options=my_options)
+    driver = webdriver.Chrome(executable_path=driver_path, options=my_options)
     driver.implicitly_wait(10)  # seconds
     driver.minimize_window()
     return driver
