@@ -10,6 +10,7 @@ from urllib.request import urlretrieve
 import logging
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 
 from tt_os_abstraction.os_abstraction import temp, user_profile
 
@@ -20,20 +21,26 @@ logger.addHandler(handler)
 
 
 def get_driver(download_dir=None):
+
+    if is_chrome_installed():
+        print(f'Using Chrome version: {get_installed_chrome_version()}')
+    else:
+        raise Exception('Chrome is not installed')
+
+    if not get_installed_chrome_version() == get_latest_stable_chrome_version():
+        print(f'downloading latest stable chrome version: {download_latest_stable_chrome_version()}')
+        print(f'downloading latest stable chromedriver version: {download_latest_stable_chromedriver_version()}')
+
     if platform.system() == 'Darwin':
         driver_path = Path('/usr/local/bin/chromedriver/chromedriver')
     elif platform.system() == 'Windows':
         driver_path = Path(user_profile())
 
-    print(f'is_chrome_installed: {is_chrome_installed()}')
-    print(f'get_installed_chrome_version: {get_installed_chrome_version()}')
-    print(f'get_latest_stable_chrome_version: {get_latest_stable_chrome_version()}')
-    print(f'download_latest_stable_chrome_version: {download_latest_stable_chrome_version()}')
-    print(f'download_latest_stable_chromedriver_version: {download_latest_stable_chromedriver_version()}')
     my_options = Options()
     if download_dir is not None:
         my_options.add_experimental_option("prefs", {'download.default_directory': str(download_dir)})
-    driver = webdriver.Chrome(executable_path=driver_path, options=my_options)
+    driver_executable = Service(driver_path)
+    driver = webdriver.Chrome(service=driver_executable, options=my_options)
     driver.implicitly_wait(10)  # seconds
     driver.minimize_window()
     return driver
