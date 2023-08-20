@@ -47,7 +47,7 @@ def get_installed_chrome_version():
     regex_pattern = '^[0-9\.]*$'
 
     if platform.system() == 'Darwin':
-        file_list = [re.search(pattern, s) for s in listdir(apple_version_path)]
+        file_list = [re.search(regex_pattern, s) for s in listdir(apple_version_path)]
     elif platform.system() == 'Windows':
-        file_list = [re.search(pattern, s) for s in listdir(windows_version_path)]
+        file_list = [re.search(regex_pattern, s) for s in listdir(windows_version_path)]
 
