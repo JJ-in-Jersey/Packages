@@ -42,12 +42,14 @@ def is_chrome_installed():
 
 def get_installed_chrome_version():
     apple_version_path = Path('/Applications/Google Chrome.app/Contents/Frameworks/Google Chrome Framework.framework/Versions')
-    windows_version_path = Path('C:/Program Files/Google/Chrome/Application/Chrome.exe')
+    windows_version_path = Path('C:/Program Files/Google/Chrome/Application')
 
     regex_pattern = '^[0-9\.]*$'
 
     if platform.system() == 'Darwin':
-        file_list = [re.search(regex_pattern, s) for s in listdir(apple_version_path)]
+        file_list = [s for s in listdir(apple_version_path) if re.search(regex_pattern, s) is not None]
     elif platform.system() == 'Windows':
-        file_list = [re.search(regex_pattern, s) for s in listdir(windows_version_path)]
+        file_list = [s for s in listdir(windows_version_path) if re.search(regex_pattern, s) is not None]
+
+    pass
 
