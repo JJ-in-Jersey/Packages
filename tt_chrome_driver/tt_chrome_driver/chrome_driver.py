@@ -22,6 +22,7 @@ logger.addHandler(handler)
 
 def get_driver(download_dir=None):
 
+    driver_path = None
     if platform.system() == 'Darwin':
         driver_path = Path('/usr/local/bin/chromedriver/chromedriver')
     elif platform.system() == 'Windows':
@@ -30,7 +31,7 @@ def get_driver(download_dir=None):
     my_options = Options()
     if download_dir is not None:
         my_options.add_experimental_option("prefs", {'download.default_directory': str(download_dir)})
-    driver_executable = Service(driver_path)
+    driver_executable = Service(str(driver_path))
     driver = webdriver.Chrome(service=driver_executable, options=my_options)
     driver.implicitly_wait(10)  # seconds
     driver.minimize_window()
