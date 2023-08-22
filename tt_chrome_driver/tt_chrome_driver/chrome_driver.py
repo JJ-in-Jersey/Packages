@@ -21,7 +21,6 @@ logger.addHandler(handler)
 
 
 def get_driver(download_dir=None):
-
     version = get_latest_stable_chrome_version()
     apple_driver_path = '/usr/local/bin/chromedriver/chromedriver-' + version
     windows_driver_path = user_profile() + '/AppData/local/Google/chromedriver/chromedriver-' + version + '.exe'
@@ -30,9 +29,11 @@ def get_driver(download_dir=None):
     if platform.system() == 'Darwin':
         driver_path = Path(apple_driver_path)
     elif platform.system() == 'Windows':
-        driver_path = Path(user_profile() + windows_driver_path)
+        driver_path = Path(windows_driver_path)
 
+    driver = None
     if driver_path.exists():
+        print('Driver exists')
         my_options = Options()
         my_options.add_experimental_option('excludeSwitches', ['enable-logging'])
         if download_dir is not None:
@@ -42,7 +43,8 @@ def get_driver(download_dir=None):
         driver.implicitly_wait(10)  # seconds
         driver.minimize_window()
     else:
-        raise Exception('chrome driver not found')
+        raise Exception('chrome driver not found: ' + windows_driver_path)
+
     return driver
 
 
@@ -57,7 +59,8 @@ def is_chrome_installed():
 
 
 def get_installed_chrome_version():
-    apple_version_path = Path('/Applications/Google Chrome.app/Contents/Frameworks/Google Chrome Framework.framework/Versions')
+    apple_version_path = Path(
+        '/Applications/Google Chrome.app/Contents/Frameworks/Google Chrome Framework.framework/Versions')
     windows_version_path = Path('C:/Program Files/Google/Chrome/Application')
     regex_pattern = '^[0-9\.]*$'
     file_list = None
