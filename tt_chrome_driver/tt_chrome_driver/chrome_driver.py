@@ -77,12 +77,14 @@ def download_latest_stable_chrome_version():
     url = None
 
     tree = Soup(requests.get(stable_version_url).text, 'html.parser')
+    version = tree.find(id='stable').find('p').find('code').text
+
     if platform.system() == 'Darwin':
         url = tree.find(id='stable').find(text='chrome').find_next(text='mac-arm64').find_next('code').text
     elif platform.system() == 'Windows':
         url = tree.find(id='stable').find(text='chrome').find_next(text='win64').find_next('code').text
 
-    filename = Path(user_profile() + '/Downloads/' + url.rpartition('/')[2])
+    filename = Path(user_profile() + '/Downloads/' + str(version) + '-' + url.rpartition('/')[2])
     return urlretrieve(url, filename)[0]
 
 
@@ -91,10 +93,11 @@ def download_latest_stable_chromedriver_version():
     url = None
 
     tree = Soup(requests.get(stable_version_url).text, 'html.parser')
+    version = tree.find(id='stable').find('p').find('code').text
     if platform.system() == 'Darwin':
         url = tree.find(id='stable').find(text='chromedriver').find_next(text='mac-arm64').find_next('code').text
     elif platform.system() == 'Windows':
         url = tree.find(id='stable').find(text='chromedriver').find_next(text='win64').find_next('code').text
 
-    filename = Path(user_profile() + '/Downloads/' + url.rpartition('/')[2])
+    filename = Path(user_profile() + '/Downloads/' + str(version) + '-' + url.rpartition('/')[2])
     return urlretrieve(url, filename)[0]
