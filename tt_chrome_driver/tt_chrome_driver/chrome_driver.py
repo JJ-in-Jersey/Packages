@@ -22,20 +22,27 @@ logger.addHandler(handler)
 
 def get_driver(download_dir=None):
 
+    version = get_latest_stable_chrome_version()
+    apple_driver_path = '/usr/local/bin/chromedriver/chromedriver-' + version
+    windows_driver_path = user_profile() + '/AppData/local/Google/chromedriver/chromedriver-' + version + '.exe'
+
     driver_path = None
     if platform.system() == 'Darwin':
-        driver_path = Path('/usr/local/bin/chromedriver/chromedriver')
+        driver_path = Path(apple_driver_path)
     elif platform.system() == 'Windows':
-        driver_path = Path(user_profile() + '/AppData/local/Google/chromedriver/chromedriver.exe')
+        driver_path = Path(user_profile() + windows_driver_path)
 
-    my_options = Options()
-    my_options.add_experimental_option('excludeSwitches', ['enable-logging'])
-    if download_dir is not None:
-        (my_options.add_experimental_option("prefs", {'download.default_directory': str(download_dir)}))
-    driver_executable = Service(str(driver_path))
-    driver = webdriver.Chrome(service=driver_executable, options=my_options)
-    driver.implicitly_wait(10)  # seconds
-    driver.minimize_window()
+    if driver_path.exists():
+        my_options = Options()
+        my_options.add_experimental_option('excludeSwitches', ['enable-logging'])
+        if download_dir is not None:
+            (my_options.add_experimental_option("prefs", {'download.default_directory': str(download_dir)}))
+        driver_executable = Service(str(driver_path))
+        driver = webdriver.Chrome(service=driver_executable, options=my_options)
+        driver.implicitly_wait(10)  # seconds
+        driver.minimize_window()
+    else:
+        raise Exception('chrome driver not found')
     return driver
 
 
