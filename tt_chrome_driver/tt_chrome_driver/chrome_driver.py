@@ -33,7 +33,6 @@ def get_driver(download_dir=None):
 
     driver = None
     if driver_path.exists():
-        print('Driver exists')
         my_options = Options()
         my_options.add_experimental_option('excludeSwitches', ['enable-logging'])
         if download_dir is not None:
