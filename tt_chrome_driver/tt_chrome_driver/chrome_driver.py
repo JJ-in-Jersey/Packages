@@ -21,23 +21,13 @@ logger.addHandler(handler)
 
 
 def get_driver(download_dir=None):
-    version = get_latest_stable_chrome_version()
-    apple_driver_path = '/usr/local/bin/chromedriver/chromedriver-' + version
-    windows_driver_path = user_profile() + '/AppData/local/Google/chromedriver/chromedriver-' + version + '.exe'
 
-    driver_path = None
-    if platform.system() == 'Darwin':
-        driver_path = Path(apple_driver_path)
-    elif platform.system() == 'Windows':
-        driver_path = Path(windows_driver_path)
-
-    driver = None
     if driver_path.exists():
         my_options = Options()
         my_options.add_experimental_option('excludeSwitches', ['enable-logging'])
         if download_dir is not None:
             (my_options.add_experimental_option("prefs", {'download.default_directory': str(download_dir)}))
-        driver_executable = Service(str(driver_path))
+        driver_executable = Service(str(get_installed_driver_path()))
         driver = webdriver.Chrome(service=driver_executable, options=my_options)
         driver.implicitly_wait(10)  # seconds
         driver.minimize_window()
@@ -48,22 +38,20 @@ def get_driver(download_dir=None):
 
 
 def is_chrome_installed():
-    apple_exe_path = Path('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome')
-    windows_exe_path = Path('C:/Program Files/Google/Chrome/Application/Chrome.exe')
-
-    if platform.system() == 'Darwin':
-        return apple_exe_path.exists()
-    elif platform.system() == 'Windows':
-        return windows_exe_path.exists()
+    path = get_installed_chrome_path()
+    if path.exists():
+        return True
+    else:
+        return False
 
 
 def get_installed_chrome_version():
-    apple_version_path = Path(
-        '/Applications/Google Chrome.app/Contents/Frameworks/Google Chrome Framework.framework/Versions')
+    apple_version_path = Path('/Applications/Google Chrome.app/Contents/Frameworks/Google Chrome Framework.framework/Versions')
     windows_version_path = Path('C:/Program Files/Google/Chrome/Application')
-    regex_pattern = '^[0-9\.]*$'
-    file_list = None
 
+    regex_pattern = '^[0-9\.]*$'
+
+    file_list = None
     if platform.system() == 'Darwin':
         file_list = [s for s in listdir(apple_version_path) if re.search(regex_pattern, s) is not None]
     elif platform.system() == 'Windows':
@@ -72,6 +60,11 @@ def get_installed_chrome_version():
     file_list.sort(key=LooseVersion)
 
     return file_list[-1]
+
+
+def get_installed_driver_version():
+    version_path = get_installed_driver_path()
+    return version_path.split('-')[1].split('.')[0]
 
 
 def get_latest_stable_chrome_version():
@@ -97,7 +90,7 @@ def download_latest_stable_chrome_version():
     return urlretrieve(url, filename)[0]
 
 
-def download_latest_stable_chromedriver_version():
+def download_latest_stable_driver_version():
     stable_version_url = 'https://googlechromelabs.github.io/chrome-for-testing/#stable'
     url = None
 
@@ -110,3 +103,22 @@ def download_latest_stable_chromedriver_version():
 
     filename = Path(user_profile() + '/Downloads/' + str(version) + '-' + url.rpartition('/')[2])
     return urlretrieve(url, filename)[0]
+
+def get_installed_driver_path():
+    version = get_latest_stable_chrome_version()
+    apple_driver_path = '/usr/local/bin/chromedriver/chromedriver-' + version
+    windows_driver_path = user_profile() + '/AppData/local/Google/chromedriver/chromedriver-' + version + '.exe'
+
+    if platform.system() == 'Darwin':
+        return apple_driver_path
+    elif platform.system() == 'Windows':
+        return windows_driver_path
+
+def get_installed_chrome_path():
+    apple_exe_path = Path('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome')
+    windows_exe_path = Path('C:/Program Files/Google/Chrome/Application/Chrome.exe')
+
+    if platform.system() == 'Darwin':
+        return apple_exe_path
+    elif platform.system() == 'Windows':
+        return windows_exe_path
