@@ -4,7 +4,7 @@ import re
 import platform
 import requests
 from bs4 import BeautifulSoup as Soup
-from distutils.version import LooseVersion
+from packaging.version import Version
 from urllib.request import urlretrieve
 
 import logging
@@ -22,17 +22,17 @@ logger.addHandler(handler)
 
 def get_driver(download_dir=None):
 
+    driver_path = get_installed_driver_path()
     if driver_path.exists():
         my_options = Options()
         my_options.add_experimental_option('excludeSwitches', ['enable-logging'])
         if download_dir is not None:
             (my_options.add_experimental_option("prefs", {'download.default_directory': str(download_dir)}))
-        driver_executable = Service(str(get_installed_driver_path()))
-        driver = webdriver.Chrome(service=driver_executable, options=my_options)
+        driver = webdriver.Chrome(service=Service(str(driver_path)), options=my_options)
         driver.implicitly_wait(10)  # seconds
         driver.minimize_window()
     else:
-        raise Exception('chrome driver not found: ' + windows_driver_path)
+        raise Exception('chrome driver not found: ' + driver_path)
 
     return driver
 
@@ -53,11 +53,11 @@ def get_installed_chrome_version():
 
     file_list = None
     if platform.system() == 'Darwin':
-        file_list = [s for s in listdir(apple_version_path) if re.search(regex_pattern, s) is not None]
+        file_list = [Version(s) for s in listdir(apple_version_path) if re.search(regex_pattern, s) is not None]
     elif platform.system() == 'Windows':
-        file_list = [s for s in listdir(windows_version_path) if re.search(regex_pattern, s) is not None]
+        file_list = [Version(s) for s in listdir(windows_version_path) if re.search(regex_pattern, s) is not None]
 
-    file_list.sort(key=LooseVersion)
+    file_list.sort()
 
     return file_list[-1]
 
