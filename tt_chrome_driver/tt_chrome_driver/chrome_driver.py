@@ -98,11 +98,12 @@ def download_latest_stable_driver_version():
     return urlretrieve(url, filename)[0]
 
 
+apple_driver_folder = Path('/usr/local/bin/chromedriver/')
+windows_driver_folder = Path(user_profile() + '/AppData/local/Google/chromedriver/')
+
+
 def get_installed_driver_version():
-
-    apple_driver_folder = Path('/usr/local/bin/chromedriver/')
-    windows_driver_folder = Path(user_profile() + '/AppData/local/Google/chromedriver/')
-
+    version_list = None
     if platform.system() == 'Darwin':
         regex_pattern = 'chromedriver-[0-9,.]'
         version_list = [Version(s.split('-')[1]) for s in listdir(apple_driver_folder) if re.search(regex_pattern, s) is not None]
@@ -112,6 +113,13 @@ def get_installed_driver_version():
 
     version_list.sort()
     return version_list[-1]
+
+
+def get_installed_driver_path():
+    if platform.system() == 'Darwin':
+        return apple_driver_folder.joinpath(str(get_installed_driver_version()))
+    elif platform.system() == 'Windows':
+        return windows_driver_folder.joinpath(str(get_installed_driver_version()))
 
 
 def get_installed_chrome_path():
