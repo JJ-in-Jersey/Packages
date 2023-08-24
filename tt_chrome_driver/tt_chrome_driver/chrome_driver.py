@@ -109,7 +109,7 @@ def download_latest_stable_driver_version():
 
 def get_installed_driver_path():
     version = get_latest_stable_chrome_version()
-    apple_driver_path = Path('/usr/local/bin/chromedriver/chromedriver-' + version)
+    apple_driver_path = Path('/usr/local/bin/chromedriver/chromedriver-' + str(version))
     windows_driver_path = Path(user_profile() + '/AppData/local/Google/chromedriver/chromedriver-' + version + '.exe')
 
     if platform.system() == 'Darwin':
