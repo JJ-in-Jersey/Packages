@@ -73,8 +73,7 @@ def get_installed_driver_version():
 def get_latest_stable_chrome_version():
     stable_version_url = 'https://googlechromelabs.github.io/chrome-for-testing/#stable'
     tree = Soup(requests.get(stable_version_url).text, 'html.parser')
-    version = tree.find(id='stable').find('p').find('code').text
-    return version
+    return Version(tree.find(id='stable').find('p').find('code').text)
 
 
 def download_latest_stable_chrome_version():
