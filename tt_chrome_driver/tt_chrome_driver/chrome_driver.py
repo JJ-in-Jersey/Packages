@@ -64,7 +64,7 @@ def get_installed_chrome_version():
 
 def get_installed_driver_version():
     version_path = get_installed_driver_path()
-    return version_path.split('-')[1].split('.')[0]
+    return version_path.split('-')[1].rsplit('.',1)[0]
 
 
 def get_latest_stable_chrome_version():
