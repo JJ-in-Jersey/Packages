@@ -32,7 +32,7 @@ def get_driver(download_dir=None):
         driver.implicitly_wait(10)  # seconds
         driver.minimize_window()
     else:
-        raise Exception('chrome driver not found: ' + driver_path)
+        raise Exception('chrome driver not found: ' + str(driver_path))
 
     return driver
 
@@ -63,8 +63,7 @@ def get_installed_chrome_version():
 
 
 def get_installed_driver_version():
-    version_path = get_installed_driver_path()
-    return version_path.split('-')[1].rsplit('.',1)[0]
+    return Version(str(get_installed_driver_path()).split('-')[1].rsplit('.', 1)[0])
 
 
 def get_latest_stable_chrome_version():
@@ -104,15 +103,17 @@ def download_latest_stable_driver_version():
     filename = Path(user_profile() + '/Downloads/' + str(version) + '-' + url.rpartition('/')[2])
     return urlretrieve(url, filename)[0]
 
+
 def get_installed_driver_path():
     version = get_latest_stable_chrome_version()
-    apple_driver_path = '/usr/local/bin/chromedriver/chromedriver-' + version
-    windows_driver_path = user_profile() + '/AppData/local/Google/chromedriver/chromedriver-' + version + '.exe'
+    apple_driver_path = Path('/usr/local/bin/chromedriver/chromedriver-' + version)
+    windows_driver_path = Path(user_profile() + '/AppData/local/Google/chromedriver/chromedriver-' + version + '.exe')
 
     if platform.system() == 'Darwin':
         return apple_driver_path
     elif platform.system() == 'Windows':
         return windows_driver_path
+
 
 def get_installed_chrome_path():
     apple_exe_path = Path('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome')
