@@ -63,7 +63,11 @@ def get_installed_chrome_version():
 
 
 def get_installed_driver_version():
-    return Version(str(get_installed_driver_path()).split('-')[1].rsplit('.', 1)[0])
+
+    if platform.system() == 'Darwin':
+        return Version(str(get_installed_driver_path()).split('-')[1])
+    elif platform.system() == 'Windows':
+        return Version(str(get_installed_driver_path()).split('-')[1].rsplit('.', 1)[0])
 
 
 def get_latest_stable_chrome_version():
