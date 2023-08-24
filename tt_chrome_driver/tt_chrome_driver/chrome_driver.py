@@ -51,23 +51,14 @@ def get_installed_chrome_version():
 
     regex_pattern = '^[0-9\.]*$'
 
-    file_list = None
+    version_list = None
     if platform.system() == 'Darwin':
-        file_list = [Version(s) for s in listdir(apple_version_path) if re.search(regex_pattern, s) is not None]
+        version_list = [Version(s) for s in listdir(apple_version_path) if re.search(regex_pattern, s) is not None]
     elif platform.system() == 'Windows':
-        file_list = [Version(s) for s in listdir(windows_version_path) if re.search(regex_pattern, s) is not None]
+        version_list = [Version(s) for s in listdir(windows_version_path) if re.search(regex_pattern, s) is not None]
 
-    file_list.sort()
-
-    return file_list[-1]
-
-
-def get_installed_driver_version():
-
-    if platform.system() == 'Darwin':
-        return Version(str(get_installed_driver_path()).split('-')[1])
-    elif platform.system() == 'Windows':
-        return Version(str(get_installed_driver_path()).split('-')[1].rsplit('.', 1)[0])
+    version_list.sort()
+    return version_list[-1]
 
 
 def get_latest_stable_chrome_version():
@@ -107,15 +98,20 @@ def download_latest_stable_driver_version():
     return urlretrieve(url, filename)[0]
 
 
-def get_installed_driver_path():
-    version = get_latest_stable_chrome_version()
-    apple_driver_path = Path('/usr/local/bin/chromedriver/chromedriver-' + str(version))
-    windows_driver_path = Path(user_profile() + '/AppData/local/Google/chromedriver/chromedriver-' + version + '.exe')
+def get_installed_driver_version():
+
+    apple_driver_folder = Path('/usr/local/bin/chromedriver/')
+    windows_driver_folder = Path(user_profile() + '/AppData/local/Google/chromedriver/')
 
     if platform.system() == 'Darwin':
-        return apple_driver_path
+        regex_pattern = 'chromedriver-[0-9,.]'
+        version_list = [s.split('-')[1] for s in listdir(apple_driver_folder) if re.search(regex_pattern, s) is not None]
     elif platform.system() == 'Windows':
-        return windows_driver_path
+        regex_pattern = 'chromedriver-[0-9,.]+.exe'
+        version_list = [s.split('-')[1].rsplit('.')[0] for s in listdir(windows_driver_folder) if re.search(regex_pattern, s) is not None]
+
+    version_list.sort()
+    return version_list[-1]
 
 
 def get_installed_chrome_path():
