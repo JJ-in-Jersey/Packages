@@ -119,7 +119,7 @@ def get_installed_driver_path():
     if platform.system() == 'Darwin':
         return apple_driver_folder.joinpath('chromedriver-' + str(get_installed_driver_version()))
     elif platform.system() == 'Windows':
-        return windows_driver_folder.joinpath('chromedriver-' + str(get_installed_driver_version()))
+        return windows_driver_folder.joinpath('chromedriver-' + str(get_installed_driver_version()) + '.exe')
 
 
 def get_installed_chrome_path():
