@@ -1,7 +1,7 @@
 from os import environ
 import platform
 
-platform_lookup = { 'darwin': {'user_profile': 'HOME', 'temp': 'TMPDIR'}, 'windows': {'user_profile': 'USERPROFILE', 'temp': 'TEMP'}}
+platform_lookup = {'darwin': {'user_profile': 'HOME', 'temp': 'TMPDIR'}, 'windows': {'user_profile': 'USERPROFILE', 'temp': 'TEMP'}}
 
 
 def env(var_name):
