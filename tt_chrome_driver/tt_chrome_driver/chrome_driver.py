@@ -12,11 +12,11 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 
-from tt_os_abstraction.os_abstraction import temp, user_profile
+from tt_os_abstraction.os_abstraction import env
 
 logger = logging.getLogger('selenium')
 logger.setLevel(logging.DEBUG)
-handler = logging.FileHandler(Path(temp() + '/logfile.tmp'))
+handler = logging.FileHandler(Path(env('temp') + '/logfile.tmp'))
 logger.addHandler(handler)
 
 
@@ -79,7 +79,7 @@ def download_latest_stable_chrome_version():
     elif platform.system() == 'Windows':
         url = tree.find(id='stable').find(text='chrome').find_next(text='win64').find_next('code').text
 
-    filename = Path(user_profile() + '/Downloads/' + str(version) + '-' + url.rpartition('/')[2])
+    filename = Path(env('user_profile') + '/Downloads/' + str(version) + '-' + url.rpartition('/')[2])
     return urlretrieve(url, filename)[0]
 
 
@@ -94,12 +94,12 @@ def download_latest_stable_driver_version():
     elif platform.system() == 'Windows':
         url = tree.find(id='stable').find(text='chromedriver').find_next(text='win64').find_next('code').text
 
-    filename = Path(user_profile() + '/Downloads/' + str(version) + '-' + url.rpartition('/')[2])
+    filename = Path(env('user_profile') + '/Downloads/' + str(version) + '-' + url.rpartition('/')[2])
     return urlretrieve(url, filename)[0]
 
 
 apple_driver_folder = Path('/usr/local/bin/chromedriver/')
-windows_driver_folder = Path(user_profile() + '/AppData/local/Google/chromedriver/')
+windows_driver_folder = Path(env('user_profile') + '/AppData/local/Google/chromedriver/')
 
 
 def get_installed_driver_version():

@@ -1,7 +1,7 @@
 from pathlib import Path
 from os import remove
 
-from tt_os_abstraction.os_abstraction import temp
+from tt_os_abstraction.os_abstraction import env
 
 def on(name): Path(temp()).joinpath(name).with_suffix('.tmp').touch()
 
