@@ -109,7 +109,7 @@ def get_installed_driver_version():
         version_list = [Version(s.split('-')[1]) for s in listdir(apple_driver_folder) if re.search(regex_pattern, s) is not None]
     elif platform.system() == 'Windows':
         regex_pattern = 'chromedriver-[0-9,.]+.exe'
-        version_list = [Version(s.split('-')[1].rsplit('.')[0]) for s in listdir(windows_driver_folder) if re.search(regex_pattern, s) is not None]
+        version_list = [Version(s.split('-')[1].rsplit('.',1)[0]) for s in listdir(windows_driver_folder) if re.search(regex_pattern, s) is not None]
 
     version_list.sort()
     return version_list[-1]
@@ -119,7 +119,7 @@ def get_installed_driver_path():
     if platform.system() == 'Darwin':
         return apple_driver_folder.joinpath('chromedriver-' + str(get_installed_driver_version()))
     elif platform.system() == 'Windows':
-        return windows_driver_folder.joinpath('chromedriver-' + str(get_installed_driver_version()))
+        return windows_driver_folder.joinpath('chromedriver-' + str(get_installed_driver_version()) + '.exe')
 
 
 def get_installed_chrome_path():
