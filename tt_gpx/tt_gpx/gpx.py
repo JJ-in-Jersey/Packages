@@ -127,19 +127,21 @@ class GPXPath:
 class Route:
 
     def __init__(self, filepath, wp_si, wp_ei, e_r):
-        self.name = filepath.stem
+        self.filepath = filepath
         self.transit_time_lookup = {}
         self.elapsed_time_lookup = {}
         self.whole_path = self.velo_path = None
         self.interpolation_groups = None
         self.waypoints = None
+        self.tree = None
 
         with open(filepath, 'r') as f: gpxfile = f.read()
-        tree = Soup(gpxfile, 'xml')
+        self.tree = Soup(gpxfile, 'xml', preserve_whitespace_tags=['name', 'type', 'sym', 'text'])
+        self.write_clean_gpx()
 
         # build ordered list of all waypoints
         waypoints = []
-        for tag in tree.find_all('rtept'):
+        for tag in self.tree.find_all('rtept'):
             if tag.sym.text == Waypoint.type['CurrentStationWP']: waypoints.append(CurrentStationWP(tag, wp_si, wp_ei))
             elif tag.sym.text == Waypoint.type['LocationWP']: waypoints.append(LocationWP(tag))
             elif tag.sym.text == Waypoint.type['InterpolationWP']: waypoints.append(InterpolationWP(tag, wp_si, wp_ei))
@@ -173,8 +175,17 @@ class Route:
         self.elapsed_time_path = GPXPath(elapsed_time_edges)
 
     def print_route(self):
-        print(f'\n{self.name}')
+        print(f'\n{self.filepath.stem}')
         print(f'\nwhole path')
         self.whole_path.print_path()
         print(f'\nvelocity path')
         self.elapsed_time_path.print_path()
+
+    def write_clean_gpx(self):
+        new_filepath = self.filepath.parent.joinpath(self.filepath.stem + ' new.gpx')
+        tag_names = ['extensions', 'time']
+        for name in tag_names:
+            for tag in self.tree.find_all(name):
+                tag.decompose()
+        with open(new_filepath, "w") as file:
+            file.write(self.tree.prettify())
