@@ -109,7 +109,7 @@ def get_installed_driver_version():
         version_list = [Version(s.split('-')[1]) for s in listdir(apple_driver_folder) if re.search(regex_pattern, s) is not None]
     elif platform.system() == 'Windows':
         regex_pattern = 'chromedriver-[0-9,.]+.exe'
-        version_list = [Version(s.split('-')[1].rsplit('.',1)[0]) for s in listdir(windows_driver_folder) if re.search(regex_pattern, s) is not None]
+        version_list = [Version(s.split('-')[1].rsplit('.', 1)[0]) for s in listdir(windows_driver_folder) if re.search(regex_pattern, s) is not None]
 
     version_list.sort()
     return version_list[-1]
@@ -130,3 +130,18 @@ def get_installed_chrome_path():
         return apple_exe_path
     elif platform.system() == 'Windows':
         return windows_exe_path
+
+
+def check_driver():
+    if not is_chrome_installed():
+        raise Exception('chrome is not installed')
+
+    print(f'latest stable version: {get_latest_stable_chrome_version()}')
+    print(f'installed driver version: {get_installed_driver_version()}')
+    print(f'installed chrome version: {get_installed_chrome_version()}')
+
+    if not get_installed_driver_version() == get_latest_stable_chrome_version():
+        print(f'downloading latest stable chromedriver version: {download_latest_stable_driver_version()}')
+
+    if not get_installed_chrome_version() >= get_latest_stable_chrome_version():
+        print(f'downloading latest stable chrome version: {download_latest_stable_chrome_version()}')

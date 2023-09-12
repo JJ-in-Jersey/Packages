@@ -37,13 +37,16 @@ class DistanceWP(Waypoint):  # required for distance calculations
     def __init__(self, *args):
         super().__init__(*args)
 
+
 class ElapsedTimeWP(DistanceWP):  # required for elapsed time calculations
     def __init__(self, *args):
         super().__init__(*args)
 
+
 class LocationWP(DistanceWP):
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
+
 
 class InterpolationWP(ElapsedTimeWP):
     def __init__(self, gpxtag, start_index, end_index):
@@ -51,6 +54,7 @@ class InterpolationWP(ElapsedTimeWP):
         makedirs(self.folder, exist_ok=True)
         self.start_index = start_index
         self.end_index = end_index
+
 
 class CurrentStationWP(ElapsedTimeWP):
     def __init__(self, gpxtag, start_index, end_index):
@@ -61,6 +65,7 @@ class CurrentStationWP(ElapsedTimeWP):
         self.noaa_url = gpxtag.find('link').attrs['href'] if gpxtag.link else None
         self.code = gpxtag.find('link').find('text').text
 
+
 class DataWP(Waypoint):
     def __init__(self, gpxtag, start_index, end_index):
         super().__init__(gpxtag)
@@ -69,6 +74,7 @@ class DataWP(Waypoint):
         self.end_index = end_index
         self.noaa_url = gpxtag.find('link').attrs['href'] if gpxtag.link else None
         self.code = gpxtag.find('link').find('text').text
+
 
 class Edge:
 

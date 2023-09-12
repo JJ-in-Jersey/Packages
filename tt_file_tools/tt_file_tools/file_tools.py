@@ -5,15 +5,18 @@ import numpy as np
 import pandas as pd
 from tt_memory_helper.reduce_memory import shrink_dataframe
 
+
 def newest_file(folder):
     types = ['*.txt', '*.csv']
     files = []
     for t in types: files.extend(glob(join(folder, t)))
     return max(files, key=getctime) if len(files) else None
 
+
 def read_df(path):
     df = pd.read_csv(path.with_suffix('.csv'), header='infer')
     return shrink_dataframe(df)
+
 
 def write_df(df, path, include_index=False):
     df.to_csv(path.with_suffix('.csv'), index=False)
@@ -28,15 +31,29 @@ def write_df(df, path, include_index=False):
             temp = df.loc[whole_spreadsheets*excel_size:]
             temp.to_csv(path.parent.joinpath(path.name+'_excel_'+str(whole_spreadsheets)).with_suffix('.csv'), index=include_index)
 
+
 def read_arr(path): return np.load(path.with_suffix('.npy'))
+
 
 def write_arr(arr, path):
     np.save(path.with_suffix('.npy'), arr, allow_pickle=False)
     while not csv_npy_file_exists(path):
         sleep(0.1)
 
+
 def read_arr_to_list(path): return list(read_arr(path))
+
 
 def write_list_to_array(lst, path): write_arr(lst, path)
 
+
 def csv_npy_file_exists(path): return True if path.with_suffix('.csv').exists() or path.with_suffix('.npy').exists() else False
+
+
+def wait_for_new_file(folder, event_function, *event_args):
+    newest_before = newest_after = newest_file(folder)
+    event_function(event_args)
+    while newest_before == newest_after:
+        sleep(0.1)
+        newest_after = newest_file(folder)
+    return newest_after
