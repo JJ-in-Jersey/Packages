@@ -14,6 +14,9 @@ from selenium.webdriver.chrome.service import Service
 
 from tt_os_abstraction.os_abstraction import env
 
+apple_driver_folder = Path('/usr/local/bin/chromedriver/')
+windows_driver_folder = Path(env('user_profile') + '/AppData/local/Google/chromedriver/')
+
 logger = logging.getLogger('selenium')
 logger.setLevel(logging.DEBUG)
 handler = logging.FileHandler(Path(env('temp') + '/logfile.tmp'))
@@ -98,10 +101,6 @@ def download_latest_stable_driver_version():
     return urlretrieve(url, filename)[0]
 
 
-apple_driver_folder = Path('/usr/local/bin/chromedriver/')
-windows_driver_folder = Path(env('user_profile') + '/AppData/local/Google/chromedriver/')
-
-
 def get_installed_driver_version():
     version_list = None
     if platform.system() == 'Darwin':
@@ -142,6 +141,10 @@ def check_driver():
 
     if not get_installed_driver_version() == get_latest_stable_chrome_version():
         print(f'downloading latest stable chromedriver version: {download_latest_stable_driver_version()}')
+        if platform.system() == 'Darwin':
+            print(f'driver path: {apple_driver_folder}')
+        elif platform.system() == 'Windows':
+            print(f'driver path: {windows_driver_folder}')
 
     if not get_installed_chrome_version() >= get_latest_stable_chrome_version():
         print(f'downloading latest stable chrome version: {download_latest_stable_chrome_version()}')
