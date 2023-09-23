@@ -6,6 +6,7 @@ import requests
 from bs4 import BeautifulSoup as Soup
 from packaging.version import Version
 from urllib.request import urlretrieve
+from time import sleep
 
 import logging
 from selenium import webdriver
@@ -26,11 +27,14 @@ logger.addHandler(handler)
 def selenium_request(url):
     my_options = Options()
     my_options.add_argument('--headless=new')
+    my_options.add_argument("--log-level=OFF")
     driver = webdriver.Chrome(service=Service(), options= my_options)
     driver.get(url)
-    request = requests.get(driver.page_source)
+    sleep(1)
+    source = driver.page_source
+    # request = requests.get(source, 'html.parser')
     driver.quit()
-    return request
+    return source
 
 
 def get_driver(download_dir=None):
