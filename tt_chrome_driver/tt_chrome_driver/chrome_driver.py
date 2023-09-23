@@ -24,8 +24,8 @@ logger.addHandler(handler)
 
 
 def selenium_request(url):
-    my_options = Options
-    my_options.add_argument("headless")
+    my_options = Options()
+    my_options.add_argument('--headless=new')
     driver = webdriver.Chrome(service=Service(), options= my_options)
     driver.get(url)
     request = requests.get(driver.page_source)
