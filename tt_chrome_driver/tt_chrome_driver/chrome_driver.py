@@ -18,17 +18,16 @@ from tt_os_abstraction.os_abstraction import env
 apple_driver_folder = Path('/usr/local/bin/chromedriver/')
 windows_driver_folder = Path(env('user_profile') + '/AppData/local/Google/chromedriver/')
 
-logger = logging.getLogger('selenium')
-logger.setLevel(logging.DEBUG)
-handler = logging.FileHandler(Path(env('temp') + '/logfile.tmp'))
-logger.addHandler(handler)
-
+# logger = logging.getLogger('selenium')
+# logger.setLevel(logging.DEBUG)
+# handler = logging.FileHandler(Path(env('temp') + '/logfile.tmp'))
+# logger.addHandler(handler)
 
 def selenium_request(url):
     my_options = Options()
     my_options.add_argument('--headless=new')
-    my_options.add_argument("--log-level=OFF")
-    driver = webdriver.Chrome(service=Service(), options= my_options)
+    my_options.add_experimental_option('excludeSwitches', ['enable-logging'])
+    driver = webdriver.Chrome(service=Service(), options=my_options)
     driver.get(url)
     sleep(1)
     source = driver.page_source
