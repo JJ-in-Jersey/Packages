@@ -23,6 +23,16 @@ handler = logging.FileHandler(Path(env('temp') + '/logfile.tmp'))
 logger.addHandler(handler)
 
 
+def selenium_request(url):
+    my_options = Options
+    my_options.add_argument("headless")
+    driver = webdriver.Chrome(service=Service(), options= my_options)
+    driver.get(url)
+    request = requests.get(driver.page_source)
+    driver.quit()
+    return request
+
+
 def get_driver(download_dir=None):
 
     driver_path = get_installed_driver_path()
