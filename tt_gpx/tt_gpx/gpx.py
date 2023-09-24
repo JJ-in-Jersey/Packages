@@ -31,6 +31,13 @@ class Waypoint:
         Waypoint.index_lookup[Waypoint.ordinal_number] = self
         Waypoint.ordinal_number += 1
 
+class FileWaypoint(Waypoint):
+    def __init__(self, filepath):
+        with open(filepath, 'r') as f: gpxfile = f.read()
+        gpxtag = Soup(gpxfile, 'xml', preserve_whitespace_tags=['name', 'type', 'sym', 'text']).find('wpt')
+        self.noaa_url = gpxtag.find('link').attrs['href'] if gpxtag.link else None
+        super().__init__(gpxtag)
+
 
 class DistanceWP(Waypoint):  # required for distance calculations
     def __init__(self, *args):
@@ -43,8 +50,8 @@ class ElapsedTimeWP(DistanceWP):  # required for elapsed time calculations
 
 
 class LocationWP(DistanceWP):
-    def __init__(self, gpxtag):
-        super().__init__(gpxtag)
+    def __init__(self, *args):
+        super().__init__(*args)
 
 
 class InterpolationWP(ElapsedTimeWP):
