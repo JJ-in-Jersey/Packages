@@ -19,12 +19,14 @@ apple_driver_folder = Path('/usr/local/bin/chromedriver/')
 windows_driver_folder = Path(env('user_profile') + '/AppData/local/Google/chromedriver/')
 
 def selenium_request(url):
-    my_options = Options()
-    my_options.add_argument('--headless=new')
-    my_options.add_experimental_option('excludeSwitches', ['enable-logging'])
-    driver = webdriver.Chrome(service=Service(), options=my_options)
+    # my_options = Options()
+    # my_options.add_argument('--headless=new')
+    # my_options.add_experimental_option('excludeSwitches', ['enable-logging'])
+    # driver = webdriver.Chrome(service=Service(), options=my_options)
+    driver = get_driver()
     driver.get(url)
-    sleep(1)  # needed to let cgi js complete building the page
+    driver.implicitly_wait(10)  # seconds
+    # sleep(1)  # needed to let cgi js complete building the page
     source = driver.page_source
     driver.quit()
     return source
@@ -35,12 +37,13 @@ def get_driver(download_dir=None):
     driver_path = get_installed_driver_path()
     if driver_path.exists():
         my_options = Options()
+        my_options.add_argument('--headless=new')
         my_options.add_experimental_option('excludeSwitches', ['enable-logging'])
         if download_dir is not None:
             (my_options.add_experimental_option("prefs", {'download.default_directory': str(download_dir)}))
         driver = webdriver.Chrome(service=Service(str(driver_path)), options=my_options)
         driver.implicitly_wait(10)  # seconds
-        driver.minimize_window()
+        # driver.minimize_window()
     else:
         raise Exception('chrome driver not found: ' + str(driver_path))
 

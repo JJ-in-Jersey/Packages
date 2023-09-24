@@ -5,6 +5,7 @@ from os import makedirs
 
 class Waypoint:
 
+    current_folder = None
     velocity_folder = None
 
     type = {'CurrentStationWP': 'Symbol-Spot-Orange', 'LocationWP': 'Symbol-Spot-Green', 'InterpolationWP': 'Symbol-Spot-Blue', 'DataWP': 'Symbol-Spot-Black'}
@@ -22,21 +23,25 @@ class Waypoint:
         self.unique_name = self.name.split(',')[0].split('(')[0].replace('.', '').strip().replace(" ", "_") + '_' + str(self.index)
         self.prev_edge = None
         self.next_edge = None
-
-        self.folder = Waypoint.velocity_folder.joinpath(self.unique_name)
-        self.downloaded_data_filepath = self.folder.joinpath(self.unique_name + '_downloaded_data')
-        self.interpolated_data_filepath = self.folder.joinpath(self.unique_name + '_interpolated_data_file')
         self.velocity_data = None
 
         Waypoint.index_lookup[Waypoint.ordinal_number] = self
         Waypoint.ordinal_number += 1
 
-class FileWaypoint(Waypoint):
+class FileWP(Waypoint):
     def __init__(self, filepath):
         with open(filepath, 'r') as f: gpxfile = f.read()
         gpxtag = Soup(gpxfile, 'xml', preserve_whitespace_tags=['name', 'type', 'sym', 'text']).find('wpt')
         self.noaa_url = gpxtag.find('link').attrs['href'] if gpxtag.link else None
         super().__init__(gpxtag)
+
+class TideWP(FileWP):
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.folder = Waypoint.current_folder.joinpath(self.unique_name)
+        makedirs(self.folder, exist_ok=True)
+        self.downloaded_data_filepath = self.folder.joinpath(self.unique_name + '_downloaded_data')
+        self.interpolated_data_filepath = self.folder.joinpath(self.unique_name + '_interpolated_data_file')
 
 
 class DistanceWP(Waypoint):  # required for distance calculations
@@ -65,11 +70,14 @@ class InterpolationWP(ElapsedTimeWP):
 class CurrentStationWP(ElapsedTimeWP):
     def __init__(self, gpxtag, start_index, end_index):
         super().__init__(gpxtag)
-        makedirs(self.folder, exist_ok=True)
         self.start_index = start_index
         self.end_index = end_index
         self.noaa_url = gpxtag.find('link').attrs['href'] if gpxtag.link else None
         self.code = gpxtag.find('link').find('text').text
+        self.folder = Waypoint.velocity_folder.joinpath(self.unique_name)
+        makedirs(self.folder, exist_ok=True)
+        self.downloaded_data_filepath = self.folder.joinpath(self.unique_name + '_downloaded_data')
+        self.interpolated_data_filepath = self.folder.joinpath(self.unique_name + '_interpolated_data_file')
 
 
 class DataWP(Waypoint):
