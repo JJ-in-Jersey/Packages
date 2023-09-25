@@ -33,6 +33,7 @@ class FileWP(Waypoint):
         with open(filepath, 'r') as f: gpxfile = f.read()
         gpxtag = Soup(gpxfile, 'xml', preserve_whitespace_tags=['name', 'type', 'sym', 'text']).find('wpt')
         self.noaa_url = gpxtag.find('link').attrs['href'] if gpxtag.link else None
+        self.code = str(gpxtag.find('link').find('text').text).split(' ')[0]
         super().__init__(gpxtag)
 
 class TideWP(FileWP):
