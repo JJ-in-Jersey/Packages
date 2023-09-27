@@ -4,6 +4,8 @@ from os.path import join, getctime
 import numpy as np
 import pandas as pd
 from tt_memory_helper.reduce_memory import shrink_dataframe
+from bs4 import BeautifulSoup as bs
+from pathlib import Path
 
 
 def newest_file(folder):
@@ -57,3 +59,9 @@ def wait_for_new_file(folder, event_function, *event_args):
         sleep(0.1)
         newest_after = newest_file(folder)
     return newest_after
+
+
+class XMLFile:
+    def __init__(self, filepath):
+        with open(filepath, 'r') as f:
+            self.tree = bs(f, "html.parser")
