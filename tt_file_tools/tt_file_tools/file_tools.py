@@ -15,23 +15,18 @@ def newest_file(folder):
     return max(files, key=getctime) if len(files) else None
 
 
+def wait_for_new_file(folder, event_function, *event_args):
+    newest_before = newest_after = newest_file(folder)
+    event_function(event_args)
+    while newest_before == newest_after:
+        sleep(0.1)
+        newest_after = newest_file(folder)
+    return newest_after
+
+
 def read_df(path):
     df = pd.read_csv(path.with_suffix('.csv'), header='infer')
     return shrink_dataframe(df)
-
-
-def write_df(df, path, include_index=False):
-    df.to_csv(path.with_suffix('.csv'), index=False)
-    excel_size = 1000000
-    if len(df) > excel_size:
-        num_of_spreadsheets = len(df)/excel_size
-        whole_spreadsheets = len(df)//excel_size
-        for i in range(whole_spreadsheets):
-            temp = df.loc[i*excel_size: i*excel_size+excel_size-1]
-            temp.to_csv(path.parent.joinpath(path.name+'_excel_'+str(i)).with_suffix('.csv'), index=include_index)
-        if num_of_spreadsheets > whole_spreadsheets:
-            temp = df.loc[whole_spreadsheets*excel_size:]
-            temp.to_csv(path.parent.joinpath(path.name+'_excel_'+str(whole_spreadsheets)).with_suffix('.csv'), index=include_index)
 
 
 def read_arr(path): return np.load(path.with_suffix('.npy'))
@@ -52,16 +47,20 @@ def write_list_to_array(lst, path): write_arr(lst, path)
 def csv_npy_file_exists(path): return True if path.with_suffix('.csv').exists() or path.with_suffix('.npy').exists() else False
 
 
-def wait_for_new_file(folder, event_function, *event_args):
-    newest_before = newest_after = newest_file(folder)
-    event_function(event_args)
-    while newest_before == newest_after:
-        sleep(0.1)
-        newest_after = newest_file(folder)
-    return newest_after
-
-
 class XMLFile:
     def __init__(self, filepath):
         with open(filepath, 'r') as f:
             self.tree = bs(f, "html.parser")
+
+def write_df(df, path):
+    df.to_csv(path.with_suffix('.csv'), index=False)
+    excel_size = 1000000
+    if len(df) > excel_size:
+        num_of_spreadsheets = len(df)/excel_size
+        whole_spreadsheets = len(df)//excel_size
+        for i in range(whole_spreadsheets):
+            temp = df.loc[i*excel_size: i*excel_size+excel_size-1]
+            temp.to_csv(path.parent.joinpath(path.name+'_excel_'+str(i)).with_suffix('.csv'), index=False)
+        if num_of_spreadsheets > whole_spreadsheets:
+            temp = df.loc[whole_spreadsheets*excel_size:]
+            temp.to_csv(path.parent.joinpath(path.name+'_excel_'+str(whole_spreadsheets)).with_suffix('.csv'), index=False)
