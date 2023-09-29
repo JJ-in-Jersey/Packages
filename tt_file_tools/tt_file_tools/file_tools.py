@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 def newest_file(folder):
-    types = ['*.txt', '*.csv']
+    types = ['*.txt', '*.csv', '*.xml']
     files = []
     for t in types: files.extend(glob(join(folder, t)))
     return max(files, key=getctime) if len(files) else None

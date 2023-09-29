@@ -31,14 +31,12 @@ def get_driver(download_dir=None, headless=False):
 
     driver_path = get_installed_driver_path()
     if driver_path.exists():
-        my_options = Options()
-        if headless:
-            my_options.add_argument('--headless=new')
-        if download_dir is not None:
-            my_options.add_experimental_option("prefs", {'download.default_directory': str(download_dir)})
         prefs = {'download.prompt_for_download': False, 'safebrowsing.enabled': True}
+        if download_dir is not None: prefs['download.default_directory'] = str(download_dir)
+        my_options = Options()
         my_options.add_experimental_option('prefs', prefs)
         my_options.add_experimental_option('excludeSwitches', ['enable-logging'])
+        if headless: my_options.add_argument('--headless=new')
         driver = webdriver.Chrome(service=Service(str(driver_path)), options=my_options)
         driver.implicitly_wait(10)  # seconds
         if not headless: driver.minimize_window()
