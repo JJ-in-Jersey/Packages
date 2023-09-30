@@ -42,7 +42,7 @@ class TideWP(FileWP):
         self.folder = Waypoint.current_folder.joinpath(self.unique_name)
         makedirs(self.folder, exist_ok=True)
         self.downloaded_data_filepath = self.folder.joinpath(self.unique_name + '_downloaded_data')
-        self.interpolated_data_filepath = self.folder.joinpath(self.unique_name + '_interpolated_data_file')
+        self.final_data_filepath = self.folder.joinpath(self.unique_name + '_final_data_file')
 
 
 class DistanceWP(Waypoint):  # required for distance calculations
@@ -78,7 +78,7 @@ class CurrentStationWP(ElapsedTimeWP):
         self.folder = Waypoint.velocity_folder.joinpath(self.unique_name)
         makedirs(self.folder, exist_ok=True)
         self.downloaded_data_filepath = self.folder.joinpath(self.unique_name + '_downloaded_data')
-        self.interpolated_data_filepath = self.folder.joinpath(self.unique_name + '_interpolated_data_file')
+        self.final_data_filepath = self.folder.joinpath(self.unique_name + '_final_data_file')
 
 
 class DataWP(Waypoint):
