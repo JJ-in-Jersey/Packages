@@ -100,6 +100,7 @@ class Edge:
 
     def __init__(self, start, end, edge_range):
         self.elapsed_time_data = None
+        self.length = None
 
         if start == end: raise IndexError
         if Edge.elapsed_time_folder is None: raise TypeError

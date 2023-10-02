@@ -3,7 +3,6 @@ from glob import glob
 from os.path import join, getctime
 import numpy as np
 import pandas as pd
-from tt_memory_helper.reduce_memory import shrink_dataframe
 from bs4 import BeautifulSoup as bs
 from pathlib import Path
 
@@ -24,9 +23,7 @@ def wait_for_new_file(folder, event_function, *event_args):
     return newest_after
 
 
-def read_df(path):
-    df = pd.read_csv(path.with_suffix('.csv'), header='infer')
-    return shrink_dataframe(df)
+def read_df(path): return pd.read_csv(path.with_suffix('.csv'), header='infer')
 
 
 def read_arr(path): return np.load(path.with_suffix('.npy'))
@@ -51,6 +48,7 @@ class XMLFile:
     def __init__(self, filepath):
         with open(filepath, 'r') as f:
             self.tree = bs(f, "html.parser")
+
 
 def write_df(df, path):
     df.to_csv(path.with_suffix('.csv'), index=False)
