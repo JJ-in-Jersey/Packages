@@ -5,7 +5,9 @@ from sympy import symbols
 from scipy.interpolate import Rbf
 from matplotlib import pyplot as plot
 
+
 def step_size(segments): return np.array([s.length for s in segments]).min() / Interpolator.num_edge_points
+
 
 def edge_points(segments, ss):
     t = symbols('t')
@@ -14,6 +16,7 @@ def edge_points(segments, ss):
         num_pts = range(1, int(round(segment.length / ss, 0)))
         edge_pts += [segment.arbitrary_point(t).evalf(subs={t: pt*ss/segment.length}) for pt in num_pts]
     return np.array(edge_pts).astype(float)
+
 
 class Interpolator:
 
@@ -66,7 +69,8 @@ class Interpolator:
         plot.show(block=False)
         plot.pause(0.001)
 
-    def close_plot(self):
+    @staticmethod
+    def close_plot():
         plot.close('all')
 
     def set_interpolation_point(self, pt: Point3D):

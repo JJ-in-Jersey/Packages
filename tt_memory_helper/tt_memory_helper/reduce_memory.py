@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 
+
 def shrink_dataframe(dataframe: pd.DataFrame):
     for col in dataframe:
         if dataframe[col].dtype == np.int64:

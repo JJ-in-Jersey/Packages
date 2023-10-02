@@ -28,6 +28,7 @@ class Waypoint:
         Waypoint.index_lookup[Waypoint.ordinal_number] = self
         Waypoint.ordinal_number += 1
 
+
 class FileWP(Waypoint):
     def __init__(self, filepath):
         with open(filepath, 'r') as f: gpxfile = f.read()
@@ -35,6 +36,7 @@ class FileWP(Waypoint):
         self.noaa_url = gpxtag.find('link').attrs['href'] if gpxtag.link else None
         self.code = str(gpxtag.find('link').find('text').text).split(' ')[0]
         super().__init__(gpxtag)
+
 
 class TideWP(FileWP):
     def __init__(self, *args):
@@ -94,6 +96,7 @@ class DataWP(Waypoint):
         self.downloaded_data_filepath = self.folder.joinpath(self.unique_name + '_downloaded_data')
         self.final_data_filepath = self.folder.joinpath(self.unique_name + '_final_data_file')
 
+
 class Edge:
 
     elapsed_time_folder = None
@@ -122,6 +125,7 @@ class SimpleEdge(Edge):
         super().__init__(start, end, edge_range)
         self.length = round(distance(self.start.coords, self.end.coords), 4)
 
+
 class CompositeEdge(Edge):
     def __init__(self, start, end, edge_range):
         super().__init__(start, end, edge_range)
@@ -130,6 +134,7 @@ class CompositeEdge(Edge):
         waypoints = [Waypoint.index_lookup[i] for i in wp_range if isinstance(Waypoint.index_lookup[i], DistanceWP)]
         for i, wp in enumerate(waypoints[:-1]):
             self.length += round(distance(wp.coords, waypoints[i+1].coords), 4)
+
 
 class GPXPath:
 
@@ -150,6 +155,7 @@ class GPXPath:
         print(f'{self.name} "{self.direction}" {self.length}')
         for edge in self.edges:
             print(f'{edge.length} {edge.name} [{edge.start.name} ({type(edge.start).__name__})]-----[{edge.end.name} ({type(edge.end).__name__})] {type(edge)}')
+
 
 class Route:
 

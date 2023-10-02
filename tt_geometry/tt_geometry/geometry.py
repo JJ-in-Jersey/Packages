@@ -1,9 +1,12 @@
 import pandas as pd
 from datetime import datetime as dt, timedelta as td
 
+
 def time_to_degrees(time): return time.hour * 15 + time.minute * 0.25
 
+
 def round_time_to(timestamp, mins): return dt.min + round((timestamp.to_pydatetime() - dt.min) / td(minutes=mins)) * td(minutes=mins)
+
 
 class Arc:
 
@@ -23,6 +26,7 @@ class Arc:
         self.base_start = pd.to_datetime(self.start_index, unit='s').round('min')
         self.base_min = pd.to_datetime(self.min_index, unit='s').round('min')
         self.base_end = pd.to_datetime(self.end_index, unit='s').round('min')
+
 
 class RoundedArc(Arc):
 
@@ -57,6 +61,7 @@ class RoundedArc(Arc):
             else:
                 self.fractured = True
 
+
 class FractionalArc:
 
     def df_angles(self): return pd.Series([self.start, self.start_date, self.start_angle, self.min_angle, self.end_angle, Arc.name])
@@ -70,12 +75,14 @@ class FractionalArc:
         self.end_angle = args[4]
         self.name = args[5]
 
+
 class FractionalArcStartDay(FractionalArc):
     def __init__(self, *args):
         super().__init__(*args)
 
         self.end_angle = 360
         if 180 > self.min_angle >= 0: self.min_angle = None
+
 
 class FractionalArcEndDay(FractionalArc):
     def __init__(self, *args):

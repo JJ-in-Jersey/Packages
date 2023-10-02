@@ -4,21 +4,23 @@ import platform
 
 
 if platform.system() == 'Darwin':
-    platform_lookup =  {'user_profile': environ['HOME'],
-                        'temp': environ['TMPDIR'],
-                        'system': 'mac-arm64',
-                        'driver_regex': 'chromedriver-[0-9,.]',
-                        'driver_folder': Path('/usr/local/bin/chromedriver/'),
-                        'browser_exe': Path('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome')
-                        }
+    platform_lookup = {
+                    'user_profile': environ['HOME'],
+                    'temp': environ['TMPDIR'],
+                    'system': 'mac-arm64',
+                    'driver_regex': 'chromedriver-[0-9,.]',
+                    'driver_folder': Path('/usr/local/bin/chromedriver/'),
+                    'browser_exe': Path('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome')
+                    }
 elif platform.system() == 'Windows':
-    platform_lookup =  {'user_profile': environ['USERPROFILE'],
-                        'temp': environ['TEMP'],
-                        'system': 'win64',
-                        'driver_regex': 'chromedriver-[0-9,.]+.exe',
-                        'driver_folder': Path(environ['USERPROFILE'] + '/AppData/local/Google/chromedriver/'),
-                        'browser_exe': Path('C:/Program Files/Google/Chrome/Application/Chrome.exe')
-                        }
+    platform_lookup = {
+                    'user_profile': environ['USERPROFILE'],
+                    'temp': environ['TEMP'],
+                    'system': 'win64',
+                    'driver_regex': 'chromedriver-[0-9,.]+.exe',
+                    'driver_folder': Path(environ['USERPROFILE'] + '/AppData/local/Google/chromedriver/'),
+                    'browser_exe': Path('C:/Program Files/Google/Chrome/Application/Chrome.exe')
+                    }
 
 
 def env(var_name):
