@@ -63,6 +63,7 @@ class LocationWP(DistanceWP):
 class InterpolationWP(ElapsedTimeWP):
     def __init__(self, gpxtag, start_index, end_index):
         super().__init__(gpxtag)
+        self.folder = Waypoint.velocity_folder.joinpath(self.unique_name)
         makedirs(self.folder, exist_ok=True)
         self.start_index = start_index
         self.end_index = end_index
@@ -84,6 +85,7 @@ class CurrentStationWP(ElapsedTimeWP):
 class DataWP(Waypoint):
     def __init__(self, gpxtag, start_index, end_index):
         super().__init__(gpxtag)
+        self.folder = Waypoint.velocity_folder.joinpath(self.unique_name)
         makedirs(self.folder, exist_ok=True)
         self.start_index = start_index
         self.end_index = end_index
