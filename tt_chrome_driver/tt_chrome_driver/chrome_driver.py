@@ -6,6 +6,7 @@ import requests
 from bs4 import BeautifulSoup as Soup
 from packaging.version import Version
 from urllib.request import urlretrieve
+from time import sleep
 
 # import logging
 from selenium import webdriver
@@ -21,7 +22,7 @@ windows_driver_folder = Path(env('user_profile') + '/AppData/local/Google/chrome
 def selenium_request(url, headless=False):
     driver = get_driver(None, headless)
     driver.get(url)
-    driver.implicitly_wait(10)  # seconds
+    sleep(5) # seconds
     source = driver.page_source
     driver.quit()
     return source
