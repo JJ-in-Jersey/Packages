@@ -1,6 +1,5 @@
 cd %userprofile%/PycharmProjects/Packages
 
-pip uninstall tt_memory_helper -y
 pip uninstall tt_navigation -y
 pip uninstall tt_date_time_tools -y
 pip uninstall tt_file_tools -y
@@ -11,7 +10,6 @@ pip uninstall tt_os_abstraction -y
 pip uninstall tt_semaphore -y
 pip uninstall tt_chrome_driver -y
 
-pip install ./tt_memory_helper
 pip install ./tt_navigation
 pip install ./tt_date_time_tools
 pip install ./tt_file_tools
