@@ -18,10 +18,11 @@ from tt_os_abstraction.os_abstraction import env
 apple_driver_folder = Path('/usr/local/bin/chromedriver/')
 windows_driver_folder = Path(env('user_profile') + '/AppData/local/Google/chromedriver/')
 
+
 def selenium_request(url, headless=False):
     driver = get_driver(None, headless)
     driver.get(url)
-    driver.implicitly_wait(10)  # seconds
+    sleep(5) # seconds
     source = driver.page_source
     driver.quit()
     return source
@@ -31,8 +32,8 @@ def get_driver(download_dir=None, headless=False):
 
     driver_path = get_installed_driver_path()
     if driver_path.exists():
-        prefs = {'download.prompt_for_download': False, 'safebrowsing.enabled': True}
-        prefs['profile.default_content_setting_values.notifications'] = 2  # block
+        prefs = {'download.prompt_for_download': False, 'safebrowsing.enabled': True,
+                 'profile.default_content_setting_values.notifications': 2}
         if download_dir is not None: prefs['download.default_directory'] = str(download_dir)
         my_options = Options()
         my_options.add_experimental_option('prefs', prefs)
