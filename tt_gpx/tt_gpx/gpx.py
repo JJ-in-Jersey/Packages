@@ -69,6 +69,7 @@ class InterpolationWP(ElapsedTimeWP):
         makedirs(self.folder, exist_ok=True)
         self.start_index = start_index
         self.end_index = end_index
+        self.final_data_filepath = self.folder.joinpath(self.unique_name + '_final_data_file')
 
 
 class CurrentStationWP(ElapsedTimeWP):
