@@ -91,7 +91,8 @@ class DataWP(Waypoint):
         self.end_index = end_index
         self.noaa_url = gpxtag.find('link').attrs['href'] if gpxtag.link else None
         self.code = gpxtag.find('link').find('text').text
-
+        self.downloaded_data_filepath = self.folder.joinpath(self.unique_name + '_downloaded_data')
+        self.final_data_filepath = self.folder.joinpath(self.unique_name + '_final_data_file')
 
 class Edge:
 
