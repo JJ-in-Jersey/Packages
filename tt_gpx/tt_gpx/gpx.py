@@ -63,9 +63,12 @@ class LocationWP(DistanceWP):
 class InterpolationWP(ElapsedTimeWP):
     def __init__(self, gpxtag, start_index, end_index):
         super().__init__(gpxtag)
+        self.folder = Waypoint.velocity_folder.joinpath(self.unique_name)
         makedirs(self.folder, exist_ok=True)
         self.start_index = start_index
         self.end_index = end_index
+        self.final_data_filepath = self.folder.joinpath(self.unique_name + '_final_data_file')
+
 
 
 class CurrentStationWP(ElapsedTimeWP):
@@ -84,12 +87,14 @@ class CurrentStationWP(ElapsedTimeWP):
 class DataWP(Waypoint):
     def __init__(self, gpxtag, start_index, end_index):
         super().__init__(gpxtag)
+        self.folder = Waypoint.velocity_folder.joinpath(self.unique_name)
         makedirs(self.folder, exist_ok=True)
         self.start_index = start_index
         self.end_index = end_index
         self.noaa_url = gpxtag.find('link').attrs['href'] if gpxtag.link else None
         self.code = gpxtag.find('link').find('text').text
-
+        self.downloaded_data_filepath = self.folder.joinpath(self.unique_name + '_downloaded_data')
+        self.final_data_filepath = self.folder.joinpath(self.unique_name + '_final_data_file')
 
 class Edge:
 
