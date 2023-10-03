@@ -23,8 +23,8 @@ class Waypoint:
         self.unique_name = self.name.split(',')[0].split('(')[0].replace('.', '').strip().replace(" ", "_") + '_' + str(self.index)
         self.prev_edge = None
         self.next_edge = None
-        self.velocity_data = None
         self.current_data = None
+        self.tide_data = None
 
         Waypoint.index_lookup[Waypoint.ordinal_number] = self
         Waypoint.ordinal_number += 1
