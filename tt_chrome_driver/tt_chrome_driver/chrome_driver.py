@@ -81,12 +81,12 @@ class ChromeDriver:
         print(f'installed driver version: {self.installed_driver_version}')
         print(f'installed chrome version: {self.installed_chrome_version}')
 
-        if not self.installed_driver_version == self.latest_stable_version:
-            print(f'downloading latest stable chromedriver version: {download_latest_stable_driver_version()}')
-            print(f'driver folder: {self.lookup["driver_folder"]}')
-
-        if not self.installed_chrome_version >= self.latest_stable_version:
-            print(f'downloading latest stable chrome version: {download_latest_stable_chrome_version()}')
+        # if not self.installed_driver_version == self.latest_stable_version:
+        #     print(f'downloading latest stable chromedriver version: {download_latest_stable_driver_version()}')
+        #     print(f'driver folder: {self.lookup["driver_folder"]}')
+        #
+        # if not self.installed_chrome_version >= self.latest_stable_version:
+        #     print(f'downloading latest stable chrome version: {download_latest_stable_chrome_version()}')
 
     def __init__(self):
         stable_version_url = 'https://googlechromelabs.github.io/chrome-for-testing/#stable'
