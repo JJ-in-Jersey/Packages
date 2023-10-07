@@ -15,6 +15,7 @@ from selenium.webdriver.chrome.service import Service
 
 from tt_os_abstraction.os_abstraction import env
 
+
 def download_latest_stable_chrome_version():
     stable_version_url = 'https://googlechromelabs.github.io/chrome-for-testing/#stable'
     url = None
@@ -110,7 +111,7 @@ class ChromeDriver:
         elif platform.system() == 'Windows': self.lookup = windows_lookup
 
         driver_version_list = [self.lookup['version_list_lambda'](s) for s in listdir(self.lookup['driver_folder']) if re.search(self.lookup['version_regex'], s) is not None]
-        driver_version_list = driver_version_list.sort()
+        driver_version_list.sort()
         self.installed_driver_version = driver_version_list[-1]
 
         regex_pattern = '^[0-9\.]*$'
