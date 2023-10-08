@@ -58,7 +58,7 @@ class ChromeDriver:
         zip_file = zipfile.ZipFile(urlretrieve(self.lookup['download_url'], file)[0], 'r')
         with zip_file as zf: zf.extractall(downloads)
         source = downloads.joinpath(list(filter(lambda s: 'LICENSE' not in s, zip_file.namelist()))[0])
-        replace(source, self.lookup['driver_folder'].joinpath(source.name + self.lookup['driver_suffix']))
+        replace(source, self.lookup['driver_folder'].joinpath('chromedriver' + self.lookup['driver_suffix']))
 
     def __init__(self):
         stable_version_url = 'https://googlechromelabs.github.io/chrome-for-testing/#stable'
@@ -93,6 +93,5 @@ class ChromeDriver:
 
         regex_pattern = '^[0-9\.]*$'
         chrome_version_list = [Version(s) for s in listdir(self.lookup['chrome_version_folder']) if re.search(regex_pattern, s) is not None]
-        print(chrome_version_list)
         chrome_version_list.sort()
         self.installed_chrome_version = chrome_version_list[-1]
