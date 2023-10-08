@@ -1,5 +1,5 @@
 from pathlib import Path
-from os import listdir, replace
+from os import listdir, replace, chmod
 import re
 import platform
 import requests
@@ -15,6 +15,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 
 from tt_os_abstraction.os_abstraction import env
+
 
 class ChromeDriver:
 
@@ -32,7 +33,7 @@ class ChromeDriver:
             driver.implicitly_wait(10)  # seconds
             if not headless: driver.minimize_window()
         else:
-            raise Exception('chrome driver not found: ' + str(self.self.installed_driver_file))
+            raise Exception('chrome driver not found: ' + str(self.installed_driver_file))
         return driver
 
     def page_source(self, url, headless=False):
@@ -49,7 +50,7 @@ class ChromeDriver:
 
         print(f'latest stable version: {self.latest_stable_version}')
         print(f'installed driver version: {self.installed_driver_version}')
-        print(f'installed driver file: {self.installed_driver_file}')
+        # print(f'installed driver file: {self.installed_driver_file}')
         print(f'installed chrome version: {self.installed_chrome_version}')
 
     def install_stable_driver(self):
@@ -60,6 +61,7 @@ class ChromeDriver:
         source = downloads.joinpath(list(filter(lambda s: 'LICENSE' not in s, zip_file.namelist()))[0])
         self.installed_driver_file = self.lookup['driver_folder'].joinpath('chromedriver' + self.lookup['driver_suffix'])
         replace(source, self.installed_driver_file)
+        chmod(self.installed_driver_file, 777)
 
     def __init__(self):
         stable_version_url = 'https://googlechromelabs.github.io/chrome-for-testing/#stable'
