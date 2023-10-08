@@ -65,20 +65,19 @@ class ChromeDriver:
         tree = Soup(requests.get(stable_version_url).text, 'html.parser')
         self.latest_stable_version = Version(tree.find(id='stable').find('p').find('code').text)
 
+        windows_lookup = {'chrome_exe_file': Path('C:/Program Files/Google/Chrome/Application/Chrome.exe'),
+                          'chrome_version_folder': Path('C:/Program Files/Google/Chrome/Application'),
+                          'version_extract': lambda name: Version(name.split('-')[1].rsplit('.', 1)[0]),
+                          'driver_folder': Path(env('user_profile') + '/AppData/local/Google/chromedriver/'),
+                          'driver_suffix': '-' + str(self.latest_stable_version) + '.exe',
+                          'download_url': tree.find(id='stable').find(text='chromedriver').find_next(text='win64').find_next('code').text}
+
         apple_lookup = {'chrome_exe_file': Path('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'),
                         'chrome_version_folder': Path('/Applications/Google Chrome.app/Contents/Frameworks/Google Chrome Framework.framework/Versions'),
-                        'version_regex': 'chromedriver-[0-9,.]',
-                        'version_extract': (lambda string: Version(string.split('-')[1])),
+                        'version_extract': lambda name: Version(name.split('-')[1]),
                         'driver_folder': Path('/usr/local/bin/chromedriver/'),
                         'driver_suffix': '-' + str(self.latest_stable_version),
                         'download_url': tree.find(id='stable').find(text='chromedriver').find_next(text='mac-arm64').find_next('code').text}
-        windows_lookup = {'chrome_exe_file': Path('C:/Program Files/Google/Chrome/Application/Chrome.exe'),
-                          'chrome_version_folder': Path(env('user_profile') + '/AppData/local/Google/chromedriver/'),
-                          'version_regex': 'chromedriver-[0-9,.]+.exe',
-                          'version_extract': (lambda string: Version(string.split('-')[1].rsplit('.', 1)[0])),
-                          'driver_folder': Path('C:/Program Files/Google/Chrome/Application'),
-                          'driver_suffix': '-' + str(self.latest_stable_version) + '.exe',
-                          'download_url': tree.find(id='stable').find(text='chromedriver').find_next(text='win64').find_next('code').text}
 
         if platform.system() == "Darwin": self.lookup = apple_lookup
         elif platform.system() == 'Windows': self.lookup = windows_lookup
@@ -94,5 +93,6 @@ class ChromeDriver:
 
         regex_pattern = '^[0-9\.]*$'
         chrome_version_list = [Version(s) for s in listdir(self.lookup['chrome_version_folder']) if re.search(regex_pattern, s) is not None]
+        print(chrome_version_list)
         chrome_version_list.sort()
         self.installed_chrome_version = chrome_version_list[-1]
