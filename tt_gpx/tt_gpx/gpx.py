@@ -1,6 +1,8 @@
 from bs4 import BeautifulSoup as Soup
 from tt_navigation.navigation import distance, direction, heading
 from os import makedirs
+from tt_file_tools import file_tools as ft
+import pandas as pd
 
 
 class Waypoint:
@@ -64,6 +66,12 @@ class LocationWP(DistanceWP):
 
 
 class InterpolationWP(ElapsedTimeWP):
+
+    def set_current_data(self, frame):
+        frame['date_time'] = pd.to_datetime(frame['date_index'], unit='s')
+        self.current_data = frame
+        ft.write_df(frame, self.downloaded_data_filepath)
+
     def __init__(self, gpxtag, start_index, end_index):
         super().__init__(gpxtag)
         self.folder = Waypoint.velocity_folder.joinpath(self.unique_name)
@@ -71,6 +79,7 @@ class InterpolationWP(ElapsedTimeWP):
         self.start_index = start_index
         self.end_index = end_index
         self.downloaded_data_filepath = self.folder.joinpath(self.unique_name + '_downloaded_data')
+        self.time_matched_data_filepath = self.folder.joinpath(self.unique_name + '_time_matched_data_filepath')
         self.final_data_filepath = self.folder.joinpath(self.unique_name + '_final_data_file')
 
 
