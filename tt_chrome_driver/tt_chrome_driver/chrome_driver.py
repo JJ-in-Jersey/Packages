@@ -68,7 +68,7 @@ class ChromeDriver:
         tree = Soup(requests.get(stable_version_url).text, 'html.parser')
         self.latest_stable_version = Version(tree.find(id='stable').find('p').find('code').text)
 
-        driver_base_name = 'chromedriver-'
+        driver_base_name = 'chromedriver'
         windows_lookup = {'chrome_exe_file': Path('C:/Program Files/Google/Chrome/Application/Chrome.exe'),
                           'chrome_version_folder': Path('C:/Program Files/Google/Chrome/Application'),
                           'version_extract': lambda name: Version(name.split('-')[1].rsplit('.', 1)[0]),
