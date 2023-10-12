@@ -68,6 +68,7 @@ class ChromeDriver:
         tree = Soup(requests.get(stable_version_url).text, 'html.parser')
         self.latest_stable_version = Version(tree.find(id='stable').find('p').find('code').text)
 
+        driver_base_name = 'chromedriver-'
         windows_lookup = {'chrome_exe_file': Path('C:/Program Files/Google/Chrome/Application/Chrome.exe'),
                           'chrome_version_folder': Path('C:/Program Files/Google/Chrome/Application'),
                           'version_extract': lambda name: Version(name.split('-')[1].rsplit('.', 1)[0]),
@@ -85,11 +86,13 @@ class ChromeDriver:
         if platform.system() == "Darwin": self.lookup = apple_lookup
         elif platform.system() == 'Windows': self.lookup = windows_lookup
 
-        driver_list = listdir(self.lookup['driver_folder'])
-        driver_list.sort()
-        if len(driver_list):
-            self.installed_driver_file = self.lookup['driver_folder'].joinpath(driver_list[0])
-            self.installed_driver_version = self.lookup['version_extract'](driver_list[0])
+        driver_version_list = [self.lookup['version_extract'](file) for file in listdir(self.lookup['driver_folder'])]
+        driver_version_list.sort()
+        driver_version_list.reverse()
+
+        if len(driver_version_list):
+            self.installed_driver_file = self.lookup['driver_folder'].joinpath(driver_base_name + self.lookup['driver_suffix'])
+            self.installed_driver_version = driver_version_list[0]
         else:
             self.installed_driver_file = None
             self.installed_driver_version = None
