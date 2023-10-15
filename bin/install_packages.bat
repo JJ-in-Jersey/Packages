@@ -1,4 +1,4 @@
-cd %userprofile%/PycharmProjects/Packages
+cd %userprofile%/pythonProject/Packages
 
 pip uninstall tt_navigation -y
 pip uninstall tt_date_time_tools -y

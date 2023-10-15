@@ -1,4 +1,4 @@
-cd %userprofile%/PycharmProjects/Packages
+cd %userprofile%/pythonProject/Packages
 
 pip uninstall tt_memory_helper -y
 pip uninstall tt_navigation -y
