@@ -1,5 +1,6 @@
 cd %userprofile%/PycharmProjects/Packages
 
+pip uninstall tt_singleton -y
 pip uninstall tt_memory_helper -y
 pip uninstall tt_navigation -y
 pip uninstall tt_chrome_driver -y
