@@ -1,6 +1,6 @@
 #!/bin/sh
 
-cd $HOME/pythonProject/Packages
+cd $HOME/PycharmProjects/Packages
 
 pip3 uninstall tt_navigation -y
 pip3 uninstall tt_date_time_tools -y

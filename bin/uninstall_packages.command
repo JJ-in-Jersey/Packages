@@ -1,6 +1,6 @@
 #!/bin/sh
 
-cd $HOME/pythonProject/Packages
+cd $HOME/PycharmProjects/Packages
 
 pip3 uninstall tt_memory_helper -y
 pip3 uninstall tt_navigation -y
