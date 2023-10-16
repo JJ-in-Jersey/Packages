@@ -3,7 +3,6 @@
 cd $HOME/PycharmProjects/Packages
 
 pip3 uninstall tt_singleton -y
-pip3 uninstall tt_memory_helper -y
 pip3 uninstall tt_navigation -y
 pip3 uninstall tt_chrome_driver -y
 pip3 uninstall tt_date_time_tools -y
