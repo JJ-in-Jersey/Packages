@@ -24,8 +24,6 @@ class JobManager(metaclass=Singleton):
         qm = WaitForProcess(target=QueueManager, name='QueueManager', args=(self.queue, self.results_lookup))
         qm.start()
 
-# jm = mpm.WaitForProcess(target=mpm.JobManager, args=(mpm.job_queue, mpm.result_lookup))
-
 
 class QueueManager(metaclass=Singleton):
 
