@@ -22,7 +22,12 @@ def wait_for_new_file(folder, event_function, *event_args):
     return newest_after
 
 
-def read_df(path): return pd.read_csv(path.with_suffix('.csv'), header='infer')
+def read_df(path):
+    return pd.read_csv(path.with_suffix('.csv'), header='infer')
+
+
+def shrink_df(path):
+    return shrink_dataframe(pd.read_csv(path.with_suffix('.csv'), header='infer'))
 
 
 def read_arr(path): return np.load(path.with_suffix('.npy'))
@@ -61,3 +66,12 @@ def write_df(df, path):
         if num_of_spreadsheets > whole_spreadsheets:
             temp = df.loc[whole_spreadsheets*excel_size:]
             temp.to_csv(path.parent.joinpath(path.name+'_excel_'+str(whole_spreadsheets)).with_suffix('.csv'), index=False)
+
+
+def shrink_dataframe(dataframe: pd.DataFrame):
+    for col in dataframe:
+        if dataframe[col].dtype == np.int64:
+            dataframe[col] = dataframe[col].astype(np.int16)
+        elif dataframe[col].dtype == np.float64:
+            dataframe[col] = dataframe[col].astype(np.float16)
+    return dataframe
