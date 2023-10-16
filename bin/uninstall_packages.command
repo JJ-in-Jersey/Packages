@@ -13,4 +13,5 @@ pip3 uninstall tt_gpx -y
 pip3 uninstall tt_interpolation -y
 pip3 uninstall tt_semaphore -y
 pip3 uninstall tt_os_abstraction -y
+pip3 uninstall tt_job_manager -y
 

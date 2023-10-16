@@ -10,6 +10,7 @@ pip uninstall tt_interpolation -y
 pip uninstall tt_os_abstraction -y
 pip uninstall tt_semaphore -y
 pip uninstall tt_chrome_driver -y
+pip uninstall tt_job_manager -y
 
 pip install ./tt_singleton
 pip install ./tt_navigation
@@ -21,5 +22,6 @@ pip install ./tt_interpolation
 pip install ./tt_os_abstraction
 pip install ./tt_semaphore
 pip install ./tt_chrome_driver
+pip install ./tt_job_manager
 
 pause
