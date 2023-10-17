@@ -15,23 +15,23 @@ class JobManager(metaclass=Singleton):
     def wait(self):
         self.queue.join()
 
-    def __init__(self):
+    def __init__(self, pool_size=None):
         self.manager = Manager()
         self.queue = self.manager.JoinableQueue()
         self.results_lookup = self.manager.dict()
-
         # qm = Process(target=QueueManager, args=(self.queue, self.results_lookup))
-        qm = WaitForProcess(target=QueueManager, name='QueueManager', args=(self.queue, self.results_lookup))
-        qm.start()
+        self.qm = WaitForProcess(target=QueueManager, name='QueueManager', args=(self.queue, self.results_lookup, pool_size,))
+        self.qm.start()
 
 
-class QueueManager(metaclass=Singleton):
+# class QueueManager(metaclass=Singleton):
+class QueueManager:
 
-    def __init__(self, q, lookup):
+    def __init__(self, q, lookup, size):
         print(f'+     queue manager (Pool size = {cpu_count()})\n', flush=True)
         semaphore.on(self.__class__.__name__)
         results = {}
-        with Pool(1) as p:
+        with Pool(size) as p:
             while True:
                 # pull submitted jobs and start them in the pool
                 while not q.empty():

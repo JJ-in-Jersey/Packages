@@ -23,11 +23,11 @@ def wait_for_new_file(folder, event_function, *event_args):
 
 
 def read_df(path):
-    return pd.read_csv(path.with_suffix('.csv'), header='infer')
+    return pd.read_csv(path.with_suffix('.csv'), engine='c', header='infer')
 
 
 def shrink_df(path):
-    return shrink_dataframe(pd.read_csv(path.with_suffix('.csv'), header='infer'))
+    return shrink_dataframe(pd.read_csv(path.with_suffix('.csv'), engine='c', header='infer'))
 
 
 def read_arr(path): return np.load(path.with_suffix('.npy'))
