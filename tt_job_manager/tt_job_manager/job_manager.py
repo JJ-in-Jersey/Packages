@@ -31,7 +31,7 @@ class QueueManager(metaclass=Singleton):
         print(f'+     queue manager (Pool size = {cpu_count()})\n', flush=True)
         semaphore.on(self.__class__.__name__)
         results = {}
-        with Pool() as p:
+        with Pool(1) as p:
             while True:
                 # pull submitted jobs and start them in the pool
                 while not q.empty():
