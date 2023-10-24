@@ -15,6 +15,9 @@ class JobManager(metaclass=Singleton):
     def wait(self):
         self.queue.join()
 
+    def stop_queue(self):
+        semaphore.off('QueueManager')
+
     def __init__(self, pool_size=None):
         self.manager = Manager()
         self.queue = self.manager.JoinableQueue()
@@ -32,7 +35,7 @@ class QueueManager:
         semaphore.on(self.__class__.__name__)
         results = {}
         with Pool(size) as p:
-            while True:
+            while semaphore.is_on(self.__class__.__name__):
                 # pull submitted jobs and start them in the pool
                 while not q.empty():
                     job = q.get()
@@ -48,6 +51,7 @@ class QueueManager:
                         q.task_done()
 
                 sleep(0.05)
+        print(f'-     queue manager\n', flush=True)
 
 
 class WaitForProcess(Process, metaclass=Singleton):
