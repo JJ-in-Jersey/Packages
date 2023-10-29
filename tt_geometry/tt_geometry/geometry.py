@@ -28,6 +28,27 @@ class Arc:
         self.base_end = pd.to_datetime(self.end_index, unit='s').round('min')
 
 
+class NewArc:
+
+    @staticmethod
+    def time_to_degrees(time): return time.hour * 15 + time.minute * 0.25
+
+    def __init__(self, lookup: dict):
+        self.name = lookup['name']
+        self.speed = lookup['speed']
+        self.direction = lookup['direction']
+        self.start_time = pd.to_datetime(lookup['start_index']).time()
+        self.start_date = pd.to_datetime(lookup['start_index']).date()
+        self.time_of_min = pd.to_datetime(lookup['index_of_min']).time()
+        self.date_of_min = pd.to_datetime(lookup['index_of_min']).date()
+        self.end_time = pd.to_datetime(lookup['end_index']).time()
+        self.end_date = pd.to_datetime(lookup['end_index']).date()
+        self.min_transit_time = lookup['min_transit_time']
+        self.start_angle = time_to_degrees(self.start_time)
+        self.min_angle = time_to_degrees(self.time_of_min)
+        self.end_angle = time_to_degrees(self.end_time)
+
+
 class RoundedArc(Arc):
 
     def df_angles(self): return pd.Series([self.start, self.start_date, self.start_angle, self.min_angle, self.end_angle, Arc.name])
