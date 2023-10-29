@@ -11,7 +11,7 @@ def round_time_to(timestamp, mins): return dt.min + round((timestamp.to_pydateti
 class Arc:
 
     columns = ['date_time', 'date', 'start', 'min', 'end', 'name']
-    round_to = 15
+    round_to = 5
     name = None
 
     def __init__(self, *args):
