@@ -11,7 +11,7 @@ def round_time_to(timestamp, mins): return dt.min + round((timestamp.to_pydateti
 class Arc:
 
     columns = ['date_time', 'date', 'start', 'min', 'end', 'name']
-    round_to = 15
+    round_to = 5
     name = None
 
     def __init__(self, *args):
@@ -26,6 +26,27 @@ class Arc:
         self.base_start = pd.to_datetime(self.start_index, unit='s').round('min')
         self.base_min = pd.to_datetime(self.min_index, unit='s').round('min')
         self.base_end = pd.to_datetime(self.end_index, unit='s').round('min')
+
+
+class NewArc:
+
+    @staticmethod
+    def time_to_degrees(time): return time.hour * 15 + time.minute * 0.25
+
+    def __init__(self, lookup: dict):
+        self.name = lookup['name']
+        self.speed = lookup['speed']
+        self.direction = lookup['direction']
+        self.start_time = pd.to_datetime(lookup['start_index']).time()
+        self.start_date = pd.to_datetime(lookup['start_index']).date()
+        self.time_of_min = pd.to_datetime(lookup['index_of_min']).time()
+        self.date_of_min = pd.to_datetime(lookup['index_of_min']).date()
+        self.end_time = pd.to_datetime(lookup['end_index']).time()
+        self.end_date = pd.to_datetime(lookup['end_index']).date()
+        self.min_transit_time = lookup['min_transit_time']
+        self.start_angle = time_to_degrees(self.start_time)
+        self.min_angle = time_to_degrees(self.time_of_min)
+        self.end_angle = time_to_degrees(self.end_time)
 
 
 class RoundedArc(Arc):
