@@ -19,7 +19,7 @@ from tt_os_abstraction.os_abstraction import env
 
 class ChromeDriver:
 
-    def get_driver(self, download_dir=None, headless=False):
+    def get_driver(self, download_dir=None):
         if self.installed_driver_file.exists():
             prefs = {'download.prompt_for_download': False, 'safebrowsing.enabled': True,
                      'profile.default_content_setting_values.notifications': 2}
@@ -28,16 +28,16 @@ class ChromeDriver:
             my_options.add_experimental_option('prefs', prefs)
             my_options.add_experimental_option('excludeSwitches', ['enable-logging'])
             # my_options.add_argument("--incognito")
-            if headless: my_options.add_argument('--headless=new')
+            my_options.add_argument(r'--user-data-dir=' + str(env('user_data')))
             driver = webdriver.Chrome(service=Service(str(self.installed_driver_file)), options=my_options)
             driver.implicitly_wait(10)  # seconds
-            if not headless: driver.minimize_window()
+            # driver.minimize_window()
         else:
             raise Exception('chrome driver not found: ' + str(self.installed_driver_file))
         return driver
 
-    def page_source(self, url, headless=False):
-        driver = self.get_driver(None, headless)
+    def page_source(self, url):
+        driver = self.get_driver()
         driver.get(url)
         sleep(5)  # seconds
         source = driver.page_source
@@ -50,7 +50,6 @@ class ChromeDriver:
 
         print(f'latest stable version: {self.latest_stable_version}')
         print(f'installed driver version: {self.installed_driver_version}')
-        # print(f'installed driver file: {self.installed_driver_file}')
         print(f'installed chrome version: {self.installed_chrome_version}')
 
     def install_stable_driver(self):
@@ -72,7 +71,7 @@ class ChromeDriver:
         windows_lookup = {'chrome_exe_file': Path('C:/Program Files/Google/Chrome/Application/Chrome.exe'),
                           'chrome_version_folder': Path('C:/Program Files/Google/Chrome/Application'),
                           'version_extract': lambda name: Version(name.split('-')[1].rsplit('.', 1)[0]),
-                          'driver_folder': Path(env('user_profile') + '/AppData/local/Google/chromedriver/'),
+                          'driver_folder': env('user_profile').joinpath('AppData/local/Google/chromedriver/'),
                           'driver_suffix': '-' + str(self.latest_stable_version) + '.exe',
                           'download_url': tree.find(id='stable').find(text='chromedriver').find_next(text='win64').find_next('code').text}
 
