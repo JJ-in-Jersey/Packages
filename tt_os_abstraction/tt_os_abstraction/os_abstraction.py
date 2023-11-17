@@ -20,7 +20,8 @@ elif platform.system() == 'Windows':
                     'system': 'win64',
                     'driver_regex': 'chromedriver-[0-9,.]+.exe',
                     'driver_folder': Path(environ['USERPROFILE'] + '/AppData/local/Google/chromedriver/'),
-                    'browser_exe': Path('C:/Program Files/Google/Chrome/Application/Chrome.exe')
+                    'browser_exe': Path('C:/Program Files/Google/Chrome/Application/Chrome.exe'),
+                    'user_data': Path(environ['USERPROFILE']).joinpath('AppData/Local/Google/Chrome/User Data')
                     }
 
 
