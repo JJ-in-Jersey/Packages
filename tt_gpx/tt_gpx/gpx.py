@@ -88,7 +88,7 @@ class CurrentStationWP(ElapsedTimeWP):
         self.start_index = start_index
         self.end_index = end_index
         self.noaa_url = gpxtag.find('link').attrs['href'] if gpxtag.link else None
-        self.code = gpxtag.find('link').find('text').text
+        self.code = gpxtag.find('link').find('text').text.split(' ')[0]
         self.folder = Waypoint.velocity_folder.joinpath(self.unique_name)
         makedirs(self.folder, exist_ok=True)
         self.downloaded_data_filepath = self.folder.joinpath(self.unique_name + '_downloaded_data')
@@ -103,7 +103,7 @@ class DataWP(Waypoint):
         self.start_index = start_index
         self.end_index = end_index
         self.noaa_url = gpxtag.find('link').attrs['href'] if gpxtag.link else None
-        self.code = gpxtag.find('link').find('text').text
+        self.code = gpxtag.find('link').find('text').text.split(' ')[0]
         self.downloaded_data_filepath = self.folder.joinpath(self.unique_name + '_downloaded_data')
         self.final_data_filepath = self.folder.joinpath(self.unique_name + '_final_data_file')
 
