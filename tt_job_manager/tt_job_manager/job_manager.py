@@ -1,13 +1,15 @@
 from tt_singleton.singleton import Singleton
 from tt_semaphore import simple_semaphore as semaphore
+from tt_date_time_tools.date_time_tools import mins_secs
 from multiprocessing import Manager, Pool, cpu_count, Process
-from time import sleep
+from time import sleep, perf_counter
 
 
 class JobManager(metaclass=Singleton):
 
     def put(self, job):
         self.queue.put(job)
+        return job.result_key
 
     def get(self, key):
         return self.results_lookup[key]
@@ -15,7 +17,8 @@ class JobManager(metaclass=Singleton):
     def wait(self):
         self.queue.join()
 
-    def stop_queue(self):
+    @staticmethod
+    def stop_queue():
         semaphore.off('QueueManager')
 
     def __init__(self, pool_size=None):
@@ -64,3 +67,24 @@ class WaitForProcess(Process, metaclass=Singleton):
         super().start(**kwargs)
         while not semaphore.is_on(semaphore_file_name):
             sleep(0.1)
+
+
+class Job:
+
+    def execute(self):
+        init_time = perf_counter()
+        print(f'+     {self.job_name}', flush=True)
+        return tuple([self.result_key, self.execute_function(*self.execute_function_arguments), init_time])
+
+    def execute_callback(self, result):
+        print(f'-     {self.job_name} {mins_secs(perf_counter() - result[2])} minutes', flush=True)
+
+    def error_callback(self, result):
+        print(f'!     {self.job_name} process has raised an error {result}', flush=True)
+
+    def __init__(self, job_name, result_key, function, arguments):
+        self.job_name = job_name
+        self.result_key = result_key
+        self.execute_function = function
+        self.execute_function_arguments = arguments
+        self.init_time = None
