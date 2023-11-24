@@ -1,8 +1,6 @@
 from bs4 import BeautifulSoup as Soup
 from tt_navigation.navigation import distance, direction, heading
 from os import makedirs
-from tt_file_tools import file_tools as ft
-import pandas as pd
 
 
 class Waypoint:
