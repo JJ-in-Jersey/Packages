@@ -10,7 +10,7 @@ class Waypoint:
     current_folder = None
     velocity_folder = None
 
-    type = {'CurrentStationWP': 'Symbol-Spot-Orange', 'LocationWP': 'Symbol-Spot-Green', 'InterpolationWP': 'Symbol-Spot-Blue', 'DataWP': 'Symbol-Spot-Black'}
+    type = {'CurrentStationWP': 'Symbol-Spot-Orange', 'SurrogateWP': 'Symbol-Pin-Orange', 'LocationWP': 'Symbol-Spot-Green', 'InterpolatedWP': 'Symbol-Spot-Blue', 'InterpolatedDataWP': 'Symbol-Spot-Black'}
     ordinal_number = 0
     index_lookup = {}
 
@@ -25,14 +25,12 @@ class Waypoint:
         self.unique_name = self.name.split(',')[0].split('(')[0].replace('.', '').strip().replace(" ", "_") + '_' + str(self.index)
         self.prev_edge = None
         self.next_edge = None
-        self.current_data = None
-        self.tide_data = None
 
         Waypoint.index_lookup[Waypoint.ordinal_number] = self
         Waypoint.ordinal_number += 1
 
 
-class FileWP(Waypoint):
+class FileWP(Waypoint):  # used in battery validation
     def __init__(self, filepath):
         with open(filepath, 'r') as f: gpxfile = f.read()
         gpxtag = Soup(gpxfile, 'xml', preserve_whitespace_tags=['name', 'type', 'sym', 'text']).find('wpt')
@@ -41,7 +39,7 @@ class FileWP(Waypoint):
         super().__init__(gpxtag)
 
 
-class TideWP(FileWP):
+class TideWP(FileWP):  # used in battery validation
     def __init__(self, *args):
         super().__init__(*args)
         self.folder = Waypoint.current_folder.joinpath(self.unique_name)
@@ -50,104 +48,82 @@ class TideWP(FileWP):
         self.final_data_filepath = self.folder.joinpath(self.unique_name + '_final_data_file')
 
 
-class DistanceWP(Waypoint):  # required for distance calculations
+class LocationWP(Waypoint):  # waypoints that define a location
     def __init__(self, *args):
         super().__init__(*args)
 
 
-class ElapsedTimeWP(DistanceWP):  # required for elapsed time calculations
-    def __init__(self, *args):
-        super().__init__(*args)
+class DataWP(Waypoint):  # waypoints that get NOAA data and store it
 
-
-class LocationWP(DistanceWP):
-    def __init__(self, *args):
-        super().__init__(*args)
-
-
-class InterpolationWP(ElapsedTimeWP):
-
-    def set_downloaded_data(self, frame):
-        frame['date_time'] = pd.to_datetime(frame['date_index'], unit='s')
-        self.current_data = frame
-        ft.write_df(frame, self.downloaded_data_filepath)
-
-    def __init__(self, gpxtag, start_index, end_index):
+    def __init__(self, gpxtag):
         super().__init__(gpxtag)
+
+        if gpxtag.link:
+            self.noaa_url = gpxtag.find('link').attrs['href']
+            self.code = gpxtag.find('link').find('text').text.split(' ')[0]
+
         self.folder = Waypoint.velocity_folder.joinpath(self.unique_name)
         makedirs(self.folder, exist_ok=True)
-        self.start_index = start_index
-        self.end_index = end_index
-        self.downloaded_data_filepath = self.folder.joinpath(self.unique_name + '_downloaded_data')
-        self.final_data_filepath = self.folder.joinpath(self.unique_name + '_final_data_file')
+
+        self.downloaded_current_path = self.folder.joinpath(self.unique_name + '_downloaded_current_data')
+        self.spline_fit_current_path = self.folder.joinpath(self.unique_name + '_spline_fit_current_data')
+        self.downloaded_tide_path = self.folder.joinpath(self.unique_name + '_downloaded_tide_data')
+
+        self.downloaded_current_data = None
+        self.spline_fit_current_data = None
+        self.downloaded_tide_data = None
 
 
-class CurrentStationWP(ElapsedTimeWP):
-    def __init__(self, gpxtag, start_index, end_index):
+class CurrentStationWP(DataWP):  # CurrentWP who's data is used to calculate elapsed time
+    def __init__(self, gpxtag):
         super().__init__(gpxtag)
-        self.start_index = start_index
-        self.end_index = end_index
-        self.noaa_url = gpxtag.find('link').attrs['href'] if gpxtag.link else None
-        self.code = gpxtag.find('link').find('text').text.split(' ')[0]
-        self.folder = Waypoint.velocity_folder.joinpath(self.unique_name)
-        makedirs(self.folder, exist_ok=True)
-        self.downloaded_data_filepath = self.folder.joinpath(self.unique_name + '_downloaded_data')
-        self.final_data_filepath = self.folder.joinpath(self.unique_name + '_final_data_file')
 
 
-class DataWP(Waypoint):
-    def __init__(self, gpxtag, start_index, end_index):
+class InterpolatedDataWP(DataWP):  # CurrentWP that downloads data used for interpolation
+    def __init__(self, gpxtag):
         super().__init__(gpxtag)
-        self.folder = Waypoint.velocity_folder.joinpath(self.unique_name)
-        makedirs(self.folder, exist_ok=True)
-        self.start_index = start_index
-        self.end_index = end_index
-        self.noaa_url = gpxtag.find('link').attrs['href'] if gpxtag.link else None
-        self.code = gpxtag.find('link').find('text').text.split(' ')[0]
-        self.downloaded_data_filepath = self.folder.joinpath(self.unique_name + '_downloaded_data')
-        self.final_data_filepath = self.folder.joinpath(self.unique_name + '_final_data_file')
 
 
-class Edge:
+class InterpolatedWP(DataWP):  # CurrentCalculationWP that calculates data used to calculate elapsed time
+
+    def __init__(self, gpxtag):
+        super().__init__(gpxtag)
+
+
+class Edge:  # connection between calculation waypoints
 
     elapsed_time_folder = None
+    edge_range = None
 
-    def __init__(self, start, end, edge_range):
+    def __init__(self, start_wp, end_wp):
         self.final_data_filepath = None
         self.elapsed_time_data = None
-        self.length = None
+        self.length = 0
 
-        if start == end: raise IndexError
+        if start_wp == end_wp: raise IndexError
+        if not isinstance(start_wp, CurrentStationWP) and not isinstance(start_wp, InterpolatedWP): raise TypeError
+        if not isinstance(end_wp, CurrentStationWP) and not isinstance(end_wp, InterpolatedWP): raise TypeError
 
-        self.unique_name = '[' + str(start.index) + '-' + str(end.index) + ']'
-        self.start = start
-        self.end = end
-        start.next_edge = self
-        end.prev_edge = self
+        self.unique_name = '[' + str(start_wp.index) + '-' + str(end_wp.index) + ']'
+        self.start = start_wp
+        self.end = end_wp
+        start_wp.next_edge = self
+        end_wp.prev_edge = self
 
         if Edge.elapsed_time_folder is None: raise TypeError
         self.folder = Edge.elapsed_time_folder.joinpath(self.unique_name)
         makedirs(self.folder, exist_ok=True)
-        self.edge_range = edge_range
+
+        wp1 = start_wp
+        while not wp1 == end_wp:
+            wp2 = Waypoint.index_lookup[wp1.index + 1]
+            while isinstance(wp2, InterpolatedDataWP):
+                wp2 = Waypoint.index_lookup[wp2.index + 1]
+            self.length += round(distance(wp1.coords, wp2.coords), 4)
+            wp1 = wp2
 
 
-class SimpleEdge(Edge):
-    def __init__(self, start, end, edge_range):
-        super().__init__(start, end, edge_range)
-        self.length = round(distance(self.start.coords, self.end.coords), 4)
-
-
-class CompositeEdge(Edge):
-    def __init__(self, start, end, edge_range):
-        super().__init__(start, end, edge_range)
-        self.length = 0
-        wp_range = range(start.index, end.index+1)
-        waypoints = [Waypoint.index_lookup[i] for i in wp_range if isinstance(Waypoint.index_lookup[i], DistanceWP)]
-        for i, wp in enumerate(waypoints[:-1]):
-            self.length += round(distance(wp.coords, waypoints[i+1].coords), 4)
-
-
-class GPXPath:
+class Path:
 
     def path_integrity(self):
         for i, edge in enumerate(self.edges[:-1]):
@@ -162,74 +138,57 @@ class GPXPath:
         self.direction = direction(self.edges[0].start.coords, self.edges[-1].end.coords)
         self.heading = heading(self.edges[0].start.coords, self.edges[-1].end.coords)
 
-    def print_path(self):
-        print(f'{self.name} "{self.direction}" {self.length}')
-        for edge in self.edges:
-            print(f'{edge.length} {edge.name} [{edge.start.name} ({type(edge.start).__name__})]-----[{edge.end.name} ({type(edge.end).__name__})] {type(edge)}')
-
 
 class Route:
 
-    def __init__(self, filepath, wp_si, wp_ei, e_r):
-        self.filepath = filepath
+    def __init__(self, filepath, edge_range):
+        Edge.edge_range = edge_range
         self.transit_time_lookup = {}
         self.elapsed_time_lookup = {}
         self.whole_path = self.velo_path = None
         self.interpolation_groups = None
         self.waypoints = None
-        self.tree = None
+        self.filepath = filepath
 
         with open(filepath, 'r') as f: gpxfile = f.read()
-        self.tree = Soup(gpxfile, 'xml', preserve_whitespace_tags=['name', 'type', 'sym', 'text'])
-        self.write_clean_gpx()
+        tree = Soup(gpxfile, 'xml', preserve_whitespace_tags=['name', 'type', 'sym', 'text'])
+        self.write_clean_gpx(filepath, tree)
 
         # build ordered list of all waypoints
         waypoints = []
-        for tag in self.tree.find_all('rtept'):
-            if tag.sym.text == Waypoint.type['CurrentStationWP']: waypoints.append(CurrentStationWP(tag, wp_si, wp_ei))
+        for tag in tree.find_all('rtept'):
+            if tag.sym.text == Waypoint.type['CurrentStationWP']: waypoints.append(CurrentStationWP(tag))
+            elif tag.sym.text == Waypoint.type['SurrogateWP']: waypoints.append(CurrentStationWP(tag))
             elif tag.sym.text == Waypoint.type['LocationWP']: waypoints.append(LocationWP(tag))
-            elif tag.sym.text == Waypoint.type['InterpolationWP']: waypoints.append(InterpolationWP(tag, wp_si, wp_ei))
-            elif tag.sym.text == Waypoint.type['DataWP']: waypoints.append(DataWP(tag, wp_si, wp_ei))
-
+            elif tag.sym.text == Waypoint.type['InterpolatedWP']: waypoints.append(InterpolatedWP(tag))
+            elif tag.sym.text == Waypoint.type['InterpolatedDataWP']: waypoints.append(InterpolatedDataWP(tag))
         self.waypoints = waypoints
-
-        # create all the edges and the whole path
-        edges = [SimpleEdge(wp, Waypoint.index_lookup[wp.index+1], e_r) for wp in waypoints[:-1]]
-        self.whole_path = GPXPath(edges)
 
         # create interpolation groups
         self.interpolation_groups = []
-        for i, wp in enumerate(waypoints):
-            if isinstance(wp, InterpolationWP):
-                group = [wp]
-                count = i+1
-                while count < len(waypoints) and isinstance(waypoints[count], DataWP):
-                    group.append(waypoints[count])
-                    count += 1
-                self.interpolation_groups.append(group)
+        interpolated_wps = [wp for wp in waypoints if isinstance(wp, InterpolatedWP)]
+        for wp in interpolated_wps:
+            group= [wp]
+            wp = Waypoint.index_lookup[wp.index+1]
+            while isinstance(wp, InterpolatedDataWP):
+                group.append(wp)
+                wp = Waypoint.index_lookup[wp.index+1]
+            self.interpolation_groups.append(group)
 
-        # create elapsed time path - exclude waypoints not required for elapsed time calculations
-        elapsed_time_wps = [wp for wp in waypoints if isinstance(wp, ElapsedTimeWP)]
-        elapsed_time_edges = []
-        for i, wp in enumerate(elapsed_time_wps[:-1]):
-            if wp.index+1 == elapsed_time_wps[i+1]:
-                elapsed_time_edges.append(SimpleEdge(wp, elapsed_time_wps[i+1], e_r))
-            else:
-                elapsed_time_edges.append(CompositeEdge(wp, elapsed_time_wps[i + 1], e_r))
-        self.elapsed_time_path = GPXPath(elapsed_time_edges)
+        # create aggregated path from waypoints
+        self.elapsed_time_wps = [wp for wp in waypoints if isinstance(wp, CurrentStationWP) or isinstance(wp, InterpolatedWP)]
+        self.elapsed_time_edges = []
+        for i, wp in enumerate(self.elapsed_time_wps[:-1]):
+            self.elapsed_time_edges.append(Edge(wp, self.elapsed_time_wps[i+1]))
 
-    def print_route(self):
-        print(f'\n{self.filepath.stem}')
-        print(f'\nwhole path')
-        self.whole_path.print_path()
-        print(f'\nvelocity path')
-        self.elapsed_time_path.print_path()
+        self.elapsed_time_path = Path(self.elapsed_time_edges)
 
-    def write_clean_gpx(self):
-        new_filepath = self.filepath.parent.joinpath(self.filepath.stem + ' new.gpx')
+    @staticmethod
+    def write_clean_gpx(filepath, tree):
+        new_filepath = filepath.parent.joinpath(filepath.stem + ' new.gpx')
         tag_names = ['extensions', 'time']
         for name in tag_names:
-            for tag in self.tree.find_all(name):
+            for tag in tree.find_all(name):
                 tag.decompose()
         with open(new_filepath, "w") as file:
-            file.write(self.tree.prettify())
+            file.write(tree.prettify())
