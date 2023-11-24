@@ -72,10 +72,10 @@ class Job:
     def execute(self):
         init_time = perf_counter()
         print(f'+     {self.job_name}', flush=True)
-        return tuple([self.result_key, self.execute_function(*self.execute_function_arguments), init_time])
+        return tuple([self.result_key, self.execute_function(*self.execute_function_arguments), mins_secs(perf_counter()-init_time)])
 
     def execute_callback(self, result):
-        print(f'-     {self.job_name} {mins_secs(perf_counter() - result[2])} minutes', flush=True)
+        print(f'-     {self.job_name} {result[2]} minutes', flush=True)
 
     def error_callback(self, result):
         print(f'!     {self.job_name} process has raised an error {result}', flush=True)
