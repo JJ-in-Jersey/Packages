@@ -25,12 +25,10 @@ class JobManager(metaclass=Singleton):
         self.manager = Manager()
         self.queue = self.manager.JoinableQueue()
         self.results_lookup = self.manager.dict()
-        # qm = Process(target=QueueManager, args=(self.queue, self.results_lookup))
         self.qm = WaitForProcess(target=QueueManager, name='QueueManager', args=(self.queue, self.results_lookup, pool_size,))
         self.qm.start()
 
 
-# class QueueManager(metaclass=Singleton):
 class QueueManager:
 
     def __init__(self, q, lookup, size):
@@ -87,4 +85,3 @@ class Job:
         self.result_key = result_key
         self.execute_function = function
         self.execute_function_arguments = arguments
-        self.init_time = None
