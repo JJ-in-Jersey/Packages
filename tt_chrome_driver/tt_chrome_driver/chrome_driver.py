@@ -13,17 +13,19 @@ import zipfile
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support.ui import WebDriverWait
 
 from tt_os_abstraction.os_abstraction import env
 
 
 class ChromeDriver:
 
-    def get_driver(self, download_dir=None):
+    def set_driver(self, download_dir=None):
         if self.installed_driver_file.exists():
             prefs = {'download.prompt_for_download': False, 'safebrowsing.enabled': True,
                      'profile.default_content_setting_values.notifications': 2}
-            if download_dir is not None: prefs['download.default_directory'] = str(download_dir)
+            if download_dir is not None:
+                prefs['download.default_directory'] = str(download_dir)
             my_options = Options()
             my_options.add_experimental_option('prefs', prefs)
             my_options.add_experimental_option('excludeSwitches', ['enable-logging'])
@@ -34,14 +36,16 @@ class ChromeDriver:
             driver.minimize_window()
         else:
             raise Exception('chrome driver not found: ' + str(self.installed_driver_file))
-        return driver
+
+        self.driver = driver
+        self.WDW = WebDriverWait(driver, 100)
+        self.folder = download_dir
 
     def page_source(self, url):
-        driver = self.get_driver()
-        driver.get(url)
-        sleep(5)  # seconds
-        source = driver.page_source
-        driver.quit()
+        self.driver.get(url)
+        sleep(5)
+        source = self.driver.page_source
+        self.driver.quit()
         return source
 
     def check_driver(self):
@@ -56,13 +60,19 @@ class ChromeDriver:
         downloads = Path(env('user_profile')).joinpath('Downloads')
         file = downloads.joinpath(str(self.latest_stable_version) + '-' + self.lookup['download_url'].rpartition('/')[2])
         zip_file = zipfile.ZipFile(urlretrieve(self.lookup['download_url'], file)[0], 'r')
-        with zip_file as zf: zf.extractall(downloads)
+        with zip_file as zf:
+            zf.extractall(downloads)
         source = downloads.joinpath(list(filter(lambda s: 'LICENSE' not in s, zip_file.namelist()))[0])
         self.installed_driver_file = self.lookup['driver_folder'].joinpath('chromedriver' + self.lookup['driver_suffix'])
         replace(source, self.installed_driver_file)
         chmod(self.installed_driver_file, 777)
 
     def __init__(self):
+
+        self.driver = None
+        self.WDW = None
+        self.folder = None
+
         stable_version_url = 'https://googlechromelabs.github.io/chrome-for-testing/#stable'
         tree = Soup(requests.get(stable_version_url).text, 'html.parser')
         self.latest_stable_version = Version(tree.find(id='stable').find('p').find('code').text)
@@ -82,8 +92,10 @@ class ChromeDriver:
                         'driver_suffix': '-' + str(self.latest_stable_version),
                         'download_url': tree.find(id='stable').find(text='chromedriver').find_next(text='mac-arm64').find_next('code').text}
 
-        if platform.system() == "Darwin": self.lookup = apple_lookup
-        elif platform.system() == 'Windows': self.lookup = windows_lookup
+        if platform.system() == "Darwin":
+            self.lookup = apple_lookup
+        elif platform.system() == 'Windows':
+            self.lookup = windows_lookup
 
         driver_version_list = [self.lookup['version_extract'](file) for file in listdir(self.lookup['driver_folder'])]
         driver_version_list.sort()
@@ -99,4 +111,5 @@ class ChromeDriver:
         regex_pattern = '^[0-9\.]*$'
         chrome_version_list = [Version(s) for s in listdir(self.lookup['chrome_version_folder']) if re.search(regex_pattern, s) is not None]
         chrome_version_list.sort()
+
         self.installed_chrome_version = chrome_version_list[-1]
