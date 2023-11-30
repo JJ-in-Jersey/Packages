@@ -13,9 +13,9 @@ def newest_file(folder):
     return max(files, key=getctime) if len(files) else None
 
 
-def wait_for_new_file(folder, event_function, *event_args):
+def wait_for_new_file(folder, event_function):
     newest_before = newest_after = newest_file(folder)
-    event_function(event_args)
+    event_function()
     while newest_before == newest_after:
         sleep(0.1)
         newest_after = newest_file(folder)
