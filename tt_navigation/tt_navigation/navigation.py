@@ -27,11 +27,15 @@ def direction(start_coords, end_coords):
     lon_dist = distance(end_coords, corner)
 
     if lon_dist > lat_dist:
-        if lon_sign > 0: code = 'WE'
-        else: code = 'EW'
+        if lon_sign > 0:
+            code = 'WE'
+        else:
+            code = 'EW'
     else:
-        if lat_sign > 0: code = 'SN'
-        else: code = 'NS'
+        if lat_sign > 0:
+            code = 'SN'
+        else:
+            code = 'NS'
 
     return directionLookup[code]
 

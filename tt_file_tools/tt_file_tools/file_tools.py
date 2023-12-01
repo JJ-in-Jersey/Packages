@@ -9,7 +9,8 @@ from bs4 import BeautifulSoup as bs
 def newest_file(folder):
     types = ['*.txt', '*.csv', '*.xml']
     files = []
-    for t in types: files.extend(glob(join(folder, t)))
+    for t in types:
+        files.extend(glob(join(folder, t)))
     return max(files, key=getctime) if len(files) else None
 
 

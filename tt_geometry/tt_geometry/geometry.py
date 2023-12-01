@@ -5,11 +5,11 @@ from datetime import datetime as dt, timedelta as td
 def time_to_degrees(time): return time.hour * 15 + time.minute * 0.25
 
 
-def round_time_to(timestamp, mins): return dt.min + round((timestamp.to_pydatetime() - dt.min) / td(minutes=mins)) * td(minutes=mins)
+def round_time_to(timestamp, mins): return dt.min + round((timestamp.to_pydatetime() - dt.min) / td(minutes=mins)) * td(
+    minutes=mins)
 
 
 class Arc:
-
     columns = ['date_time', 'date', 'start', 'min', 'end', 'name']
     round_to = 5
     name = None
@@ -51,10 +51,17 @@ class NewArc:
 
 class RoundedArc(Arc):
 
-    def df_angles(self): return pd.Series([self.start, self.start_date, self.start_angle, self.min_angle, self.end_angle, Arc.name])
-    def fractional_arc_args(self): return tuple([self.start, self.start_date, self.start_angle, self.min_angle, self.end_angle, Arc.name])
-    def print_times(self): print(f's: {self.start_time} m: {self.min_time} e: {self.end_time}')
-    def print_angles(self): print(f's: {self.start_angle} m: {self.min_angle} e: {self.end_angle}')
+    def df_angles(self):
+        return pd.Series([self.start, self.start_date, self.start_angle, self.min_angle, self.end_angle, Arc.name])
+
+    def fractional_arc_args(self):
+        return tuple([self.start, self.start_date, self.start_angle, self.min_angle, self.end_angle, Arc.name])
+
+    def print_times(self):
+        print(f's: {self.start_time} m: {self.min_time} e: {self.end_time}')
+
+    def print_angles(self):
+        print(f's: {self.start_angle} m: {self.min_angle} e: {self.end_angle}')
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -85,7 +92,8 @@ class RoundedArc(Arc):
 
 class FractionalArc:
 
-    def df_angles(self): return pd.Series([self.start, self.start_date, self.start_angle, self.min_angle, self.end_angle, Arc.name])
+    def df_angles(self): return pd.Series(
+        [self.start, self.start_date, self.start_angle, self.min_angle, self.end_angle, Arc.name])
 
     # start start_date, start_angle, min_angle, end_angle, name
     def __init__(self, *args):
@@ -102,7 +110,8 @@ class FractionalArcStartDay(FractionalArc):
         super().__init__(*args)
 
         self.end_angle = 360
-        if 180 > self.min_angle >= 0: self.min_angle = None
+        if 180 > self.min_angle >= 0:
+            self.min_angle = None
 
 
 class FractionalArcEndDay(FractionalArc):
@@ -111,4 +120,5 @@ class FractionalArcEndDay(FractionalArc):
 
         self.start_date = self.start_date + td(days=1)
         self.start_angle = 0
-        if 360 > self.min_angle > 180: self.min_angle = None
+        if 360 > self.min_angle > 180:
+            self.min_angle = None

@@ -28,7 +28,8 @@ class Interpolator:
     XY_PLANE = Plane(Point3D(0, 0, 0), normal_vector=[0, 0, 1])
 
     def plot_segment(self, segment: Segment, color: str, style: str, weight: float):
-        if segment.length == 0: return
+        if segment.length == 0:
+            return
         points = np.array(segment.points).astype(float)
         self.ax.plot3D(points[:, 0], points[:, 1], points[:, 2], c=color, linestyle=style, linewidth=weight)
 
@@ -36,7 +37,8 @@ class Interpolator:
         self.ax.scatter(pt.x, pt.y, pt.z, c=color, marker=mark)
 
     def show_axes(self):
-        if self.ax is None: self.ax = plot.axes(projection="3d")
+        if self.ax is None:
+            self.ax = plot.axes(projection="3d")
         xi = np.linspace(min(self.x_limits), max(self.x_limits), Interpolator.mesh_density)
         yi = np.linspace(min(self.y_limits), max(self.y_limits), Interpolator.mesh_density)
         XI, YI = np.meshgrid(xi, yi)
@@ -55,15 +57,19 @@ class Interpolator:
         plot.show(block=True)
 
     def show_interpolation_point(self):
-        if self.input_point is None: return ValueError
-        if self.ax is None: self.ax = plot.axes(projection="3d")
+        if self.input_point is None:
+            return ValueError
+        if self.ax is None:
+            self.ax = plot.axes(projection="3d")
         self.plot_point(self.input_point, 'black', 'o')
         plot.show(block=False)
         plot.pause(0.001)
 
     def show_interpolated_point(self):
-        if self.output_point is None: return ValueError
-        if self.ax is None: self.ax = plot.axes(projection="3d")
+        if self.output_point is None:
+            return ValueError
+        if self.ax is None:
+            self.ax = plot.axes(projection="3d")
         self.plot_point(self.output_point, 'red', 'o')
         self.plot_segment(Segment(self.input_point, self.output_point), 'black', '--', 0.25)
         plot.show(block=False)
@@ -74,7 +80,8 @@ class Interpolator:
         plot.close('all')
 
     def set_interpolation_point(self, pt: Point3D):
-        if not isinstance(pt, Point3D): raise TypeError
+        if not isinstance(pt, Point3D):
+            raise TypeError
         self.input_point = pt.scale(Interpolator.scale, Interpolator.scale, 1)
 
     def get_interpolated_point(self):
@@ -91,9 +98,11 @@ class Interpolator:
         self.initialize([*points][0])
 
     def initialize(self, pts: Point3D):
-        if len(pts) < 2: raise ValueError
+        if len(pts) < 2:
+            raise ValueError
         for pt in pts:
-            if not isinstance(pt, Point3D): raise TypeError
+            if not isinstance(pt, Point3D):
+                raise TypeError
 
         if len(pts) == 2:
             self.shape = Interpolator.LINE
