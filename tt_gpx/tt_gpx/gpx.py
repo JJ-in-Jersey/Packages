@@ -4,38 +4,39 @@ from os import makedirs
 
 
 class Waypoint:
-
     waypoints_folder = None
 
-    type = {'TideStationWP': 'Symbol-Spot-Yellow', 'CurrentStationWP': 'Symbol-Spot-Orange', 'SurrogateWP': 'Symbol-Pin-Orange', 'LocationWP': 'Symbol-Spot-Green', 'InterpolatedWP': 'Symbol-Spot-Blue', 'InterpolatedDataWP': 'Symbol-Spot-Black'}
+    type = {'TideStationWP': 'Symbol-Spot-Yellow', 'CurrentStationWP': 'Symbol-Spot-Orange',
+            'SurrogateWP': 'Symbol-Pin-Orange', 'LocationWP': 'Symbol-Spot-Green', 'InterpolatedWP': 'Symbol-Spot-Blue',
+            'InterpolatedDataWP': 'Symbol-Spot-Black'}
     ordinal_number = 0
     index_lookup = {}
 
     def __init__(self, gpxtag):
-
         self.lat = round(float(gpxtag.attrs['lat']), 4)
         self.lon = round(float(gpxtag.attrs['lon']), 4)
-        self.index = Waypoint.ordinal_number
+        self.index = self.ordinal_number
         self.coords = tuple([self.lat, self.lon])
         self.symbol = gpxtag.sym.text
         self.name = gpxtag.find('name').text.strip('\n')
-        self.unique_name = self.name.split(',')[0].split('(')[0].replace('.', '').strip().replace(" ", "_") + '_' + str(self.index)
+        self.unique_name = self.name.split(',')[0].split('(')[0].replace('.', '').strip().replace(" ", "_") + '_' + str(
+            self.index)
         self.prev_edge = None
         self.next_edge = None
 
         self.folder = self.waypoints_folder.joinpath(self.unique_name)
         makedirs(self.folder, exist_ok=True)
 
-        Waypoint.index_lookup[Waypoint.ordinal_number] = self
-        Waypoint.ordinal_number += 1
+        self.index_lookup[self.index] = self
+        self.ordinal_number += 1
 
 
-class LocationWP(Waypoint):  # waypoints that define a location
+class LocationWP(Waypoint):
     def __init__(self, *args):
         super().__init__(*args)
 
 
-class DownloadedDataWP(Waypoint):  # waypoints that get NOAA data and store it
+class DownloadedDataWP(Waypoint):
 
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
@@ -66,7 +67,7 @@ class CurrentStationWP(SplineFitWP):
         super().__init__(gpxtag)
 
 
-class InterpolatedDataWP(SplineFitWP):  # CurrentWP that downloads data used for interpolation
+class InterpolatedDataWP(SplineFitWP):
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
 
@@ -76,7 +77,7 @@ class InterpolatedWP(SplineFitWP):  # Not really a data waypoint but stores data
         super().__init__(gpxtag)
 
 
-class Edge:  # connection between calculation waypoints
+class Edge:  # connection between waypoints with current data
 
     elapsed_time_folder = None
     edge_range = None
@@ -86,9 +87,12 @@ class Edge:  # connection between calculation waypoints
         self.elapsed_time_data = None
         self.length = 0
 
-        if start_wp == end_wp: raise IndexError
-        if not isinstance(start_wp, CurrentStationWP) and not isinstance(start_wp, InterpolatedWP): raise TypeError
-        if not isinstance(end_wp, CurrentStationWP) and not isinstance(end_wp, InterpolatedWP): raise TypeError
+        if start_wp == end_wp:
+            raise IndexError
+        if not isinstance(start_wp, CurrentStationWP) and not isinstance(start_wp, InterpolatedWP):
+            raise TypeError
+        if not isinstance(end_wp, CurrentStationWP) and not isinstance(end_wp, InterpolatedWP):
+            raise TypeError
 
         self.unique_name = '[' + str(start_wp.index) + '-' + str(end_wp.index) + ']'
         self.start = start_wp
@@ -96,7 +100,8 @@ class Edge:  # connection between calculation waypoints
         start_wp.next_edge = self
         end_wp.prev_edge = self
 
-        if Edge.elapsed_time_folder is None: raise TypeError
+        if Edge.elapsed_time_folder is None:
+            raise TypeError
         self.folder = Edge.elapsed_time_folder.joinpath(self.unique_name)
         makedirs(self.folder, exist_ok=True)
 
@@ -113,7 +118,7 @@ class Path:
 
     def path_integrity(self):
         for i, edge in enumerate(self.edges[:-1]):
-            if not edge.end == self.edges[i+1].start:
+            if not edge.end == self.edges[i + 1].start:
                 raise RecursionError
 
     def __init__(self, edges):
@@ -136,37 +141,45 @@ class Route:
         self.waypoints = None
         self.filepath = filepath
 
-        with open(filepath, 'r') as f: gpxfile = f.read()
+        with open(filepath, 'r') as f:
+            gpxfile = f.read()
         tree = Soup(gpxfile, 'xml', preserve_whitespace_tags=['name', 'type', 'sym', 'text'])
         self.write_clean_gpx(filepath, tree)
 
         # build ordered list of all waypoints
         waypoints = []
         for tag in tree.find_all('rtept'):
-            if tag.sym.text == Waypoint.type['TideStationWP']: waypoints.append(TideStationWP(tag))
-            elif tag.sym.text == Waypoint.type['CurrentStationWP']: waypoints.append(CurrentStationWP(tag))
-            elif tag.sym.text == Waypoint.type['SurrogateWP']: waypoints.append(CurrentStationWP(tag))
-            elif tag.sym.text == Waypoint.type['LocationWP']: waypoints.append(LocationWP(tag))
-            elif tag.sym.text == Waypoint.type['InterpolatedWP']: waypoints.append(InterpolatedWP(tag))
-            elif tag.sym.text == Waypoint.type['InterpolatedDataWP']: waypoints.append(InterpolatedDataWP(tag))
+            if tag.sym.text == Waypoint.type['TideStationWP']:
+                waypoints.append(TideStationWP(tag))
+            elif tag.sym.text == Waypoint.type['CurrentStationWP']:
+                waypoints.append(CurrentStationWP(tag))
+            elif tag.sym.text == Waypoint.type['SurrogateWP']:
+                waypoints.append(CurrentStationWP(tag))
+            elif tag.sym.text == Waypoint.type['LocationWP']:
+                waypoints.append(LocationWP(tag))
+            elif tag.sym.text == Waypoint.type['InterpolatedWP']:
+                waypoints.append(InterpolatedWP(tag))
+            elif tag.sym.text == Waypoint.type['InterpolatedDataWP']:
+                waypoints.append(InterpolatedDataWP(tag))
         self.waypoints = waypoints
 
         # create interpolation groups
         self.interpolation_groups = []
         interpolated_wps = [wp for wp in waypoints if isinstance(wp, InterpolatedWP)]
         for wp in interpolated_wps:
-            group= [wp]
-            wp = Waypoint.index_lookup[wp.index+1]
+            group = [wp]
+            wp = Waypoint.index_lookup[wp.index + 1]
             while isinstance(wp, InterpolatedDataWP):
                 group.append(wp)
-                wp = Waypoint.index_lookup[wp.index+1]
+                wp = Waypoint.index_lookup[wp.index + 1]
             self.interpolation_groups.append(group)
 
         # create aggregated path from waypoints
-        self.elapsed_time_wps = [wp for wp in waypoints if isinstance(wp, CurrentStationWP) or isinstance(wp, InterpolatedWP)]
+        self.elapsed_time_wps = [wp for wp in waypoints if
+                                 isinstance(wp, CurrentStationWP) or isinstance(wp, InterpolatedWP)]
         self.elapsed_time_edges = []
         for i, wp in enumerate(self.elapsed_time_wps[:-1]):
-            self.elapsed_time_edges.append(Edge(wp, self.elapsed_time_wps[i+1]))
+            self.elapsed_time_edges.append(Edge(wp, self.elapsed_time_wps[i + 1]))
 
         self.elapsed_time_path = Path(self.elapsed_time_edges)
 
