@@ -5,10 +5,9 @@ from os import makedirs
 
 class Waypoint:
 
-    current_folder = None
-    velocity_folder = None
+    folder = None
 
-    type = {'CurrentStationWP': 'Symbol-Spot-Orange', 'SurrogateWP': 'Symbol-Pin-Orange', 'LocationWP': 'Symbol-Spot-Green', 'InterpolatedWP': 'Symbol-Spot-Blue', 'InterpolatedDataWP': 'Symbol-Spot-Black'}
+    type = {'TideStationWP': 'Symbol-Spot-Yellow', 'CurrentStationWP': 'Symbol-Spot-Orange', 'SurrogateWP': 'Symbol-Pin-Orange', 'LocationWP': 'Symbol-Spot-Green', 'InterpolatedWP': 'Symbol-Spot-Blue', 'InterpolatedDataWP': 'Symbol-Spot-Black'}
     ordinal_number = 0
     index_lookup = {}
 
@@ -24,26 +23,10 @@ class Waypoint:
         self.prev_edge = None
         self.next_edge = None
 
+        makedirs(self.folder, exist_ok=True)
+
         Waypoint.index_lookup[Waypoint.ordinal_number] = self
         Waypoint.ordinal_number += 1
-
-
-class FileWP(Waypoint):  # used in battery validation
-    def __init__(self, filepath):
-        with open(filepath, 'r') as f: gpxfile = f.read()
-        gpxtag = Soup(gpxfile, 'xml', preserve_whitespace_tags=['name', 'type', 'sym', 'text']).find('wpt')
-        self.noaa_url = gpxtag.find('link').attrs['href'] if gpxtag.link else None
-        self.code = str(gpxtag.find('link').find('text').text).split(' ')[0]
-        super().__init__(gpxtag)
-
-
-class TideWP(FileWP):  # used in battery validation
-    def __init__(self, *args):
-        super().__init__(*args)
-        self.folder = Waypoint.current_folder.joinpath(self.unique_name)
-        makedirs(self.folder, exist_ok=True)
-        self.downloaded_data_filepath = self.folder.joinpath(self.unique_name + '_downloaded_data')
-        self.final_data_filepath = self.folder.joinpath(self.unique_name + '_final_data_file')
 
 
 class LocationWP(Waypoint):  # waypoints that define a location
@@ -51,7 +34,7 @@ class LocationWP(Waypoint):  # waypoints that define a location
         super().__init__(*args)
 
 
-class DataWP(Waypoint):  # waypoints that get NOAA data and store it
+class DownloadDataWP(Waypoint):  # waypoints that get NOAA data and store it
 
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
@@ -60,32 +43,31 @@ class DataWP(Waypoint):  # waypoints that get NOAA data and store it
             self.noaa_url = gpxtag.find('link').attrs['href']
             self.code = gpxtag.find('link').find('text').text.split(' ')[0]
 
-        self.folder = Waypoint.velocity_folder.joinpath(self.unique_name)
-        makedirs(self.folder, exist_ok=True)
-
-        self.downloaded_current_path = self.folder.joinpath(self.unique_name + '_downloaded_current_data')
-        self.spline_fit_current_path = self.folder.joinpath(self.unique_name + '_spline_fit_current_data')
-        self.downloaded_tide_path = self.folder.joinpath(self.unique_name + '_downloaded_tide_data')
-
-        self.downloaded_current_data = None
-        self.spline_fit_current_data = None
-        self.downloaded_tide_data = None
+        self.downloaded_path = self.folder.joinpath(self.unique_name + '_downloaded_data')
+        self.downloaded_data = None
 
 
-class CurrentStationWP(DataWP):  # CurrentWP who's data is used to calculate elapsed time
+class TideStationWP(DownloadDataWP):
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
 
 
-class InterpolatedDataWP(DataWP):  # CurrentWP that downloads data used for interpolation
+class CurrentStationWP(DownloadDataWP):
+    def __init__(self, gpxtag):
+        super().__init__(gpxtag)
+
+        self.spline_fit_path = self.folder.joinpath(self.unique_name + '_spline_fit_data')
+        self.spline_fit_data = None
+
+
+class InterpolatedDataWP(DownloadDataWP):  # CurrentWP that downloads data used for interpolation
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
 
 
-class InterpolatedWP(DataWP):  # CurrentCalculationWP that calculates data used to calculate elapsed time
-
-    def __init__(self, gpxtag):
-        super().__init__(gpxtag)
+class InterpolatedWP(DownloadDataWP):  # Not really a data waypoint but stores the aprox data in the downloaded data path
+    def __init__(self):
+        super().__init__()
 
 
 class Edge:  # connection between calculation waypoints
@@ -115,7 +97,7 @@ class Edge:  # connection between calculation waypoints
         wp1 = start_wp
         while not wp1 == end_wp:
             wp2 = Waypoint.index_lookup[wp1.index + 1]
-            while isinstance(wp2, InterpolatedDataWP):
+            while isinstance(wp2, InterpolatedDataWP) or isinstance(wp2, TideStationWP):
                 wp2 = Waypoint.index_lookup[wp2.index + 1]
             self.length += round(distance(wp1.coords, wp2.coords), 4)
             wp1 = wp2
@@ -155,7 +137,8 @@ class Route:
         # build ordered list of all waypoints
         waypoints = []
         for tag in tree.find_all('rtept'):
-            if tag.sym.text == Waypoint.type['CurrentStationWP']: waypoints.append(CurrentStationWP(tag))
+            if tag.sym.text == Waypoint.type['TideStationWP']: waypoints.append(TideStationWP(tag))
+            elif tag.sym.text == Waypoint.type['CurrentStationWP']: waypoints.append(CurrentStationWP(tag))
             elif tag.sym.text == Waypoint.type['SurrogateWP']: waypoints.append(CurrentStationWP(tag))
             elif tag.sym.text == Waypoint.type['LocationWP']: waypoints.append(LocationWP(tag))
             elif tag.sym.text == Waypoint.type['InterpolatedWP']: waypoints.append(InterpolatedWP(tag))
