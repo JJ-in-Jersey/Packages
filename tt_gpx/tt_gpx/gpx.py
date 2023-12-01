@@ -5,7 +5,7 @@ from os import makedirs
 
 class Waypoint:
 
-    folder = None
+    waypoints_folder = None
 
     type = {'TideStationWP': 'Symbol-Spot-Yellow', 'CurrentStationWP': 'Symbol-Spot-Orange', 'SurrogateWP': 'Symbol-Pin-Orange', 'LocationWP': 'Symbol-Spot-Green', 'InterpolatedWP': 'Symbol-Spot-Blue', 'InterpolatedDataWP': 'Symbol-Spot-Black'}
     ordinal_number = 0
@@ -23,6 +23,7 @@ class Waypoint:
         self.prev_edge = None
         self.next_edge = None
 
+        self.folder = self.waypoints_folder.joinpath(self.unique_name)
         makedirs(self.folder, exist_ok=True)
 
         Waypoint.index_lookup[Waypoint.ordinal_number] = self
@@ -34,7 +35,7 @@ class LocationWP(Waypoint):  # waypoints that define a location
         super().__init__(*args)
 
 
-class DownloadDataWP(Waypoint):  # waypoints that get NOAA data and store it
+class DownloadedDataWP(Waypoint):  # waypoints that get NOAA data and store it
 
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
@@ -47,12 +48,7 @@ class DownloadDataWP(Waypoint):  # waypoints that get NOAA data and store it
         self.downloaded_data = None
 
 
-class TideStationWP(DownloadDataWP):
-    def __init__(self, gpxtag):
-        super().__init__(gpxtag)
-
-
-class CurrentStationWP(DownloadDataWP):
+class SplineFitWP(DownloadedDataWP):
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
 
@@ -60,14 +56,24 @@ class CurrentStationWP(DownloadDataWP):
         self.spline_fit_data = None
 
 
-class InterpolatedDataWP(DownloadDataWP):  # CurrentWP that downloads data used for interpolation
+class TideStationWP(DownloadedDataWP):
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
 
 
-class InterpolatedWP(DownloadDataWP):  # Not really a data waypoint but stores the aprox data in the downloaded data path
-    def __init__(self):
-        super().__init__()
+class CurrentStationWP(SplineFitWP):
+    def __init__(self, gpxtag):
+        super().__init__(gpxtag)
+
+
+class InterpolatedDataWP(SplineFitWP):  # CurrentWP that downloads data used for interpolation
+    def __init__(self, gpxtag):
+        super().__init__(gpxtag)
+
+
+class InterpolatedWP(SplineFitWP):  # Not really a data waypoint but stores data in the downloaded data path
+    def __init__(self, gpxtag):
+        super().__init__(gpxtag)
 
 
 class Edge:  # connection between calculation waypoints
