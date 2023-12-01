@@ -5,7 +5,7 @@ from os import makedirs
 
 class Waypoint:
 
-    folder = None
+    waypoints_folder = None
 
     type = {'TideStationWP': 'Symbol-Spot-Yellow', 'CurrentStationWP': 'Symbol-Spot-Orange', 'SurrogateWP': 'Symbol-Pin-Orange', 'LocationWP': 'Symbol-Spot-Green', 'InterpolatedWP': 'Symbol-Spot-Blue', 'InterpolatedDataWP': 'Symbol-Spot-Black'}
     ordinal_number = 0
@@ -23,6 +23,7 @@ class Waypoint:
         self.prev_edge = None
         self.next_edge = None
 
+        self.folder = Waypoint.waypoints_folder.joinpath(self.unique_name)
         makedirs(self.folder, exist_ok=True)
 
         Waypoint.index_lookup[Waypoint.ordinal_number] = self
