@@ -93,9 +93,9 @@ class Edge:  # connection between waypoints with current data
 
         if start_wp == end_wp:
             raise IndexError
-        if not isinstance(start_wp, CurrentStationWP) and not isinstance(start_wp, InterpolatedWP):
+        if not isinstance(start_wp, CurrentStationWP) and not isinstance(start_wp, InterpolatedWP) and not isinstance(start_wp, SurrogateWP):
             raise TypeError
-        if not isinstance(end_wp, CurrentStationWP) and not isinstance(end_wp, InterpolatedWP):
+        if not isinstance(end_wp, CurrentStationWP) and not isinstance(end_wp, InterpolatedWP) and not isinstance(end_wp, SurrogateWP):
             raise TypeError
 
         self.unique_name = '[' + str(start_wp.index) + '-' + str(end_wp.index) + ']'
