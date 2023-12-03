@@ -61,9 +61,10 @@ class TideStationWP(DownloadedDataWP):
         super().__init__(gpxtag)
 
 
-class SurrogateWP(DownloadedDataWP):
+class SurrogateWP(SplineFitWP):
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
+
 
 class CurrentStationWP(SplineFitWP):
     def __init__(self, gpxtag):
