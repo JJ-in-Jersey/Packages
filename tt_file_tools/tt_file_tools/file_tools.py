@@ -57,7 +57,7 @@ class XMLFile:
 
 def write_df(df, path):
     df.to_csv(path.with_suffix('.csv'), index=False)
-    excel_size = 1000000
+    excel_size = 950000
     if len(df) > excel_size:
         num_of_spreadsheets = len(df)/excel_size
         whole_spreadsheets = len(df)//excel_size
