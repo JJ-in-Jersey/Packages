@@ -5,13 +5,12 @@ from datetime import datetime as dt, timedelta as td
 def time_to_degrees(time): return time.hour * 15 + time.minute * 0.25
 
 
-def round_time_to(timestamp, mins): return dt.min + round((timestamp.to_pydatetime() - dt.min) / td(minutes=mins)) * td(
-    minutes=mins)
+def round_time_to(timestamp, mins): return dt.min + round((timestamp.to_pydatetime() - dt.min) / td(minutes=mins)) * td(minutes=mins)
 
 
 class Arc:
     columns = ['date_time', 'date', 'start', 'min', 'end', 'name', 'elapsed_time']
-    round_to = 5
+    round_to = 15
     name = None
     TIMESTEP = 15
 
