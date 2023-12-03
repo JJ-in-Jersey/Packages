@@ -181,8 +181,7 @@ class Route:
             self.interpolation_groups.append(group)
 
         # create aggregated path from waypoints
-        self.elapsed_time_wps = [wp for wp in waypoints if
-                                 isinstance(wp, CurrentStationWP) or isinstance(wp, InterpolatedWP)]
+        self.elapsed_time_wps = [wp for wp in waypoints if isinstance(wp, CurrentStationWP) or isinstance(wp, SurrogateWP) or isinstance(wp, InterpolatedWP)]
         self.elapsed_time_edges = []
         for i, wp in enumerate(self.elapsed_time_wps[:-1]):
             self.elapsed_time_edges.append(Edge(wp, self.elapsed_time_wps[i + 1]))
