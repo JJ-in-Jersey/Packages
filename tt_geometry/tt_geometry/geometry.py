@@ -10,12 +10,15 @@ def round_time_to(timestamp, mins): return dt.min + round((timestamp.to_pydateti
 
 
 class Arc:
-    columns = ['date_time', 'date', 'start', 'min', 'end', 'name']
+    columns = ['date_time', 'date', 'start', 'min', 'end', 'name', 'elapsed_time']
     round_to = 5
     name = None
+    TIMESTEP = 15
 
     def __init__(self, *args):
         self.tts = args[0]
+        self.elapsed_time = pd.to_timedelta(self.tts * Arc.TIMESTEP, unit='s').round('min')
+
         self.start_index = args[1]
         self.min_index = args[2]
         self.end_index = args[3]
@@ -28,40 +31,13 @@ class Arc:
         self.base_end = pd.to_datetime(self.end_index, unit='s').round('min')
 
 
-class NewArc:
-
-    @staticmethod
-    def time_to_degrees(time): return time.hour * 15 + time.minute * 0.25
-
-    def __init__(self, lookup: dict):
-        self.name = lookup['name']
-        self.speed = lookup['speed']
-        self.direction = lookup['direction']
-        self.start_time = pd.to_datetime(lookup['start_index']).time()
-        self.start_date = pd.to_datetime(lookup['start_index']).date()
-        self.time_of_min = pd.to_datetime(lookup['index_of_min']).time()
-        self.date_of_min = pd.to_datetime(lookup['index_of_min']).date()
-        self.end_time = pd.to_datetime(lookup['end_index']).time()
-        self.end_date = pd.to_datetime(lookup['end_index']).date()
-        self.min_transit_time = lookup['min_transit_time']
-        self.start_angle = time_to_degrees(self.start_time)
-        self.min_angle = time_to_degrees(self.time_of_min)
-        self.end_angle = time_to_degrees(self.end_time)
-
-
 class RoundedArc(Arc):
 
     def df_angles(self):
-        return pd.Series([self.start, self.start_date, self.start_angle, self.min_angle, self.end_angle, Arc.name])
+        return pd.Series([self.start, self.start_date, self.start_angle, self.min_angle, self.end_angle, Arc.name, self.elapsed_time])
 
     def fractional_arc_args(self):
-        return tuple([self.start, self.start_date, self.start_angle, self.min_angle, self.end_angle, Arc.name])
-
-    def print_times(self):
-        print(f's: {self.start_time} m: {self.min_time} e: {self.end_time}')
-
-    def print_angles(self):
-        print(f's: {self.start_angle} m: {self.min_angle} e: {self.end_angle}')
+        return tuple([self.start, self.start_date, self.start_angle, self.min_angle, self.end_angle, Arc.name, self.elapsed_time])
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -93,9 +69,9 @@ class RoundedArc(Arc):
 class FractionalArc:
 
     def df_angles(self): return pd.Series(
-        [self.start, self.start_date, self.start_angle, self.min_angle, self.end_angle, Arc.name])
+        [self.start, self.start_date, self.start_angle, self.min_angle, self.end_angle, Arc.name, self.elapsed_time])
 
-    # start start_date, start_angle, min_angle, end_angle, name
+    # start start_date, start_angle, min_angle, end_angle, name, elapsed_time
     def __init__(self, *args):
         self.start = args[0]
         self.start_date = args[1]
@@ -103,6 +79,7 @@ class FractionalArc:
         self.min_angle = args[3]
         self.end_angle = args[4]
         self.name = args[5]
+        self.elapsed_time = args[6]
 
 
 class FractionalArcStartDay(FractionalArc):
