@@ -61,6 +61,10 @@ class TideStationWP(DownloadedDataWP):
         super().__init__(gpxtag)
 
 
+class SurrogateWP(DownloadedDataWP):
+    def __init__(self, gpxtag):
+        super().__init__(gpxtag)
+
 class CurrentStationWP(SplineFitWP):
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
@@ -150,6 +154,8 @@ class Route:
         for tag in tree.find_all('rtept'):
             if tag.sym.text == Waypoint.type['TideStationWP']:
                 waypoints.append(TideStationWP(tag))
+            elif tag.sym.text == Waypoint.type['SurrogateWP']:
+                waypoints.append(SurrogateWP(tag))
             elif tag.sym.text == Waypoint.type['CurrentStationWP']:
                 waypoints.append(CurrentStationWP(tag))
             elif tag.sym.text == Waypoint.type['SurrogateWP']:
