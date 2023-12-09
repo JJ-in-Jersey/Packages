@@ -56,6 +56,8 @@ class RoundedArc(Arc):
         self.end_angle = time_to_degrees(self.end)
         self.min_angle = time_to_degrees(self.min)
 
+        print(self.min, self.min_angle)
+
         if self.start_date != self.end_date:
             if self.end_angle == 0:
                 self.end_angle = 360
