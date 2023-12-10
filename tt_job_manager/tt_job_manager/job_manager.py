@@ -21,7 +21,7 @@ class JobManager(metaclass=Singleton):
     def stop_queue():
         semaphore.off('QueueManager')
 
-    def __init__(self, pool_size=None):
+    def __init__(self, pool_size=cpu_count()):
         self.manager = Manager()
         self.queue = self.manager.JoinableQueue()
         self.results_lookup = self.manager.dict()
@@ -32,7 +32,7 @@ class JobManager(metaclass=Singleton):
 class QueueManager:
 
     def __init__(self, q, lookup, size):
-        print(f'+     queue manager (Pool size = {cpu_count()})\n', flush=True)
+        print(f'+     queue manager (Pool size = {size})\n', flush=True)
         semaphore.on(self.__class__.__name__)
         results = {}
         with Pool(size) as p:
