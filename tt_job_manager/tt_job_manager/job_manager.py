@@ -7,50 +7,55 @@ from time import sleep, perf_counter
 
 class JobManager(metaclass=Singleton):
 
-    def put(self, job):
-        self.queue.put(job)
+    manager = None
+    queue = None
+    results_key_dict = None
+
+    @staticmethod
+    def put(job):
+        JobManager.queue.put(job)
         return job.result_key
 
-    def get(self, key):
-        return self.results_lookup[key]
+    @staticmethod
+    def get(key):
+        return JobManager.results_key_dict.pop(key)
 
-    def wait(self):
-        self.queue.join()
+    @staticmethod
+    def wait():
+        JobManager.queue.join()
 
     @staticmethod
     def stop_queue():
         semaphore.off('QueueManager')
 
     def __init__(self, pool_size=cpu_count()):
-        self.manager = Manager()
-        self.queue = self.manager.JoinableQueue()
-        self.results_lookup = self.manager.dict()
-        self.qm = WaitForProcess(target=QueueManager, name='QueueManager', args=(self.queue, self.results_lookup, pool_size,))
+        JobManager.manager = Manager()
+        JobManager.queue = JobManager.manager.JoinableQueue()
+        JobManager.results_key_dict = JobManager.manager.dict()
+        self.qm = WaitForProcess(target=QueueManager, name='QueueManager', args=(JobManager.queue, JobManager.results_key_dict, pool_size,))
         self.qm.start()
 
 
 class QueueManager:
 
-    def __init__(self, q, lookup, size):
+    def __init__(self, q, results_dict, size):
         print(f'+     queue manager (Pool size = {size})\n', flush=True)
         semaphore.on(self.__class__.__name__)
-        results = {}
+        job_key_dict = {}
         with Pool(size) as p:
-            while semaphore.is_on(self.__class__.__name__):
-                # pull submitted jobs and start them in the pool
+            while semaphore.is_on(self.__class__.__name__):  # pull submitted jobs and start them in the pool
                 while not q.empty():
-                    job = q.get()
-                    results[job] = p.apply_async(job.execute, callback=job.execute_callback, error_callback=job.error_callback)
+                    job = q.get()  # retrieve the job, launch the job
+                    job_key_dict[job.result_key] = p.apply_async(job.execute, callback=job.execute_callback, error_callback=job.error_callback)
 
                 # check results for complete job and put them on external lookup
-                jobs = list(results.keys())
-                for job in jobs:
-                    if results[job].ready():
-                        result = results[job].get()
-                        lookup[result[0]] = result[1]  # results format is tuple of (key, data, init time)
+                for key in list(job_key_dict.keys()):
+                    if job_key_dict[key].ready():
+                        job = job_key_dict.pop(key)
+                        job_result = job.get()
+                        results_dict[key] = job_result[1]  # results format is tuple of (key, data, init time)
                         q.task_done()
-                        del results[job]
-                sleep(0.01)
+                sleep(1)
         print(f'-     queue manager\n', flush=True)
 
 
