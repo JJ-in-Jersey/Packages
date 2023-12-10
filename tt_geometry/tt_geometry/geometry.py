@@ -9,7 +9,7 @@ def round_time_to(timestamp, mins): return dt.min + round((timestamp.to_pydateti
 
 
 class Arc:
-    columns = ['date_time', 'date', 'start', 'min', 'end', 'name', 'elapsed_time']
+    columns = ['date_time', 'date', 'start', 'min', 'end', 'name', 'elapsed_time', 'start_datetime', 'min_datetime', 'end_datetime']
     round_to = 15
     name = None
     TIMESTEP = 15
@@ -55,8 +55,6 @@ class RoundedArc(Arc):
         self.start_angle = time_to_degrees(self.start)
         self.end_angle = time_to_degrees(self.end)
         self.min_angle = time_to_degrees(self.min)
-
-        print(self.min, self.min_angle)
 
         if self.start_date != self.end_date:
             if self.end_angle == 0:
