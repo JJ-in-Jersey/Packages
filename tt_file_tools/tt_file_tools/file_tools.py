@@ -3,7 +3,7 @@ from glob import glob
 from os.path import join, getctime
 import numpy as np
 import pandas as pd
-from bs4 import BeautifulSoup as bs
+from bs4 import BeautifulSoup as Soup
 
 
 def newest_file(folder):
@@ -23,12 +23,20 @@ def wait_for_new_file(folder, event_function):
     return newest_after
 
 
+# def read_df(path):
+#     return pd.read_csv(path.with_suffix('.csv'), engine='c', header='infer')
+#
+#
+# def shrink_df(path):
+#     return shrink_dataframe(pd.read_csv(path.with_suffix('.csv'), engine='c', header='infer'))
+
+
 def read_df(path):
-    return pd.read_csv(path.with_suffix('.csv'), engine='c', header='infer')
-
-
-def shrink_df(path):
-    return shrink_dataframe(pd.read_csv(path.with_suffix('.csv'), engine='c', header='infer'))
+    return pd.read_csv(path.with_suffix('.csv'), header='infer')
+#
+#
+# def shrink_df(path):
+#     return shrink_dataframe(pd.read_csv(path.with_suffix('.csv'), engine='c', header='infer'))
 
 
 def read_arr(path): return np.load(path.with_suffix('.npy'))
@@ -52,7 +60,7 @@ def csv_npy_file_exists(path): return True if path.with_suffix('.csv').exists() 
 class XMLFile:
     def __init__(self, filepath):
         with open(filepath, 'r') as f:
-            self.tree = bs(f, "html.parser")
+            self.tree = Soup(f, "html.parser")
 
 
 def write_df(df, path):

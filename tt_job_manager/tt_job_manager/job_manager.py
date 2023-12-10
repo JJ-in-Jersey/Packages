@@ -48,10 +48,9 @@ class QueueManager:
                     if results[job].ready():
                         result = results[job].get()
                         lookup[result[0]] = result[1]  # results format is tuple of (key, data, init time)
-                        del results[job]
                         q.task_done()
-
-                sleep(0.05)
+                        del results[job]
+                sleep(0.01)
         print(f'-     queue manager\n', flush=True)
 
 
