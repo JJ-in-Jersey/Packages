@@ -30,7 +30,7 @@ class Arc:
         self.start_day_arc = None
         self.end_day_arc = None
         self.name = Arc.name
-        self.elapsed_time = args[6].split(' ')[2][:-3]
+        self.elapsed_time = str(args[6]).split(' ')[2][:-3]
 
         self.start_datetime = dtt.datetime(args[0])
         self.start_date = self.start_datetime.date()
