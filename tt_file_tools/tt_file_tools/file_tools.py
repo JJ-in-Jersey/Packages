@@ -23,20 +23,8 @@ def wait_for_new_file(folder, event_function):
     return newest_after
 
 
-# def read_df(path):
-#     return pd.read_csv(path.with_suffix('.csv'), engine='c', header='infer')
-#
-#
-# def shrink_df(path):
-#     return shrink_dataframe(pd.read_csv(path.with_suffix('.csv'), engine='c', header='infer'))
-
-
 def read_df(path):
     return pd.read_csv(path.with_suffix('.csv'), header='infer')
-#
-#
-# def shrink_df(path):
-#     return shrink_dataframe(pd.read_csv(path.with_suffix('.csv'), engine='c', header='infer'))
 
 
 def read_arr(path): return np.load(path.with_suffix('.npy'))
@@ -65,16 +53,16 @@ class XMLFile:
 
 def write_df(df, path):
     df.to_csv(path.with_suffix('.csv'), index=False)
-    excel_size = 950000
-    if len(df) > excel_size:
-        num_of_spreadsheets = len(df)/excel_size
-        whole_spreadsheets = len(df)//excel_size
+    spreadsheet_limit = 950000
+    if len(df) > spreadsheet_limit:
+        num_of_spreadsheets = len(df)/spreadsheet_limit
+        whole_spreadsheets = len(df)//spreadsheet_limit
         for i in range(whole_spreadsheets):
-            temp = df.loc[i*excel_size: i*excel_size+excel_size-1]
-            temp.to_csv(path.parent.joinpath(path.name+'_excel_'+str(i)).with_suffix('.csv'), index=False)
+            temp = df.loc[i*spreadsheet_limit: i*spreadsheet_limit+spreadsheet_limit-1]
+            temp.to_csv(path.parent.joinpath(path.name+'_spreadsheet_'+str(i)).with_suffix('.csv'), index=False)
         if num_of_spreadsheets > whole_spreadsheets:
-            temp = df.loc[whole_spreadsheets*excel_size:]
-            temp.to_csv(path.parent.joinpath(path.name+'_excel_'+str(whole_spreadsheets)).with_suffix('.csv'), index=False)
+            temp = df.loc[whole_spreadsheets*spreadsheet_limit:]
+            temp.to_csv(path.parent.joinpath(path.name+'_spreadsheet_'+str(whole_spreadsheets)).with_suffix('.csv'), index=False)
 
 
 def shrink_dataframe(dataframe: pd.DataFrame):
