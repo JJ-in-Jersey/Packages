@@ -13,6 +13,7 @@ pip3 uninstall tt_os_abstraction -y
 pip3 uninstall tt_semaphore -y
 pip3 uninstall tt_chrome_driver -y
 pip3 uninstall tt_job_manager -y
+pip3 uninstall tt_noaa_data -y
 
 pip3 install ./tt_singleton
 pip3 install ./tt_navigation
@@ -25,3 +26,4 @@ pip3 install ./tt_os_abstraction
 pip3 install ./tt_semaphore
 pip3 install ./tt_chrome_driver
 pip3 install ./tt_job_manager
+pip3 install ./tt_noaa_data
