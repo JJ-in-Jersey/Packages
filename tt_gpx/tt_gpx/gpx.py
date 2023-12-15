@@ -51,9 +51,6 @@ class SplineFitWP(DownloadedDataWP):
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
 
-        self.spline_fit_path = self.folder.joinpath(self.unique_name + '_spline_fit_data')
-        self.spline_fit_data = None
-
 
 class TideStationWP(DownloadedDataWP):
     def __init__(self, gpxtag):
