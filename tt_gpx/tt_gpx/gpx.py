@@ -45,7 +45,6 @@ class DownloadedDataWP(Waypoint):
             self.code = gpxtag.find('link').find('text').text.split(' ')[0]
 
         self.downloaded_path = self.folder.joinpath(self.unique_name + '_downloaded_data')
-        self.downloaded_data = None
 
 
 class SplineFitWP(DownloadedDataWP):

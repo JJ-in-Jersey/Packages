@@ -14,7 +14,10 @@ def noaa_current_datafile(folder: Path, year: int, month: int, station, bin_num=
         u4 = "&product=currents_predictions&time_zone=lst_ldt&interval=60&units=english&format=csv"
 
     start_date = datetime(year, month, 1)
-    end_date = datetime(year, month + 1, 1) - timedelta(days=1)
+    if month < 12:
+        end_date = datetime(year, month + 1, 1) - timedelta(days=1)
+    else:
+        end_date = datetime(year+1, 1, 1) - timedelta(days=1)
 
     url = u1 + start_date.strftime("%Y%m%d") + u2 + end_date.strftime("%Y%m%d") + u3 + station + u4 + str(bin_num)
     response = requests.get(url)
