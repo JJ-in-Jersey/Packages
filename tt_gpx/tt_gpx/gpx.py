@@ -5,7 +5,7 @@ from os import makedirs
 
 class Waypoint:
     waypoints_folder = None
-    type = {'TideStationWP': 'Yellow', 'CurrentStationWP': 'Orange',
+    color = {'TideStationWP': 'Yellow', 'CurrentStationWP': 'Orange',
             'LocationWP': 'Green', 'InterpolatedWP': 'Blue',
             'InterpolatedDataWP': 'Black'}
     ordinal_number = 0
@@ -152,15 +152,15 @@ class Route:
         # build ordered list of all waypoints
         waypoints = []
         for tag in tree.find_all('rtept'):
-            if Waypoint.type['TideStationWP'] in tag.sym.text:
+            if Waypoint.color['TideStationWP'] in tag.sym.text:
                 waypoints.append(TideStationWP(tag))
-            elif Waypoint.type['CurrentStationWP'] in tag.sym.text:
+            elif Waypoint.color['CurrentStationWP'] in tag.sym.text:
                 waypoints.append(CurrentStationWP(tag))
-            elif Waypoint.type['LocationWP'] in tag.sym.text:
+            elif Waypoint.color['LocationWP'] in tag.sym.text:
                 waypoints.append(LocationWP(tag))
-            elif Waypoint.type['InterpolatedWP'] in tag.sym.text:
+            elif Waypoint.color['InterpolatedWP'] in tag.sym.text:
                 waypoints.append(InterpolatedWP(tag))
-            elif Waypoint.type['InterpolatedDataWP'] in tag.sym.text:
+            elif Waypoint.color['InterpolatedDataWP'] in tag.sym.text:
                 waypoints.append(InterpolatedDataWP(tag))
         self.waypoints = waypoints
 
