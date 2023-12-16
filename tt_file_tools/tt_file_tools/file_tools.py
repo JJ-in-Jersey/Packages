@@ -32,7 +32,7 @@ def read_arr(path): return np.load(path.with_suffix('.npy'))
 
 def write_arr(arr, path):
     np.save(path.with_suffix('.npy'), arr, allow_pickle=False)
-    while not csv_npy_file_exists(path):
+    while not path.exists():
         sleep(0.1)
 
 
@@ -40,9 +40,6 @@ def read_arr_to_list(path): return list(read_arr(path))
 
 
 def write_list_to_array(lst, path): write_arr(lst, path)
-
-
-def csv_npy_file_exists(path): return True if path.with_suffix('.csv').exists() or path.with_suffix('.npy').exists() else False
 
 
 class XMLFile:
