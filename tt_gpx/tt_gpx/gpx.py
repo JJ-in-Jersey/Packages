@@ -5,9 +5,9 @@ from os import makedirs
 
 class Waypoint:
     waypoints_folder = None
-    type = {'TideStationWP': 'Symbol-Spot-Yellow', 'CurrentStationWP': 'Symbol-Spot-Orange',
-            'SurrogateWP': 'Symbol-Pin-Orange', 'LocationWP': 'Symbol-Spot-Green', 'InterpolatedWP': 'Symbol-Spot-Blue',
-            'InterpolatedDataWP': 'Symbol-Spot-Black'}
+    color = {'TideStationWP': 'Yellow', 'CurrentStationWP': 'Orange',
+            'LocationWP': 'Green', 'InterpolatedWP': 'Blue',
+            'InterpolatedDataWP': 'Black'}
     ordinal_number = 0
     index_lookup = {}
 
@@ -17,9 +17,12 @@ class Waypoint:
         self.index = self.ordinal_number
         self.coords = tuple([self.lat, self.lon])
         self.symbol = gpxtag.sym.text
+        if 'Spot' in gpxtag.sym.text:
+            self.type = 'Harmonic'
+        elif 'Circle' in gpxtag.sym.text:
+            self.type = 'Subordinate'
         self.name = gpxtag.find('name').text.strip('\n')
-        self.unique_name = self.name.split(',')[0].split('(')[0].replace('.', '').strip().replace(" ", "_") + '_' + str(
-            self.index)
+        self.unique_name = self.name.split(',')[0].split('(')[0].replace('.', '').strip().replace(" ", "_") + '_' + str(self.index)
         self.prev_edge = None
         self.next_edge = None
 
@@ -149,19 +152,15 @@ class Route:
         # build ordered list of all waypoints
         waypoints = []
         for tag in tree.find_all('rtept'):
-            if tag.sym.text == Waypoint.type['TideStationWP']:
+            if Waypoint.color['TideStationWP'] in tag.sym.text:
                 waypoints.append(TideStationWP(tag))
-            elif tag.sym.text == Waypoint.type['SurrogateWP']:
-                waypoints.append(SurrogateWP(tag))
-            elif tag.sym.text == Waypoint.type['CurrentStationWP']:
+            elif Waypoint.color['CurrentStationWP'] in tag.sym.text:
                 waypoints.append(CurrentStationWP(tag))
-            elif tag.sym.text == Waypoint.type['SurrogateWP']:
-                waypoints.append(CurrentStationWP(tag))
-            elif tag.sym.text == Waypoint.type['LocationWP']:
+            elif Waypoint.color['LocationWP'] in tag.sym.text:
                 waypoints.append(LocationWP(tag))
-            elif tag.sym.text == Waypoint.type['InterpolatedWP']:
+            elif Waypoint.color['InterpolatedWP'] in tag.sym.text:
                 waypoints.append(InterpolatedWP(tag))
-            elif tag.sym.text == Waypoint.type['InterpolatedDataWP']:
+            elif Waypoint.color['InterpolatedDataWP'] in tag.sym.text:
                 waypoints.append(InterpolatedDataWP(tag))
         self.waypoints = waypoints
 
