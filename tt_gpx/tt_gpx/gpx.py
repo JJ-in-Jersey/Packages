@@ -18,8 +18,7 @@ class Waypoint:
         self.coords = tuple([self.lat, self.lon])
         self.symbol = gpxtag.sym.text
         self.name = gpxtag.find('name').text.strip('\n')
-        self.unique_name = self.name.split(',')[0].split('(')[0].replace('.', '').strip().replace(" ", "_") + '_' + str(
-            self.index)
+        self.unique_name = self.name.split(',')[0].split('(')[0].replace('.', '').strip().replace(" ", "_") + '_' + str(self.index)
         self.prev_edge = None
         self.next_edge = None
 
