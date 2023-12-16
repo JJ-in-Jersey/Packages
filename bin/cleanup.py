@@ -10,5 +10,3 @@ for x in walk:
     if 'venv' not in x[0] and 'egg-info' in os.path.basename(x[0]):
         print(f'Deleting {x[0]}')
         shutil.rmtree(x[0])
-
-pass
