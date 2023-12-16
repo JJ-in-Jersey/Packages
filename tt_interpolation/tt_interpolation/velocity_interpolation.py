@@ -18,6 +18,7 @@ def edge_points(segments, ss):
     return np.array(edge_pts).astype(float)
 
 
+# noinspection PyPep8Naming
 class Interpolator:
 
     scale = 10000

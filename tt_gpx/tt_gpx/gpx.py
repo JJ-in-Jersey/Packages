@@ -6,8 +6,8 @@ from os import makedirs
 class Waypoint:
     waypoints_folder = None
     color = {'TideStationWP': 'Yellow', 'CurrentStationWP': 'Orange',
-            'LocationWP': 'Green', 'InterpolatedWP': 'Blue',
-            'InterpolatedDataWP': 'Black'}
+             'LocationWP': 'Green', 'InterpolatedWP': 'Blue',
+             'InterpolatedDataWP': 'Black'}
     ordinal_number = 0
     index_lookup = {}
 
