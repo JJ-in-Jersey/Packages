@@ -22,7 +22,7 @@ class Waypoint:
         elif 'Circle' in gpxtag.sym.text:
             self.type = 'Subordinate'
         self.name = gpxtag.find('name').text.strip('\n')
-        self.unique_name = self.name.split(',')[0].split('(')[0].replace('.', '').strip().replace(" ", "_") + '_' + str(self.index)
+        self.unique_name = str(self.index) + '_' + self.name.split(',')[0].split('(')[0].replace('.', '').strip().replace(" ", "_")
         self.prev_edge = None
         self.next_edge = None
 
@@ -97,7 +97,7 @@ class Edge:  # connection between waypoints with current data
         if not isinstance(end_wp, CurrentStationWP) and not isinstance(end_wp, InterpolatedWP) and not isinstance(end_wp, SurrogateWP):
             raise TypeError
 
-        self.unique_name = '[' + str(start_wp.index) + '-' + str(end_wp.index) + ']'
+        self.unique_name = '[' + str(start_wp.unique_name) + '-' + str(end_wp.unique_name) + ']'
         self.start = start_wp
         self.end = end_wp
         start_wp.next_edge = self
