@@ -44,7 +44,7 @@ def noaa_tide_datafile(folder: Path, year: int, month: int, station):
 
     url = u1 + start_date.strftime("%Y%m%d") + u2 + end_date.strftime("%Y%m%d") + u3 + station + u4
     response = requests.get(url)
-    filepath = folder.joinpath(station + '_' + str(year) + '_' + str(month) + '.csv')
+    filepath = folder.joinpath(station + '_' + str(year) + '_' + str(month) + '.xml')
     with open(filepath, mode="wb") as file:
         file.write(response.content)
 
