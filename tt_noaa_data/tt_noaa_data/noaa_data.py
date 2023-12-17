@@ -30,10 +30,13 @@ def noaa_current_datafile(folder: Path, year: int, month: int, station, bin_num=
 
 def noaa_tide_datafile(folder: Path, year: int, month: int, station):
 
+    # https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=20231201&end_date=20240101&station=8518750&product=predictions&datum=STND&time_zone=lst_ldt&interval=hilo&units=english&format=xml
+    
+
     u1 = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date="
     u2 = "&end_date="
     u3 = "&station="
-    u4 = "&product=high_low&datum=STND&time_zone=lst_ldt&units=english&format=xml"
+    u4 = "&product=predictions&datum=STND&time_zone=lst_ldt&interval=hilo&units=english&format=xml"
 
 
     start_date = datetime(year, month, 1)
