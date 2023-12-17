@@ -42,7 +42,7 @@ def noaa_tide_datafile(folder: Path, year: int, month: int, station):
     else:
         end_date = datetime(year+1, 1, 1) - timedelta(days=1)
 
-    url = u1 + start_date.strftime("%Y%m%d") + u2 + end_date.strftime("%Y%m%d") + u3 + station
+    url = u1 + start_date.strftime("%Y%m%d") + u2 + end_date.strftime("%Y%m%d") + u3 + station + u4
     response = requests.get(url)
     filepath = folder.joinpath(station + '_' + str(year) + '_' + str(month) + '.csv')
     with open(filepath, mode="wb") as file:
