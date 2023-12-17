@@ -4,6 +4,7 @@ from os.path import join, getctime
 import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup as Soup
+from pathlib import Path
 
 
 def newest_file(folder):
@@ -69,3 +70,11 @@ def shrink_dataframe(dataframe: pd.DataFrame):
         elif dataframe[col].dtype == np.float64:
             dataframe[col] = dataframe[col].astype(np.float16)
     return dataframe
+
+
+def print_file_exists(filepath: Path):
+    checkmark = u'\N{check mark}'
+    if filepath.exists():
+        print(f'   {checkmark}   {str(filepath)}')
+    else:
+        print(f'   x {str(filepath)}')
