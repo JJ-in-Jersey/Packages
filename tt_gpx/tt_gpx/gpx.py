@@ -47,10 +47,8 @@ class DownloadedDataWP(Waypoint):
             self.noaa_url = gpxtag.find('link').attrs['href']
             self.code = gpxtag.find('link').find('text').text.split(' ')[0]
 
-        self.downloaded_path = self.folder.joinpath(self.unique_name + '_downloaded_data')
 
-
-class SplineFitWP(DownloadedDataWP):
+class EdgeNode(DownloadedDataWP):
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
 
@@ -60,22 +58,22 @@ class TideStationWP(DownloadedDataWP):
         super().__init__(gpxtag)
 
 
-class SurrogateWP(SplineFitWP):
+class SurrogateWP(EdgeNode):
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
 
 
-class CurrentStationWP(SplineFitWP):
+class CurrentStationWP(EdgeNode):
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
 
 
-class InterpolatedDataWP(SplineFitWP):
+class InterpolatedDataWP(DownloadedDataWP):
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
 
 
-class InterpolatedWP(SplineFitWP):  # Not really a data waypoint but stores data in the downloaded data path
+class InterpolatedWP(EdgeNode):  # Not really a data waypoint but stores data in the downloaded data path
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
 
