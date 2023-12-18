@@ -4,4 +4,5 @@ setup(
     name='tt_globals',
     version='1.0',
     packages=find_packages(include=['tt_globals', 'tt_globals.*']),
+    install_requires=['num2words']
 )
