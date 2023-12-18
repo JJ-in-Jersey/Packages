@@ -26,7 +26,7 @@ class Globals:
         YEAR = year
         FIRST_DAY = dp.parse('1/1/' + str(YEAR))
         FIRST_DAY_INDEX = index(FIRST_DAY)
-        FIRST_DAY_DATE = FIRST_DAY_INDEX.date()
+        FIRST_DAY_DATE = FIRST_DAY.date()
         LAST_DAY = dp.parse('1/1/' + str(YEAR + 1))
         LAST_DAY_INDEX = index(LAST_DAY)
         LAST_DAY_DATE = LAST_DAY.date()
