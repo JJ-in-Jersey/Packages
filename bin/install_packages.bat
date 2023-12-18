@@ -12,6 +12,7 @@ pip uninstall tt_semaphore -y
 pip uninstall tt_chrome_driver -y
 pip uninstall tt_job_manager -y
 pip uninstall tt_noaa_data -y
+pip uninstall tt_globals -y
 
 pip install ./tt_singleton
 pip install ./tt_navigation
@@ -25,5 +26,6 @@ pip install ./tt_semaphore
 pip install ./tt_chrome_driver
 pip install ./tt_job_manager
 pip install ./tt_noaa_data
+pip install ./tt_globals
 
 pause
