@@ -46,6 +46,7 @@ class Globals:
 
         Globals.DOWNLOAD_INDEX_RANGE = range(date_time_index(Globals.FIRST_DOWNLOAD_DAY), date_time_index(Globals.LAST_DOWNLOAD_DAY), Globals.TIMESTEP)
         Globals.ELAPSED_TIME_INDEX_RANGE =  range(date_time_index(Globals.FIRST_DOWNLOAD_DAY), date_time_index(Globals.LAST_DOWNLOAD_DAY - timedelta(weeks=1)), Globals.TIMESTEP)
+        Globals.TRANSIT_TIME_INDEX_RANGE = range(date_time_index(Globals.FIRST_DOWNLOAD_DAY)), date_time_index(Globals.LAST_DOWNLOAD_DAY- timedelta(weeks=2), Globals.TIMESTEP)
 
     def __init__(self):
         pass
