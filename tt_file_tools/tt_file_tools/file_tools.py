@@ -28,21 +28,6 @@ def read_df(filepath):
     return pd.read_csv(filepath, header='infer')
 
 
-def read_arr(path): return np.load(path.with_suffix('.npy'))
-
-
-def write_arr(arr, path):
-    np.save(path.with_suffix('.npy'), arr, allow_pickle=False)
-    while not path.exists():
-        sleep(0.1)
-
-
-def read_arr_to_list(path): return list(read_arr(path))
-
-
-def write_list_to_array(lst, path): write_arr(lst, path)
-
-
 class XMLFile:
     def __init__(self, filepath):
         with open(filepath, 'r') as f:
