@@ -80,7 +80,7 @@ class InterpolatedWP(EdgeNode):  # Not really a data waypoint but stores data in
 
 class Edge:  # connection between waypoints with current data
 
-    elapsed_time_folder = None
+    edges_folder = None
     edge_range = None
 
     def __init__(self, start_wp, end_wp):
@@ -101,9 +101,9 @@ class Edge:  # connection between waypoints with current data
         start_wp.next_edge = self
         end_wp.prev_edge = self
 
-        if Edge.elapsed_time_folder is None:
+        if Edge.edges_folder is None:
             raise TypeError
-        self.folder = Edge.elapsed_time_folder.joinpath(self.unique_name)
+        self.folder = Edge.edges_folder.joinpath(self.unique_name)
         makedirs(self.folder, exist_ok=True)
 
         wp1 = start_wp
