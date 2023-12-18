@@ -18,7 +18,8 @@ class Globals:
     LAST_DAY_DATE = None
 
     DOWNLOAD_INDEX_RANGE = None
-    ELAPSED_TIME_INDEX_RANGE =  None
+    ELAPSED_TIME_INDEX_RANGE = None
+    TRABSUT_TIME_INDEX_RANGE = None
 
     CHECKMARK = u'\N{check mark}'
     TIMESTEP = 15  # seconds
@@ -45,8 +46,8 @@ class Globals:
         Globals.LAST_DAY_DATE = Globals.LAST_DAY.date()
 
         Globals.DOWNLOAD_INDEX_RANGE = range(date_time_index(Globals.FIRST_DOWNLOAD_DAY), date_time_index(Globals.LAST_DOWNLOAD_DAY), Globals.TIMESTEP)
-        Globals.ELAPSED_TIME_INDEX_RANGE =  range(date_time_index(Globals.FIRST_DOWNLOAD_DAY), date_time_index(Globals.LAST_DOWNLOAD_DAY - timedelta(weeks=1)), Globals.TIMESTEP)
-        Globals.TRANSIT_TIME_INDEX_RANGE = range(date_time_index(Globals.FIRST_DOWNLOAD_DAY)), date_time_index(Globals.LAST_DOWNLOAD_DAY- timedelta(weeks=2), Globals.TIMESTEP)
+        Globals.ELAPSED_TIME_INDEX_RANGE = range(date_time_index(Globals.FIRST_DOWNLOAD_DAY), date_time_index(Globals.LAST_DOWNLOAD_DAY - timedelta(weeks=1)), Globals.TIMESTEP)
+        Globals.TRANSIT_TIME_INDEX_RANGE = range(date_time_index(Globals.FIRST_DOWNLOAD_DAY), date_time_index(Globals.LAST_DOWNLOAD_DAY - timedelta(weeks=2)), Globals.TIMESTEP)
 
     def __init__(self):
         pass
