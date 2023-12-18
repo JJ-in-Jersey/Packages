@@ -14,6 +14,8 @@ class Globals:
     LAST_DAY_INDEX = None
     LAST_DAY_DATE = None
 
+    DOWNLOAD_INDEX_RANGE = None
+
     CHECKMARK = u'\N{check mark}'
     TIMESTEP = 15  # seconds
     TIME_RESOLUTION = 5  # time shown on chart, rounded to minutes
@@ -34,6 +36,7 @@ class Globals:
         Globals.LAST_DAY = dp.parse('1/1/' + str(Globals.YEAR + 1))
         Globals.LAST_DAY_INDEX = index(Globals.LAST_DAY)
         Globals.LAST_DAY_DATE = Globals.LAST_DAY.date()
+        Globals.DOWNLOAD_INDEX_RANGE = range(index(dp.parse('12/1/' + str(year - 1) + ' 00:00:00')), index(dp.parse('2/1/' + str(year + 1) + ' 00:00:00')), Globals.TIMESTEP)
 
     def __init__(self):
         pass
