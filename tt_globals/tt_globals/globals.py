@@ -19,7 +19,7 @@ class Globals:
 
     DOWNLOAD_INDEX_RANGE = None
     ELAPSED_TIME_INDEX_RANGE = None
-    TRABSUT_TIME_INDEX_RANGE = None
+    TRANSIT_TIME_INDEX_RANGE = None
 
     CHECKMARK = u'\N{check mark}'
     TIMESTEP = 15  # seconds
