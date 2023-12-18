@@ -135,8 +135,7 @@ class Path:
 
 class Route:
 
-    def __init__(self, filepath, edge_range):
-        Edge.edge_range = edge_range
+    def __init__(self, filepath):
         self.transit_time_lookup = {}
         self.elapsed_time_lookup = {}
         self.whole_path = self.velo_path = None
