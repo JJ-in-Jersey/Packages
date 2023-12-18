@@ -1,6 +1,10 @@
 from dateparser import parse
 from datetime import timedelta
 from tt_date_time_tools.date_time_tools import int_timestamp as date_time_index
+from tt_os_abstraction.os_abstraction import env
+import shutil
+from os import makedirs
+from num2words import num2words
 
 
 class Globals:
@@ -21,6 +25,11 @@ class Globals:
     ELAPSED_TIME_INDEX_RANGE = None
     TRANSIT_TIME_INDEX_RANGE = None
 
+    PROJECT_FOLDER = None
+    WAYPOINTS_FOLDER = None
+    EDGES_FOLDER = None
+    TRANSIT_TIMES_FOLDER = None
+
     CHECKMARK = u'\N{check mark}'
     TIMESTEP = 15  # seconds
     WINDOW_MARGIN = 20  # time on either side of best, minutes
@@ -29,11 +38,10 @@ class Globals:
     BOAT_SPEEDS = [v for v in range(-7, -2, 2)] + [v for v in range(3, 8, 2)]  # knots
 
     @staticmethod
-    def initialize_dates(year):
+    def initialize_dates(args):
+        print('initializing globals dates')
 
-        print('initializing globals')
-
-        Globals.YEAR = year
+        Globals.YEAR = args['year']
 
         Globals.FIRST_DOWNLOAD_DAY = parse('12/1/' + str(Globals.YEAR - 1))
         Globals.FIRST_DAY = parse('1/1/' + str(Globals.YEAR))
@@ -48,6 +56,26 @@ class Globals:
         Globals.DOWNLOAD_INDEX_RANGE = range(date_time_index(Globals.FIRST_DOWNLOAD_DAY), date_time_index(Globals.LAST_DOWNLOAD_DAY), Globals.TIMESTEP)
         Globals.ELAPSED_TIME_INDEX_RANGE = range(date_time_index(Globals.FIRST_DOWNLOAD_DAY), date_time_index(Globals.LAST_DOWNLOAD_DAY - timedelta(weeks=1)), Globals.TIMESTEP)
         Globals.TRANSIT_TIME_INDEX_RANGE = range(date_time_index(Globals.FIRST_DOWNLOAD_DAY), date_time_index(Globals.LAST_DOWNLOAD_DAY - timedelta(weeks=2)), Globals.TIMESTEP)
+
+    @staticmethod
+    def initialize_folders(args):
+        print('initializing globals folders')
+
+        if args['delete_data']:
+            shutil.rmtree(Globals.PROJECT_FOLDER, ignore_errors=True)
+
+        Globals.PROJECT_FOLDER = env('user_profile').joinpath('Developer Workspace/' + args['project_name'] + '_' + str(Globals.YEAR) + '/')
+        Globals.WAYPOINTS_FOLDER = Globals.PROJECT_FOLDER.joinpath('Waypoints')
+        Globals.EDGES_FOLDER = Globals.PROJECT_FOLDER.joinpath('Edges')
+        Globals.TRANSIT_TIMES_FOLDER = Globals.PROJECT_FOLDER.joinpath('Transit Times')
+
+        makedirs(Globals.PROJECT_FOLDER, exist_ok=True)
+        makedirs(Globals.WAYPOINTS_FOLDER, exist_ok=True)
+        makedirs(Globals.EDGES_FOLDER, exist_ok=True)
+        makedirs(Globals.TRANSIT_TIMES_FOLDER, exist_ok=True)
+
+        for s in Globals.BOAT_SPEEDS:
+            makedirs(Globals.TRANSIT_TIMES_FOLDER.joinpath(num2words(s)), exist_ok=True)
 
     def __init__(self):
         pass
