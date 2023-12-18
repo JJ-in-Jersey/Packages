@@ -34,15 +34,16 @@ class Globals:
 
         Globals.YEAR = year
 
-        Globals.FIRST_DOWNLOAD_DAY = parse('12/1' + str(Globals.YEAR - 1))
+        Globals.FIRST_DOWNLOAD_DAY = parse('12/1/' + str(Globals.YEAR - 1))
         Globals.FIRST_DAY = parse('1/1/' + str(Globals.YEAR))
         Globals.FIRST_DAY_INDEX = date_time_index(Globals.FIRST_DAY)
         Globals.FIRST_DAY_DATE = Globals.FIRST_DAY.date()
 
-        Globals.LAST_DOWNLOAD_DAY = parse('2/1' + str(Globals.YEAR + 1))
+        Globals.LAST_DOWNLOAD_DAY = parse('2/1/' + str(Globals.YEAR + 1))
         Globals.LAST_DAY = parse('1/1/' + str(Globals.YEAR + 1))
         Globals.LAST_DAY_INDEX = date_time_index(Globals.LAST_DAY)
         Globals.LAST_DAY_DATE = Globals.LAST_DAY.date()
+
         Globals.DOWNLOAD_INDEX_RANGE = range(date_time_index(Globals.FIRST_DOWNLOAD_DAY), date_time_index(Globals.LAST_DOWNLOAD_DAY), Globals.TIMESTEP)
         Globals.ELAPSED_TIME_INDEX_RANGE =  range(date_time_index(Globals.FIRST_DOWNLOAD_DAY), date_time_index(Globals.LAST_DOWNLOAD_DAY - timedelta(weeks=1)), Globals.TIMESTEP)
 
