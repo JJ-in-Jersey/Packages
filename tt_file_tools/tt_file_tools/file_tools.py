@@ -31,7 +31,7 @@ def read_df(filepath):
 class XMLFile:
     def __init__(self, filepath):
         with open(filepath, 'r') as f:
-            self.tree = Soup(f, "html.parser")
+            self.tree = Soup(f, "xml")
 
 
 def write_df(df, path):
