@@ -1,6 +1,7 @@
 import dateparser as dp
 from tt_date_time_tools.date_time_tools import int_timestamp as index
 
+
 class Globals:
 
     YEAR = None
@@ -12,6 +13,14 @@ class Globals:
     LAST_DAY = None
     LAST_DAY_INDEX = None
     LAST_DAY_DATE = None
+
+    CHECKMARK = u'\N{check mark}'
+    TIMESTEP = 15  # seconds
+    TIME_RESOLUTION = 5  # time shown on chart, rounded to minutes
+    WINDOW_MARGIN = 20  # time on either side of best, minutes
+    TIMESTEP_MARGIN = int(WINDOW_MARGIN * 60 / TIMESTEP)  # number of timesteps to add to minimum to find edges of time windows
+    FIVE_HOURS_OF_TIMESTEPS = int(5 * 3600 / TIMESTEP)  # transit time windows < midline at least 5 hours long (6 hour tide change)
+    BOAT_SPEEDS = [v for v in range(-7, -2, 2)] + [v for v in range(3, 8, 2)]  # knots
 
     @staticmethod
     def initialize_dates(year):
@@ -28,4 +37,3 @@ class Globals:
 
     def __init__(self):
         pass
-
