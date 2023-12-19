@@ -174,7 +174,7 @@ class Route:
 
         # create edges
         edge_nodes = [wp for wp in waypoints if isinstance(wp, EdgeNode)]
-        self.edge_nodes_edges = [Edge(wp, edge_nodes[i+1]) for i, wp in enumerate(edge_nodes[:-1])]
+        self.edges = [Edge(wp, edge_nodes[i+1]) for i, wp in enumerate(edge_nodes[:-1])]
 
         # self.elapsed_time_path = Path(self.elapsed_time_edges)
 
