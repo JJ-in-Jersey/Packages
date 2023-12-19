@@ -176,7 +176,7 @@ class Route:
         edge_nodes = [wp for wp in waypoints if isinstance(wp, EdgeNode)]
         self.edges = [Edge(wp, edge_nodes[i+1]) for i, wp in enumerate(edge_nodes[:-1])]
 
-        # self.elapsed_time_path = Path(self.elapsed_time_edges)
+        self.edge_path = GPXPath(self.edges)
 
     @staticmethod
     def write_clean_gpx(filepath, tree):
