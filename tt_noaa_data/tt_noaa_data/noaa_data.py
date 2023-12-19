@@ -1,4 +1,6 @@
 from datetime import datetime, timedelta
+
+import pandas as pd
 import requests
 from pathlib import Path
 
@@ -49,3 +51,20 @@ def noaa_tide_datafile(folder: Path, year: int, month: int, station):
         file.write(response.content)
 
     return filepath
+
+
+def noaa_14_months(folder, year, interval, station, bin=None):
+
+    frame = pd.DataFrame()
+
+    file = noaa_current_datafile(folder, year - 1, 12, interval, station, bin)
+    frame = pd.concat([frame, pd.read_csv(file, header='infer')])
+
+    for m in range(1, 13):
+        file = noaa_current_datafile(folder, year, m, interval, station, bin)
+        frame = pd.concat([frame, pd.read_csv(file, header='infer')])
+
+    file = noaa_current_datafile(folder, year + 1, 1, interval, station, bin)
+    frame = pd.concat([frame, pd.read_csv(file, header='infer')])
+
+    return frame
