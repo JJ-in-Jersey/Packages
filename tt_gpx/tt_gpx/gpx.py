@@ -115,7 +115,7 @@ class Edge:  # connection between waypoints with current data
             wp1 = wp2
 
 
-class Path:
+class GPXPath:
 
     def path_integrity(self):
         for i, edge in enumerate(self.edges[:-1]):
@@ -172,13 +172,11 @@ class Route:
                 wp = Waypoint.index_lookup[wp.index + 1]
             self.interpolation_groups.append(group)
 
-        # create aggregated path from waypoints
-        self.elapsed_time_wps = [wp for wp in waypoints if isinstance(wp, CurrentStationWP) or isinstance(wp, SurrogateWP) or isinstance(wp, InterpolatedWP)]
-        self.elapsed_time_edges = []
-        for i, wp in enumerate(self.elapsed_time_wps[:-1]):
-            self.elapsed_time_edges.append(Edge(wp, self.elapsed_time_wps[i + 1]))
+        # create edges
+        edge_nodes = [wp for wp in waypoints if isinstance(wp, EdgeNode)]
+        self.edge_nodes_edges = [Edge(wp, edge_nodes[i+1]) for i, wp in enumerate(self.edge_nodes[:-1])]
 
-        self.elapsed_time_path = Path(self.elapsed_time_edges)
+        # self.elapsed_time_path = Path(self.elapsed_time_edges)
 
     @staticmethod
     def write_clean_gpx(filepath, tree):
