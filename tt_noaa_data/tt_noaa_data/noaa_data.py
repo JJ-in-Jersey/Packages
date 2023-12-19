@@ -3,15 +3,16 @@ import requests
 from pathlib import Path
 
 
-def noaa_current_datafile(folder: Path, year: int, month: int, station, bin_num=None):
+def noaa_current_datafile(folder: Path, year: int, month: int, interval, station, bin_num=None):
 
     u1 = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date="
     u2 = "&end_date="
     u3 = "&station="
-    u4 = "&product=currents_predictions&time_zone=lst_ldt&interval=60&units=english&format=csv&bin="
+    u4 = "&product=currents_predictions&time_zone=lst_ldt&interval="
+    u5 = "&units=english&format=csv&bin="
 
     if not bin_num:
-        u4 = "&product=currents_predictions&time_zone=lst_ldt&interval=60&units=english&format=csv"
+        u5 = "&units=english&format=csv"
 
     start_date = datetime(year, month, 1)
     if month < 12:
@@ -19,7 +20,7 @@ def noaa_current_datafile(folder: Path, year: int, month: int, station, bin_num=
     else:
         end_date = datetime(year+1, 1, 1) - timedelta(days=1)
 
-    url = u1 + start_date.strftime("%Y%m%d") + u2 + end_date.strftime("%Y%m%d") + u3 + station + u4 + str(bin_num)
+    url = u1 + start_date.strftime("%Y%m%d") + u2 + end_date.strftime("%Y%m%d") + u3 + station + u4 + str(interval) + str(bin_num) + u5
     response = requests.get(url)
     filepath = folder.joinpath(station + '_' + str(year) + '_' + str(month) + '.csv')
     with open(filepath, mode="wb") as file:
@@ -30,14 +31,10 @@ def noaa_current_datafile(folder: Path, year: int, month: int, station, bin_num=
 
 def noaa_tide_datafile(folder: Path, year: int, month: int, station):
 
-    # https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=20231201&end_date=20240101&station=8518750&product=predictions&datum=STND&time_zone=lst_ldt&interval=hilo&units=english&format=xml
-    
-
     u1 = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date="
     u2 = "&end_date="
     u3 = "&station="
     u4 = "&product=predictions&datum=STND&time_zone=lst_ldt&interval=hilo&units=english&format=xml"
-
 
     start_date = datetime(year, month, 1)
     if month < 12:

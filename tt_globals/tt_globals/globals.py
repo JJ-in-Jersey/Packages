@@ -2,6 +2,7 @@ from dateparser import parse
 from datetime import timedelta
 from tt_date_time_tools.date_time_tools import int_timestamp as date_time_index
 from tt_os_abstraction.os_abstraction import env
+from tt_job_manager.job_manager import JobManager
 import shutil
 from os import makedirs
 from num2words import num2words
