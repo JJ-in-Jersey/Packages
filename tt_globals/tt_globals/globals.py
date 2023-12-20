@@ -33,7 +33,7 @@ class Globals:
 
     CHECKMARK = u'\N{check mark}'
     TIMESTEP = 15  # seconds
-    WINDOW_MARGIN = 20  # time on either side of best, minutes
+    WINDOW_MARGIN = 15  # time on either side of best, minutes
     TIMESTEP_MARGIN = int(WINDOW_MARGIN * 60 / TIMESTEP)  # number of timesteps to add to minimum to find edges of time windows
     FIVE_HOURS_OF_TIMESTEPS = int(5 * 3600 / TIMESTEP)  # transit time windows < midline at least 5 hours long (6 hour tide change)
     BOAT_SPEEDS = [v for v in range(-7, -2, 2)] + [v for v in range(3, 8, 2)]  # knots
