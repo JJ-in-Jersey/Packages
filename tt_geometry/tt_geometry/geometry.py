@@ -49,9 +49,9 @@ class Arc:
 
         if self.start_date != self.end_date:
             self.fractured = True
-            if not self.start_angle == 0.0:
+            if not self.start_angle == 0.0 and not self.start_angle == 360.0:
                 self.start_day_arc = FractionalArcStartDay(self)
-            if not self.end_angle == 360.0:
+            if not self.end_angle == 360.0 and not self.end_angle == 0.0:
                 self.end_day_arc = FractionalArcEndDay(self)
 
 
