@@ -1,8 +1,6 @@
 from haversine import haversine as hvs, Unit
 import numpy as np
 
-directionLookup = {'SN': 'South to North', 'NS': 'North to South', 'EW': 'East to West', 'WE': 'West to East'}
-
 
 def sign(value): return value/abs(value)
 
@@ -10,34 +8,25 @@ def sign(value): return value/abs(value)
 def distance(start_coords, end_coords): return hvs(start_coords, end_coords, unit=Unit.NAUTICAL_MILES)
 
 
-def direction(start_coords, end_coords):
-    #                                  (y,x)
-    # corner(e lat,s lon)---------end(lat,lon)
-    # ----------------------------------------
-    # ----------------------------------------
-    # ----------------------------------------
-    # start(lat,lon)--------------------------
-    #        (y,x)
-    #
-    corner = (end_coords[0], start_coords[1])
-    lat_sign = sign(end_coords[0] - start_coords[0])
-    lon_sign = sign(end_coords[1] - start_coords[1])
+def direction(compass_heading: int):
+    if compass_heading > 337.5 or compass_heading < 22.5:
+        dir_name = 'north'
+    elif 62.5 > compass_heading > 22.5:
+        dir_name = 'northeast'
+    elif 112.5 > compass_heading > 62.5:
+        dir_name = 'east'
+    elif 157.5> compass_heading > 112.5:
+        dir_name = 'southeast'
+    elif 202.5 > compass_heading > 157.5:
+        dir_name = 'south'
+    elif 247.5 > compass_heading > 202.5:
+        dir_name = 'southwest'
+    elif 292.5 > compass_heading > 247.5:
+        dir_name = 'west'
+    elif 337.5 > compass_heading > 202.5:
+        dir_name = 'northwest'
 
-    lat_dist = distance(corner, start_coords)
-    lon_dist = distance(end_coords, corner)
-
-    if lon_dist > lat_dist:
-        if lon_sign > 0:
-            code = 'WE'
-        else:
-            code = 'EW'
-    else:
-        if lat_sign > 0:
-            code = 'SN'
-        else:
-            code = 'NS'
-
-    return directionLookup[code]
+    return dir_name
 
 
 def heading(start_coords, end_coords):
