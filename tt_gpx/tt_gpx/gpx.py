@@ -127,8 +127,8 @@ class GPXPath:
         self.path_integrity()
         self.name = '{' + str(self.edges[0].start.index) + '-' + str(self.edges[-1].end.index) + '}'
         self.length = round(sum([edge.length for edge in self.edges]), 4)
-        self.direction = direction(self.edges[0].start.coords, self.edges[-1].end.coords)
         self.heading = heading(self.edges[0].start.coords, self.edges[-1].end.coords)
+        self.direction = direction(self.heading)
 
 
 class Route:
