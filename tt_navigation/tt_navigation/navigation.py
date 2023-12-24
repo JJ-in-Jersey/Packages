@@ -8,25 +8,25 @@ def sign(value): return value/abs(value)
 def distance(start_coords, end_coords): return hvs(start_coords, end_coords, unit=Unit.NAUTICAL_MILES)
 
 
-def direction(compass_heading: int):
+def directions(compass_heading: int):
     if compass_heading > 337.5 or compass_heading < 22.5:
-        dir_name = 'north'
+        dir_names = tuple(['north', 'south'])
     elif 62.5 > compass_heading > 22.5:
-        dir_name = 'northeast'
+        dir_names = tuple(['northeast', 'southwest'])
     elif 112.5 > compass_heading > 62.5:
-        dir_name = 'east'
+        dir_names = tuple(['east', 'west'])
     elif 157.5> compass_heading > 112.5:
-        dir_name = 'southeast'
+        dir_names = tuple(['southeast', 'northwest'])
     elif 202.5 > compass_heading > 157.5:
-        dir_name = 'south'
+        dir_names = tuple(['south', 'north'])
     elif 247.5 > compass_heading > 202.5:
-        dir_name = 'southwest'
+        dir_names = tuple(['southwest', 'northeast'])
     elif 292.5 > compass_heading > 247.5:
-        dir_name = 'west'
+        dir_names = tuple(['west', 'east'])
     elif 337.5 > compass_heading > 202.5:
-        dir_name = 'northwest'
+        dir_names = tuple(['northwest', 'southeast'])
 
-    return dir_name
+    return dir_names
 
 
 def heading(start_coords, end_coords):
