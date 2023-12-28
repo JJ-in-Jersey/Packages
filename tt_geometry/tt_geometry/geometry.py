@@ -56,6 +56,7 @@ class Arc:
 
 
 class FractionalArcStartDay:
+    #  arc with legitimate start date, end of a day
 
     def info(self):
         return pd.Series([self.name, self.start_date, self.start_time, self.start_angle, self.min_time, self.min_angle, self.end_time, self.end_angle, self.elapsed_time])
@@ -69,21 +70,25 @@ class FractionalArcStartDay:
         self.start_angle = arc.start_angle
         self.start_time = arc.start_time
 
+        self.min_date = arc.min_date
         self.min_angle = arc.min_angle
         self.min_time = arc.min_time
 
-        self.end_angle = arc.end_angle
-        self.end_time = arc.end_time
-
         self.end_angle = 360
-        self.end_time = pd.to_datetime(str(dt.today().date())).time()
+        self.end_time = pd.to_datetime(str(dt.today().date())).time()  # set to 00:00:00
 
-        if 180 > arc.min_angle >= 0:
+        if not self.min_date == self.start_date:
             self.min_angle = None
             self.min_time = None
 
+        if self.min_angle == 0:
+            self.min_angle = 360
+
+        print(f'start date: {self.start_date} min time: {self.min_time} min angle: {self.min_angle}')
+
 
 class FractionalArcEndDay:
+    #  arc with a legitimate end date, start of a day
 
     def info(self):
         return pd.Series([self.name, self.start_date, self.start_time, self.start_angle, self.min_time, self.min_angle, self.end_time, self.end_angle, self.elapsed_time])
@@ -92,21 +97,22 @@ class FractionalArcEndDay:
 
         self.name = arc.name
         self.elapsed_time = arc.elapsed_time
-
-        self.start_date = arc.start_date
-        self.start_angle = arc.start_angle
-        self.start_time = arc.start_time
-
-        self.min_angle = arc.min_angle
-        self.min_time = arc.min_time
-
-        self.end_angle = arc.end_angle
-        self.end_time = arc.end_time
 
         self.start_date = arc.start_date + td(days=1)
         self.start_angle = 0
         self.start_time = pd.to_datetime(str(dt.today().date())).time()
 
-        if 360 > arc.min_angle > 180:
+        self.min_date = arc.min_date
+        self.min_angle = arc.min_angle
+        self.min_time = arc.min_time
+
+        self.end_angle = arc.end_angle
+        self.end_time = arc.end_time
+
+        self.start_angle = 0
+
+        if not self.min_date == self.start_date:
             self.min_angle = None
             self.min_time = None
+
+        print(f'end date: {self.start_date} min time: {self.min_time} min angle: {self.min_angle}')
