@@ -65,7 +65,8 @@ class ChromeDriver:
         source = downloads.joinpath(list(filter(lambda s: 'LICENSE' not in s, zip_file.namelist()))[0])
         self.installed_driver_file = self.lookup['driver_folder'].joinpath('chromedriver' + self.lookup['driver_suffix'])
         replace(source, self.installed_driver_file)
-        chmod(self.installed_driver_file, 777)
+        if env('os') == 'mac':
+            chmod(self.installed_driver_file, 777)
 
     def __init__(self):
 

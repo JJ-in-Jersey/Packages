@@ -40,7 +40,7 @@ class Globals:
 
     @staticmethod
     def initialize_dates(args):
-        print('initializing globals dates')
+        print('\nInitializing globals dates')
 
         Globals.YEAR = args['year']
 
@@ -60,7 +60,7 @@ class Globals:
 
     @staticmethod
     def initialize_folders(args):
-        print('initializing globals folders')
+        print('\nInitializing globals folders')
 
         if args['delete_data']:
             shutil.rmtree(Globals.PROJECT_FOLDER, ignore_errors=True)
