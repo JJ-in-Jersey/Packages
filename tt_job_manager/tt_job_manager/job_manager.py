@@ -29,6 +29,7 @@ class JobManager(metaclass=Singleton):
         semaphore.off('QueueManager')
 
     def __init__(self, pool_size=cpu_count()):
+        print(f'\nStarting multiprocess job manager')
         JobManager.manager = Manager()
         JobManager.queue = JobManager.manager.JoinableQueue()
         JobManager.results_key_dict = JobManager.manager.dict()

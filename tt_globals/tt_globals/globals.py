@@ -2,7 +2,6 @@ from dateparser import parse
 from datetime import timedelta
 from tt_date_time_tools.date_time_tools import int_timestamp as date_time_index
 from tt_os_abstraction.os_abstraction import env
-from tt_job_manager.job_manager import JobManager
 import shutil
 from os import makedirs
 from num2words import num2words
@@ -62,10 +61,11 @@ class Globals:
     def initialize_folders(args):
         print('\nInitializing globals folders')
 
+        Globals.PROJECT_FOLDER = env('user_profile').joinpath('Developer Workspace/' + args['project_name'] + '_' + str(Globals.YEAR) + '/')
+
         if args['delete_data']:
             shutil.rmtree(Globals.PROJECT_FOLDER, ignore_errors=True)
 
-        Globals.PROJECT_FOLDER = env('user_profile').joinpath('Developer Workspace/' + args['project_name'] + '_' + str(Globals.YEAR) + '/')
         Globals.WAYPOINTS_FOLDER = Globals.PROJECT_FOLDER.joinpath('Waypoints')
         Globals.EDGES_FOLDER = Globals.PROJECT_FOLDER.joinpath('Edges')
         Globals.TRANSIT_TIMES_FOLDER = Globals.PROJECT_FOLDER.joinpath('Transit Times')
