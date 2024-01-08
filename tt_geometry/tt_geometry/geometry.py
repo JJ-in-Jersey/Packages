@@ -84,8 +84,6 @@ class FractionalArcStartDay:
         if self.min_angle == 0:
             self.min_angle = 360
 
-        print(f'start date: {self.start_date} min time: {self.min_time} min angle: {self.min_angle}')
-
 
 class FractionalArcEndDay:
     #  arc with a legitimate end date, start of a day
@@ -114,5 +112,3 @@ class FractionalArcEndDay:
         if not self.min_date == self.start_date:
             self.min_angle = None
             self.min_time = None
-
-        print(f'end date: {self.start_date} min time: {self.min_time} min angle: {self.min_angle}')
