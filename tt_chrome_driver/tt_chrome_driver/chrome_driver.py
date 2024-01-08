@@ -66,7 +66,8 @@ class ChromeDriver:
         self.installed_driver_file = self.lookup['driver_folder'].joinpath('chromedriver' + self.lookup['driver_suffix'])
         replace(source, self.installed_driver_file)
         if env('os') == 'mac':
-            chmod(self.installed_driver_file, 777)
+            chmod(self.installed_driver_file, 0o777)
+            # chmod(self.installed_driver_file, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     def __init__(self):
 
