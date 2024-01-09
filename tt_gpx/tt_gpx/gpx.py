@@ -166,10 +166,9 @@ class Route:
         interpolated_wps = [wp for wp in waypoints if isinstance(wp, InterpolatedWP)]
         for wp in interpolated_wps:
             group = [wp]
-            wp = Waypoint.index_lookup[wp.index + 1]
-            while isinstance(wp, InterpolatedDataWP):
-                group.append(wp)
+            while wp.index + 1 <= max(Waypoint.index_lookup) and isinstance(Waypoint.index_lookup[wp.index + 1], InterpolatedDataWP):
                 wp = Waypoint.index_lookup[wp.index + 1]
+                group.append(wp)
             self.interpolation_groups.append(group)
 
         # create edges
