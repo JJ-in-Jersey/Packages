@@ -42,13 +42,13 @@ class Globals:
 
         Globals.YEAR = args['year']
 
-        Globals.FIRST_DOWNLOAD_DAY = parse('12/1/' + str(Globals.YEAR - 1))
-        Globals.FIRST_DAY = parse('1/1/' + str(Globals.YEAR))
+        Globals.FIRST_DOWNLOAD_DAY = parse('11/1/' + str(Globals.YEAR - 1))
+        Globals.FIRST_DAY = parse('12/1/' + str(Globals.YEAR - 1))
         Globals.FIRST_DAY_INDEX = date_time_index(Globals.FIRST_DAY)
         Globals.FIRST_DAY_DATE = Globals.FIRST_DAY.date()
 
-        Globals.LAST_DOWNLOAD_DAY = parse('2/1/' + str(Globals.YEAR + 1))
-        Globals.LAST_DAY = parse('1/1/' + str(Globals.YEAR + 1))
+        Globals.LAST_DOWNLOAD_DAY = parse('3/1/' + str(Globals.YEAR + 1))
+        Globals.LAST_DAY = parse('1/30/' + str(Globals.YEAR + 1))
         Globals.LAST_DAY_INDEX = date_time_index(Globals.LAST_DAY)
         Globals.LAST_DAY_DATE = Globals.LAST_DAY.date()
 
