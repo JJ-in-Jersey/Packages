@@ -23,7 +23,7 @@ class TideXMLDataframe:
 
 def noaa_current_fetch(start, end, folder: Path, station, bin_num=None):
 
-    if (end - start).days > 366:
+    if end.year != start.year:
         raise ValueError
 
     interval = 60
@@ -48,15 +48,20 @@ def noaa_current_dataframe(start, end, folder, station, bin_num=None):
 
     frame = pd.DataFrame()
 
-    prior_year_end = datetime(start.year, 12, 31)
-    file = noaa_current_fetch(start, prior_year_end, folder, station, bin_num)
+    # start year
+    file = noaa_current_fetch(start, datetime(start.year, 12, 31), folder, station, bin_num)
     frame = pd.concat([frame, pd.read_csv(file, header='infer')])
 
-    file = noaa_current_fetch(start, end, folder, station, bin_num)
-    frame = pd.concat([frame, pd.read_csv(file, header='infer')])
+    if start.year + 1 == end.year - 1:
+        file = noaa_current_fetch(datetime(start.year + 1, 1,1), datetime(start.year + 1, 12,31), folder, station, bin_num)
+        frame = pd.concat([frame, pd.read_csv(file, header='infer')])
+    else:
+        for year in range(start.year + 1, end.year):
+            file = noaa_current_fetch(datetime(year, 1, 1), datetime(year, 12, 31), folder, station, bin_num)
+            frame = pd.concat([frame, pd.read_csv(file, header='infer')])
 
-    next_year_start = datetime(end.year, 1, 1)
-    file = noaa_current_fetch(next_year_start, end, folder, station, bin_num)
+    # end year
+    file = noaa_current_fetch(datetime(end.year, 1, 1), end, folder, station, bin_num)
     frame = pd.concat([frame, pd.read_csv(file, header='infer')])
 
     return frame
