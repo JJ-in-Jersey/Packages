@@ -22,6 +22,10 @@ class TideXMLDataframe:
 
 
 def noaa_current_fetch(start, end, folder: Path, station, bin_num=None):
+
+    if (end - start).days > 366:
+        raise ValueError
+
     interval = 60
 
     u1 = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date="
@@ -60,16 +64,17 @@ def noaa_current_dataframe(start, end, folder, station, bin_num=None):
 
 def noaa_tide_dataframe(start, end, folder, station):
 
+    filepath = folder.joinpath(station + '.xml')
+
     u1 = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date="
     u2 = "&end_date="
     u3 = "&station=" + station + "&product=predictions&datum=STND&time_zone=lst_ldt&interval=hilo&units=english&format=xml"
 
     url = u1 + start.strftime("%Y%m%d") + u2 + end.strftime("%Y%m%d") + u3
     response = requests.get(url)
-    filepath = folder.joinpath(station + '.xml')
     with open(filepath, mode="wb") as file:
         file.write(response.content)
 
-    frame = pd.read_csv(filepath, header='infer')
+    frame = TideXMLDataframe(filepath).frame
 
     return frame
