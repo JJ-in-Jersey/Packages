@@ -26,9 +26,10 @@ def noaa_current_fetch(start, end, folder: Path, station: str):
     if end.year != start.year:
         raise ValueError
 
-    station = station.split('_')[0]
-    bin_num = station.split('_')[1]
-    print(station, bin_num)
+    station_split = station.split('_')
+    station = station_split[0]
+    bin_num = station_split[1] if len(station_split) > 1 else None
+    # print(station, bin_num)
 
     filepath = folder.joinpath(station + '_' + str(start.year) + '_current.csv')
     interval = 60
@@ -93,9 +94,10 @@ def noaa_tide_dataframe(start, end, folder: Path, station: str):
 
 def noaa_slack_fetch(start, end, folder: Path, station: str):
 
-    station = station.split('_')[0]
-    bin_num = station.split('_')[1]
-    print(station, bin_num)
+    station_split = station.split('_')
+    station = station_split[0]
+    bin_num = station_split[1] if len(station_split) > 1 else None
+    # print(station, bin_num)
 
     filepath = folder.joinpath(station + '_slack.csv')
 
