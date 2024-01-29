@@ -131,7 +131,7 @@ def noaa_slack_dataframe(start, end, folder: Path, station: str):
             frame = pd.concat([frame, pd.read_csv(file, header='infer')])
 
     # end year
-    file = noaa_current_fetch(datetime(end.year, 1, 1), end, folder, station)
+    file = noaa_slack_fetch(datetime(end.year, 1, 1), end, folder, station)
     frame = pd.concat([frame, pd.read_csv(file, header='infer')])
 
     return frame
