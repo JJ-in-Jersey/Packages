@@ -29,7 +29,6 @@ def noaa_current_fetch(start, end, folder: Path, station: str):
     station_split = station.split('_')
     station = station_split[0]
     bin_num = station_split[1] if len(station_split) > 1 else None
-    # print(station, bin_num)
 
     filepath = folder.joinpath(station + '_' + str(start.year) + '_current.csv')
     interval = 60
@@ -59,7 +58,7 @@ def noaa_current_dataframe(start, end, folder: Path, station: str):
     frame = pd.concat([frame, pd.read_csv(file, header='infer')])
 
     if start.year + 1 == end.year - 1:
-        file = noaa_current_fetch(datetime(start.year + 1, 1,1), datetime(start.year + 1, 12,31), folder, station)
+        file = noaa_current_fetch(datetime(start.year + 1, 1, 1), datetime(start.year + 1, 12, 31), folder, station)
         frame = pd.concat([frame, pd.read_csv(file, header='infer')])
     else:
         for year in range(start.year + 1, end.year):
@@ -92,12 +91,12 @@ def noaa_tide_dataframe(start, end, folder: Path, station: str):
 
     return frame
 
+
 def noaa_slack_fetch(start, end, folder: Path, station: str):
 
     station_split = station.split('_')
     station = station_split[0]
-    bin_num = station_split[1] if len(station_split) > 1 else None
-    # print(station, bin_num)
+    # bin_num = station_split[1] if len(station_split) > 1 else None
 
     filepath = folder.joinpath(station + '_slack.csv')
 
@@ -113,6 +112,7 @@ def noaa_slack_fetch(start, end, folder: Path, station: str):
 
     return filepath
 
+
 def noaa_slack_dataframe(start, end, folder: Path, station: str):
     # return times of change in current, between high and low tide and close to zero
 
@@ -123,7 +123,7 @@ def noaa_slack_dataframe(start, end, folder: Path, station: str):
     frame = pd.concat([frame, pd.read_csv(file, header='infer')])
 
     if start.year + 1 == end.year - 1:
-        file = noaa_slack_fetch(datetime(start.year + 1, 1,1), datetime(start.year + 1, 12,31), folder, station)
+        file = noaa_slack_fetch(datetime(start.year + 1, 1, 1), datetime(start.year + 1, 12, 31), folder, station)
         frame = pd.concat([frame, pd.read_csv(file, header='infer')])
     else:
         for year in range(start.year + 1, end.year):
