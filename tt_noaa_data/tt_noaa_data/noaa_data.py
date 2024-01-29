@@ -1,16 +1,16 @@
 from datetime import datetime
-from tt_file_tools.file_tools import XMLFile
+from tt_file_tools.file_tools import soupFromXMLresponse
 from dateparser import parse
 
 import pandas as pd
 import requests
-from pathlib import Path
+from io import StringIO
 
 
 class TideXMLDataframe:
 
-    def __init__(self, filepath):
-        tree = XMLFile(filepath).tree
+    def __init__(self, response):
+        tree = soupFromXMLresponse(response).tree
 
         self.frame = pd.DataFrame(columns=['date_time', 'date', 'time', 'HL'])
         for pr in tree.find_all('pr'):
@@ -21,7 +21,8 @@ class TideXMLDataframe:
             self.frame.loc[len(self.frame)] = [date_time, date, time, hl]
 
 
-def noaa_current_fetch(start, end, folder: Path, station: str):
+def noaa_current_fetch(start, end, station: str):
+    # request call returns CSV
 
     if end.year != start.year:
         raise ValueError
@@ -30,7 +31,6 @@ def noaa_current_fetch(start, end, folder: Path, station: str):
     station = station_split[0]
     bin_num = station_split[1] if len(station_split) > 1 else None
 
-    filepath = folder.joinpath(station + '_' + str(start.year) + '_current.csv')
     interval = 60
 
     u1 = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=" + start.strftime("%Y%m%d")
@@ -41,41 +41,39 @@ def noaa_current_fetch(start, end, folder: Path, station: str):
     url_base = u1 + u2 + u3 + u4
     url = url_base if not bin_num else url_base + u5
 
+    # returns CSV
     response = requests.get(url)
-    with open(filepath, mode="wb") as file:
-        file.write(response.content)
-
-    return filepath
-
-
-def noaa_current_dataframe(start, end, folder: Path, station: str):
-    # return speed of flowing water
-
-    frame = pd.DataFrame()
-
-    # start year
-    file = noaa_current_fetch(start, datetime(start.year, 12, 31), folder, station)
-    frame = pd.concat([frame, pd.read_csv(file, header='infer')])
-
-    if start.year + 1 == end.year - 1:
-        file = noaa_current_fetch(datetime(start.year + 1, 1, 1), datetime(start.year + 1, 12, 31), folder, station)
-        frame = pd.concat([frame, pd.read_csv(file, header='infer')])
-    else:
-        for year in range(start.year + 1, end.year):
-            file = noaa_current_fetch(datetime(year, 1, 1), datetime(year, 12, 31), folder, station)
-            frame = pd.concat([frame, pd.read_csv(file, header='infer')])
-
-    # end year
-    file = noaa_current_fetch(datetime(end.year, 1, 1), end, folder, station)
-    frame = pd.concat([frame, pd.read_csv(file, header='infer')])
-
+    frame = pd.read_csv(StringIO(response.content.decode()))
     return frame
 
 
-def noaa_tide_dataframe(start, end, folder: Path, station: str):
-    # return height of flowing water
+def noaa_current_dataframe(start, end, station: str):
+    # return speed of flowing water
 
-    filepath = folder.joinpath(station + '_tide.xml')
+    current_frame = pd.DataFrame()
+
+    # start year
+    frame = noaa_current_fetch(start, datetime(start.year, 12, 31), station)
+    current_frame = pd.concat([current_frame, frame])
+
+    # middle_year(s)
+    if start.year + 1 == end.year - 1:
+        frame = noaa_current_fetch(datetime(start.year + 1, 1, 1), datetime(start.year + 1, 12, 31), station)
+        current_frame = pd.concat([current_frame, frame])
+    else:
+        for year in range(start.year + 1, end.year):
+            frame = noaa_current_fetch(datetime(year, 1, 1), datetime(year, 12, 31), station)
+            current_frame = pd.concat([current_frame, frame])
+
+    # end year
+    frame = noaa_current_fetch(datetime(end.year, 1, 1), end, station)
+    current_frame = pd.concat([current_frame, frame])
+
+    return current_frame
+
+
+def noaa_tide_dataframe(start, end, station: str):
+    # return height of flowing water
 
     u1 = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=" + start.strftime("%Y%m%d")
     u2 = "&end_date=" + end.strftime("%Y%m%d")
@@ -84,21 +82,16 @@ def noaa_tide_dataframe(start, end, folder: Path, station: str):
     url = u1 + u2 + u3 + u4
 
     response = requests.get(url)
-    with open(filepath, mode="wb") as file:
-        file.write(response.content)
-
-    frame = TideXMLDataframe(filepath).frame
-
+    frame = TideXMLDataframe(response.content).frame
     return frame
 
 
-def noaa_slack_fetch(start, end, folder: Path, station: str):
+def noaa_slack_fetch(start, end, station: str):
+    # request call returns CSV
 
     station_split = station.split('_')
     station = station_split[0]
     # bin_num = station_split[1] if len(station_split) > 1 else None
-
-    filepath = folder.joinpath(station + '_slack.csv')
 
     u1 = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=" + start.strftime("%Y%m%d")
     u2 = "&end_date=" + end.strftime("%Y%m%d")
@@ -107,31 +100,28 @@ def noaa_slack_fetch(start, end, folder: Path, station: str):
     url = u1 + u2 + u3 + u4
 
     response = requests.get(url)
-    with open(filepath, mode="wb") as file:
-        file.write(response.content)
-
-    return filepath
+    frame = pd.read_csv(StringIO(response.content.decode()))
+    return frame
 
 
-def noaa_slack_dataframe(start, end, folder: Path, station: str):
+def noaa_slack_dataframe(start, end, station: str):
     # return times of change in current, between high and low tide and close to zero
 
-    frame = pd.DataFrame()
+    slack_frame = pd.DataFrame()
 
     # start year
-    file = noaa_slack_fetch(start, datetime(start.year, 12, 31), folder, station)
-    frame = pd.concat([frame, pd.read_csv(file, header='infer')])
+    frame = noaa_slack_fetch(start, datetime(start.year, 12, 31), station)
+    slack_frame = pd.concat([slack_frame, frame])
 
     if start.year + 1 == end.year - 1:
-        file = noaa_slack_fetch(datetime(start.year + 1, 1, 1), datetime(start.year + 1, 12, 31), folder, station)
-        frame = pd.concat([frame, pd.read_csv(file, header='infer')])
+        frame = noaa_slack_fetch(datetime(start.year + 1, 1, 1), datetime(start.year + 1, 12, 31), station)
+        slack_frame = pd.concat([slack_frame, frame])
     else:
         for year in range(start.year + 1, end.year):
-            file = noaa_slack_fetch(datetime(year, 1, 1), datetime(year, 12, 31), folder, station)
-            frame = pd.concat([frame, pd.read_csv(file, header='infer')])
+            frame = noaa_slack_fetch(datetime(year, 1, 1), datetime(year, 12, 31), station)
+            slack_frame = pd.concat([slack_frame, frame])
 
     # end year
-    file = noaa_slack_fetch(datetime(end.year, 1, 1), end, folder, station)
-    frame = pd.concat([frame, pd.read_csv(file, header='infer')])
-
-    return frame
+    frame = noaa_slack_fetch(datetime(end.year, 1, 1), end, station)
+    slack_frame = pd.concat([slack_frame, frame])
+    return slack_frame

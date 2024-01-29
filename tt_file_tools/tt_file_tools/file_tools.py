@@ -28,10 +28,15 @@ def read_df(filepath):
     return pd.read_csv(filepath, header='infer')
 
 
-class XMLFile:
+class SoupFromXMLFile:
     def __init__(self, filepath):
         with open(filepath, 'r') as f:
             self.tree = Soup(f, "xml")
+
+
+class SoupFromXMLResponse:
+    def __init__(self, response):
+        self.tree = Soup(response, 'xml')
 
 
 def write_df(df, path):
