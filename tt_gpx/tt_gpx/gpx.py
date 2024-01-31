@@ -10,6 +10,7 @@ class Waypoint:
              'InterpolatedDataWP': 'Black'}
     ordinal_number = 0
     index_lookup = {}
+    name_lookup = {}
 
     def __init__(self, gpxtag):
         self.lat = round(float(gpxtag.attrs['lat']), 4)

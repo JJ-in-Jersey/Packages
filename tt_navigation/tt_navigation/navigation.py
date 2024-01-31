@@ -9,13 +9,14 @@ def distance(start_coords, end_coords): return hvs(start_coords, end_coords, uni
 
 
 def directions(compass_heading: int):
+    dir_names = None
     if compass_heading > 337.5 or compass_heading < 22.5:
         dir_names = tuple(['north', 'south'])
     elif 62.5 > compass_heading > 22.5:
         dir_names = tuple(['northeast', 'southwest'])
     elif 112.5 > compass_heading > 62.5:
         dir_names = tuple(['east', 'west'])
-    elif 157.5> compass_heading > 112.5:
+    elif 157.5 > compass_heading > 112.5:
         dir_names = tuple(['southeast', 'northwest'])
     elif 202.5 > compass_heading > 157.5:
         dir_names = tuple(['south', 'north'])

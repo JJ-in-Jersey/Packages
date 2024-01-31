@@ -110,7 +110,8 @@ class ChromeDriver:
             self.installed_driver_file = None
             self.installed_driver_version = None
 
-        regex_pattern = '^[0-9\.]*$'
+        # regex_pattern = '^[0-9\.]*$'
+        regex_pattern = '^[0-9\\.]*$'
         chrome_version_list = [Version(s) for s in listdir(self.lookup['chrome_version_folder']) if re.search(regex_pattern, s) is not None]
         chrome_version_list.sort()
 

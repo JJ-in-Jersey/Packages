@@ -1,5 +1,5 @@
 from datetime import datetime
-from tt_file_tools.file_tools import soupFromXMLresponse
+from tt_file_tools.file_tools import SoupFromXMLResponse
 from dateparser import parse
 
 import pandas as pd
@@ -10,7 +10,7 @@ from io import StringIO
 class TideXMLDataframe:
 
     def __init__(self, response):
-        tree = soupFromXMLresponse(response).tree
+        tree = SoupFromXMLResponse(response).tree
 
         self.frame = pd.DataFrame(columns=['date_time', 'date', 'time', 'HL'])
         for pr in tree.find_all('pr'):
