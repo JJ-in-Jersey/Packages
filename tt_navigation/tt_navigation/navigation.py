@@ -12,9 +12,9 @@ def directions(compass_heading: int):
     dir_names = None
     if compass_heading > 337.5 or compass_heading < 22.5:
         dir_names = tuple(['north', 'south'])
-    elif 62.5 > compass_heading > 22.5:
+    elif 67.5 > compass_heading > 22.5:
         dir_names = tuple(['northeast', 'southwest'])
-    elif 112.5 > compass_heading > 62.5:
+    elif 112.5 > compass_heading > 67.5:
         dir_names = tuple(['east', 'west'])
     elif 157.5 > compass_heading > 112.5:
         dir_names = tuple(['southeast', 'northwest'])
@@ -24,7 +24,7 @@ def directions(compass_heading: int):
         dir_names = tuple(['southwest', 'northeast'])
     elif 292.5 > compass_heading > 247.5:
         dir_names = tuple(['west', 'east'])
-    elif 337.5 > compass_heading > 202.5:
+    elif 337.5 > compass_heading > 292.5:
         dir_names = tuple(['northwest', 'southeast'])
 
     return dir_names
