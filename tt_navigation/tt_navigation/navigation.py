@@ -31,7 +31,9 @@ def directions(compass_heading: int):
 
 
 def heading(start_coords, end_coords):
+    lat_sign = np.sign(end_coords[0] - start_coords[0])
+    lon_sign = np.sign(end_coords[1] - start_coords[1])
     corner = (end_coords[0], start_coords[1])
-    lat_dist = distance(corner, start_coords)
-    lon_dist = distance(end_coords, corner)
+    lat_dist = distance(corner, start_coords) * lat_sign
+    lon_dist = distance(end_coords, corner) * lon_sign
     return int(round(np.rad2deg(np.arctan(lon_dist/lat_dist)), 0))
