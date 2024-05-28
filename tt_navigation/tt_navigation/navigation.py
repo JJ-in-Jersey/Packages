@@ -36,4 +36,7 @@ def heading(start_coords, end_coords):
     corner = (end_coords[0], start_coords[1])
     lat_dist = distance(corner, start_coords) * lat_sign
     lon_dist = distance(end_coords, corner) * lon_sign
-    return int(round(np.rad2deg(np.arctan(lon_dist/lat_dist)), 0))
+    angle = int(round(np.rad2deg(np.arctan(lon_dist/lat_dist)), 0))
+    if angle < 0:
+        angle = 360 - angle
+    return angle
