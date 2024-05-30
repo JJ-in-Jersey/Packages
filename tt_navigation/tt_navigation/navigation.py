@@ -30,13 +30,41 @@ def directions(compass_heading: int):
     return dir_names
 
 
-def heading(start_coords, end_coords):
-    lat_sign = np.sign(end_coords[0] - start_coords[0])
-    lon_sign = np.sign(end_coords[1] - start_coords[1])
-    corner = (end_coords[0], start_coords[1])
-    lat_dist = distance(corner, start_coords) * lat_sign
-    lon_dist = distance(end_coords, corner) * lon_sign
-    angle = int(round(np.rad2deg(np.arctan(lon_dist/lat_dist)), 0))
-    if angle < 0:
-        angle = 180 + angle
-    return angle
+class Heading:
+
+    def quadrant(self):
+        if self.lat_sign > 0 and self.lon_sign > 0:
+            return 1
+        elif self.lat_sign < 0 < self.lon_sign:
+            return 2
+        elif self.lat_sign < 0 and self.lon_sign < 0:
+            return 3
+        elif self.lon_sign < 0 < self.lat_sign:
+            return 4
+
+    def __init__(self, start_coords, end_coords):
+        self.lat_sign = np.sign(end_coords[0] - start_coords[0])
+        self.lon_sign = np.sign(end_coords[1] - start_coords[1])
+        corner = (end_coords[0], start_coords[1])
+        self.lat_dist = distance(corner, start_coords)
+        self.lon_dist = distance(end_coords, corner)
+        self.angle = int(round(np.rad2deg(np.arctan(self.lon_dist/self.lat_dist)), 0))
+
+        if self.quadrant() == 2:
+            self.angle = 180 - self.angle
+        elif self.quadrant() == 3:
+            self.angle = self.angle + 180
+        elif self.quadrant() == 4:
+            self.angle = 360 - self.angle
+
+
+# def heading(start_coords, end_coords):
+#     lat_sign = np.sign(end_coords[0] - start_coords[0])
+#     lon_sign = np.sign(end_coords[1] - start_coords[1])
+#     corner = (end_coords[0], start_coords[1])
+#     lat_dist = distance(corner, start_coords) * lat_sign
+#     lon_dist = distance(end_coords, corner) * lon_sign
+#     angle = int(round(np.rad2deg(np.arctan(lon_dist/lat_dist)), 0))
+#     if angle < 0:
+#         angle = 180 + angle
+#     return angle

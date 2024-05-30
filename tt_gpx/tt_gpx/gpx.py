@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup as Soup
-from tt_navigation.navigation import distance, directions, heading
+from tt_navigation.navigation import distance, directions, Heading
 from os import makedirs
 
 
@@ -128,7 +128,7 @@ class GPXPath:
         self.path_integrity()
         self.name = '{' + str(self.edges[0].start.index) + '-' + str(self.edges[-1].end.index) + '}'
         self.length = round(sum([edge.length for edge in self.edges]), 4)
-        self.route_heading = heading(self.edges[0].start.coords, self.edges[-1].end.coords)
+        self.route_heading = Heading(self.edges[0].start.coords, self.edges[-1].end.coords).angle
         self.direction = directions(self.route_heading)[0]
 
 
