@@ -47,7 +47,7 @@ class Globals:
         Globals.FIRST_DAY_INDEX = date_time_index(Globals.FIRST_DAY)
         Globals.FIRST_DAY_DATE = Globals.FIRST_DAY.date()
 
-        Globals.LAST_DOWNLOAD_DAY = parse('3/1/' + str(Globals.YEAR + 1))
+        Globals.LAST_DOWNLOAD_DAY = parse('3/1/' + str(Globals.YEAR + 1)) - timedelta(days=1)
         Globals.LAST_DAY = parse('1/31/' + str(Globals.YEAR + 1))
         Globals.LAST_DAY_INDEX = date_time_index(Globals.LAST_DAY)
         Globals.LAST_DAY_DATE = Globals.LAST_DAY.date()
