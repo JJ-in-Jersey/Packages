@@ -30,6 +30,8 @@ class Globals:
     EDGES_FOLDER = None
     TRANSIT_TIMES_FOLDER = None
 
+    HARMONIC_TIMES = None
+
     CHECKMARK = u'\N{check mark}'
     TIMESTEP = 15  # seconds
     WINDOW_MARGIN = 15  # minutes on either side of best time
