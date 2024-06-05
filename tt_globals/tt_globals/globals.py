@@ -49,7 +49,7 @@ class Globals:
         Globals.FIRST_DAY_INDEX = date_time_index(Globals.FIRST_DAY)
         Globals.FIRST_DAY_DATE = Globals.FIRST_DAY.date()
 
-        Globals.LAST_DOWNLOAD_DAY = parse('3/1/' + str(Globals.YEAR + 1)) - timedelta(hours=1)
+        Globals.LAST_DOWNLOAD_DAY = parse('3/1/' + str(Globals.YEAR + 1)) - timedelta(days=1)
         Globals.LAST_DAY = parse('1/31/' + str(Globals.YEAR + 1))
         Globals.LAST_DAY_INDEX = date_time_index(Globals.LAST_DAY)
         Globals.LAST_DAY_DATE = Globals.LAST_DAY.date()
@@ -58,7 +58,7 @@ class Globals:
         Globals.ELAPSED_TIME_INDEX_RANGE = range(date_time_index(Globals.FIRST_DOWNLOAD_DAY), date_time_index(Globals.LAST_DOWNLOAD_DAY - timedelta(weeks=1)), Globals.TIMESTEP)
         Globals.TRANSIT_TIME_INDEX_RANGE = range(date_time_index(Globals.FIRST_DOWNLOAD_DAY), date_time_index(Globals.LAST_DOWNLOAD_DAY - timedelta(weeks=2)), Globals.TIMESTEP)
 
-        Globals.EXPECTED_HARMONIC_DATETIMES = [Globals.FIRST_DOWNLOAD_DAY + timedelta(hours=index) for index in range(0, (Globals.LAST_DOWNLOAD_DAY - Globals.FIRST_DOWNLOAD_DAY).days*24)]
+        Globals.EXPECTED_HARMONIC_DATETIMES = [Globals.FIRST_DOWNLOAD_DAY + timedelta(hours=index) for index in range(0, ((Globals.LAST_DOWNLOAD_DAY - Globals.FIRST_DOWNLOAD_DAY).days + 1)*24)]
 
     @staticmethod
     def initialize_folders(args):
