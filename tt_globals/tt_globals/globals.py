@@ -1,6 +1,6 @@
 from dateparser import parse
 from datetime import timedelta
-from tt_date_time_tools.date_time_tools import time_index
+from tt_date_time_tools.date_time_tools import date_to_index
 from tt_os_abstraction.os_abstraction import env
 import shutil
 from os import makedirs
@@ -46,17 +46,17 @@ class Globals:
 
         Globals.FIRST_DOWNLOAD_DAY = parse('11/1/' + str(Globals.YEAR - 1))
         Globals.FIRST_DAY = parse('12/1/' + str(Globals.YEAR - 1))
-        Globals.FIRST_DAY_INDEX = time_index(Globals.FIRST_DAY)
+        Globals.FIRST_DAY_INDEX = date_to_index(Globals.FIRST_DAY)
         Globals.FIRST_DAY_DATE = Globals.FIRST_DAY.date()
 
         Globals.LAST_DOWNLOAD_DAY = parse('3/1/' + str(Globals.YEAR + 1)) - timedelta(days=1)
         Globals.LAST_DAY = parse('1/31/' + str(Globals.YEAR + 1))
-        Globals.LAST_DAY_INDEX = time_index(Globals.LAST_DAY)
+        Globals.LAST_DAY_INDEX = date_to_index(Globals.LAST_DAY)
         Globals.LAST_DAY_DATE = Globals.LAST_DAY.date()
 
-        Globals.DOWNLOAD_INDEX_RANGE = range(time_index(Globals.FIRST_DOWNLOAD_DAY), time_index(Globals.LAST_DOWNLOAD_DAY), Globals.TIMESTEP)
-        Globals.ELAPSED_TIME_INDEX_RANGE = range(time_index(Globals.FIRST_DOWNLOAD_DAY), time_index(Globals.LAST_DOWNLOAD_DAY - timedelta(weeks=1)), Globals.TIMESTEP)
-        Globals.TRANSIT_TIME_INDEX_RANGE = range(time_index(Globals.FIRST_DOWNLOAD_DAY), time_index(Globals.LAST_DOWNLOAD_DAY - timedelta(weeks=2)), Globals.TIMESTEP)
+        Globals.DOWNLOAD_INDEX_RANGE = range(date_to_index(Globals.FIRST_DOWNLOAD_DAY), date_to_index(Globals.LAST_DOWNLOAD_DAY), Globals.TIMESTEP)
+        Globals.ELAPSED_TIME_INDEX_RANGE = range(date_to_index(Globals.FIRST_DOWNLOAD_DAY), date_to_index(Globals.LAST_DOWNLOAD_DAY - timedelta(weeks=1)), Globals.TIMESTEP)
+        Globals.TRANSIT_TIME_INDEX_RANGE = range(date_to_index(Globals.FIRST_DOWNLOAD_DAY), date_to_index(Globals.LAST_DOWNLOAD_DAY - timedelta(weeks=2)), Globals.TIMESTEP)
 
         Globals.EXPECTED_HARMONIC_DATETIMES = [Globals.FIRST_DOWNLOAD_DAY + timedelta(hours=index) for index in range(0, ((Globals.LAST_DOWNLOAD_DAY - Globals.FIRST_DOWNLOAD_DAY).days + 1)*24)]
 
