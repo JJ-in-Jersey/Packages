@@ -30,7 +30,7 @@ class Globals:
     EDGES_FOLDER = None
     TRANSIT_TIMES_FOLDER = None
 
-    HARMONIC_TIMES = None
+    EXPECTED_HARMONIC_DATETIMES = None
 
     CHECKMARK = u'\N{check mark}'
     TIMESTEP = 15  # seconds
@@ -58,7 +58,7 @@ class Globals:
         Globals.ELAPSED_TIME_INDEX_RANGE = range(date_time_index(Globals.FIRST_DOWNLOAD_DAY), date_time_index(Globals.LAST_DOWNLOAD_DAY - timedelta(weeks=1)), Globals.TIMESTEP)
         Globals.TRANSIT_TIME_INDEX_RANGE = range(date_time_index(Globals.FIRST_DOWNLOAD_DAY), date_time_index(Globals.LAST_DOWNLOAD_DAY - timedelta(weeks=2)), Globals.TIMESTEP)
 
-        Globals.HARMONIC_TIMES = [Globals.FIRST_DOWNLOAD_DAY + timedelta(hours=index) for index in range(0, (Globals.LAST_DOWNLOAD_DAY - Globals.FIRST_DOWNLOAD_DAY).days*24)]
+        Globals.EXPECTED_HARMONIC_DATETIMES = [Globals.FIRST_DOWNLOAD_DAY + timedelta(hours=index) for index in range(0, (Globals.LAST_DOWNLOAD_DAY - Globals.FIRST_DOWNLOAD_DAY).days*24)]
 
     @staticmethod
     def initialize_folders(args):
