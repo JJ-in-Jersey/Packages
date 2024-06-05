@@ -8,7 +8,10 @@ def hours_mins(secs): return "%d:%02d" % (secs // 3600, secs % 3600 // 60)
 def mins_secs(secs): return "%d:%02d" % (secs // 60, secs % 60)
 
 
-def int_timestamp(date): return int(pd.Timestamp(date).timestamp())
+# def int_timestamp(date): return int(pd.Timestamp(date).timestamp())
+
+
+def time_index(date): return int(pd.Timestamp(date).timestamp())
 
 
 def datetime(index): return pd.to_datetime(index, unit='s').round('min')
