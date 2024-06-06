@@ -107,7 +107,8 @@ class InterpolatedWP(EdgeNode):  # result of interpolation of other waypoint dat
             frame['date_time'] = frame['date_index'].apply(index_to_date)
             frame.reset_index(drop=True, inplace=True)
             write_df(frame, output_filepath)
-        pass
+        else:
+            print_file_exists(output_filepath)
 
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
