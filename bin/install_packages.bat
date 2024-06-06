@@ -1,5 +1,6 @@
 cd %userprofile%/PycharmProjects/Packages
 
+pip uninstall tt_jobs -y
 pip uninstall tt_singleton -y
 pip uninstall tt_navigation -y
 pip uninstall tt_date_time_tools -y
@@ -14,6 +15,7 @@ pip uninstall tt_job_manager -y
 pip uninstall tt_noaa_data -y
 pip uninstall tt_globals -y
 
+pip install ../jobs
 pip install ./tt_singleton
 pip install ./tt_navigation
 pip install ./tt_date_time_tools
