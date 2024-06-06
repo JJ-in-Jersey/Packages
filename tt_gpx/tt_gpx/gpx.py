@@ -1,6 +1,10 @@
 from bs4 import BeautifulSoup as Soup
 from tt_navigation.navigation import distance, directions, Heading
+from tt_file_tools.file_tools import read_df, write_df
+from tt_date_time_tools.date_time_tools import index_to_date
+from tt_jobs.jobs import InterpolatePointJob
 from os import makedirs
+import pandas as pd
 
 
 class Waypoint:
@@ -69,14 +73,45 @@ class CurrentStationWP(EdgeNode):
         super().__init__(gpxtag)
 
 
-class InterpolatedDataWP(DownloadedDataWP):
+class InterpolatedDataWP(DownloadedDataWP):  # downloaded data used to interpolate a location
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
 
 
-class InterpolatedWP(EdgeNode):  # Not really a data waypoint but stores data in the downloaded data path
+class InterpolatedWP(EdgeNode):  # result of interpolation of other waypoint data
+
+    def create_data_waypoint_list(self):
+        index = self.index + 1
+        while index <= max(Waypoint.index_lookup) and isinstance(Waypoint.index_lookup[index], InterpolatedDataWP):
+            self.data_waypoints.append(Waypoint.index_lookup[index])
+            index += 1
+
+    def interpolate(self, job_manager):
+
+        output_filepath = self.folder.joinpath('interpolated_velocity.csv')
+
+        if not output_filepath.exists():
+            velocity_data = []
+            for i, wp in enumerate(self.data_waypoints):
+                velocity_data.append(read_df(wp.folder.joinpath('normalized_velocity.csv')))
+                velocity_data[i]['lat'] = wp.lat
+                velocity_data[i]['lon'] = wp.lon
+                print(i, len(velocity_data[i]), wp.name)
+
+            keys = [job_manager.put(InterpolatePointJob(self, velocity_data, i)) for i in range(len(velocity_data[0]))]
+            job_manager.wait()
+
+            result_array = tuple([job_manager.get(key).date_velocity for key in keys])
+            frame = pd.DataFrame(result_array, columns=['date_index', 'velocity'])
+            frame.sort_values('date_index', inplace=True)
+            frame['date_time'] = frame['date_index'].apply(index_to_date)
+            frame.reset_index(drop=True, inplace=True)
+            write_df(frame, output_filepath)
+        pass
+
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
+        self.data_waypoints = []
 
 
 class Edge:  # connection between waypoints with current data
@@ -162,15 +197,19 @@ class Route:
                 waypoints.append(InterpolatedDataWP(tag))
         self.waypoints = waypoints
 
-        # create interpolation groups
-        self.interpolation_groups = []
-        interpolated_wps = [wp for wp in waypoints if isinstance(wp, InterpolatedWP)]
-        for wp in interpolated_wps:
-            group = [wp]
-            while wp.index + 1 <= max(Waypoint.index_lookup) and isinstance(Waypoint.index_lookup[wp.index + 1], InterpolatedDataWP):
-                wp = Waypoint.index_lookup[wp.index + 1]
-                group.append(wp)
-            self.interpolation_groups.append(group)
+        # populate interpolated waypoint data
+        for iwp in filter(lambda w: isinstance(w, InterpolatedWP), waypoints):
+            iwp.create_data_waypoint_list()
+
+        # # create interpolation groups
+        # self.interpolation_groups = []
+        # interpolated_wps = [wp for wp in waypoints if isinstance(wp, InterpolatedWP)]
+        # for wp in interpolated_wps:
+        #     group = [wp]
+        #     while wp.index + 1 <= max(Waypoint.index_lookup) and isinstance(Waypoint.index_lookup[wp.index + 1], InterpolatedDataWP):
+        #         wp = Waypoint.index_lookup[wp.index + 1]
+        #         group.append(wp)
+        #     self.interpolation_groups.append(group)
 
         # create edges
         edge_nodes = [wp for wp in waypoints if isinstance(wp, EdgeNode)]
