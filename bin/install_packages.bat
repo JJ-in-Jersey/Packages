@@ -15,7 +15,7 @@ pip uninstall tt_job_manager -y
 pip uninstall tt_noaa_data -y
 pip uninstall tt_globals -y
 
-pip install ./jobs
+pip install ./tt_jobs
 pip install ./tt_singleton
 pip install ./tt_navigation
 pip install ./tt_date_time_tools
