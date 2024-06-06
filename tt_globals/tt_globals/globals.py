@@ -39,6 +39,9 @@ class Globals:
     TIMESTEP_MARGIN = int(WINDOW_MARGIN * 60 / TIMESTEP)  # number of timesteps to add to minimum to find edges of time windows
     BOAT_SPEEDS = [v for v in range(-7, -2, 2)] + [v for v in range(3, 8, 2)]  # knots
 
+    WAYPOINT_DATAFILE_NAME = 'normalized_velocity.csv'
+    EDGE_DATAFILE_NAME = 'normalized_velocity_spline_fit.csv'
+
     @staticmethod
     def initialize_dates(args):
         print('\nInitializing globals dates')
