@@ -1,6 +1,6 @@
 import pandas as pd
 from datetime import datetime as dt, timedelta as td
-from tt_date_time_tools import date_time_tools as dtt
+from tt_date_time_tools.date_time_tools import index_to_date
 
 
 def time_to_degrees(time): return time.hour * 15 + time.minute * 0.25
@@ -32,17 +32,17 @@ class Arc:
         self.name = Arc.name
         self.elapsed_time = str(args[6]).split(' ')[2][:-3]
 
-        self.start_datetime = dtt.datetime(args[0])
+        self.start_datetime = index_to_date(args[0])
         self.start_date = self.start_datetime.date()
         self.start_time = self.start_datetime.time()
         self.start_angle = time_to_degrees(self.round_time(self.start_datetime))
 
-        self.min_datetime = dtt.datetime(args[2])
+        self.min_datetime = index_to_date(args[2])
         self.min_date = self.min_datetime.date()
         self.min_time = self.min_datetime.time()
         self.min_angle = time_to_degrees(self.round_time(self.min_datetime))
 
-        self.end_datetime = dtt.datetime(args[4])
+        self.end_datetime = index_to_date(args[4])
         self.end_date = self.end_datetime.date()
         self.end_time = self.end_datetime.time()
         self.end_angle = time_to_degrees(self.round_time(self.end_datetime))
