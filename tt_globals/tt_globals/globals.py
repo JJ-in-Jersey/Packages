@@ -55,9 +55,9 @@ class Globals:
         Globals.LAST_DAY_INDEX = date_to_index(Globals.LAST_DAY)
         Globals.LAST_DAY_DATE = Globals.LAST_DAY.date()
 
-        Globals.DOWNLOAD_INDEX_RANGE = range(date_to_index(Globals.FIRST_DOWNLOAD_DAY), date_to_index(Globals.LAST_DOWNLOAD_DAY), Globals.TIMESTEP)
-        Globals.ELAPSED_TIME_INDEX_RANGE = range(date_to_index(Globals.FIRST_DOWNLOAD_DAY), date_to_index(Globals.LAST_DOWNLOAD_DAY - timedelta(weeks=1)), Globals.TIMESTEP)
-        Globals.TRANSIT_TIME_INDEX_RANGE = range(date_to_index(Globals.FIRST_DOWNLOAD_DAY), date_to_index(Globals.LAST_DOWNLOAD_DAY - timedelta(weeks=2)), Globals.TIMESTEP)
+        Globals.DOWNLOAD_INDEX_RANGE = range(date_to_index(Globals.FIRST_DOWNLOAD_DAY), date_to_index(Globals.LAST_DOWNLOAD_DAY + timedelta(days=1)), Globals.TIMESTEP)
+        Globals.ELAPSED_TIME_INDEX_RANGE = range(date_to_index(Globals.FIRST_DOWNLOAD_DAY), date_to_index(Globals.LAST_DOWNLOAD_DAY - timedelta(days=6)), Globals.TIMESTEP)
+        Globals.TRANSIT_TIME_INDEX_RANGE = range(date_to_index(Globals.FIRST_DOWNLOAD_DAY), date_to_index(Globals.LAST_DOWNLOAD_DAY - timedelta(days=13)), Globals.TIMESTEP)
 
         Globals.NORMALIZED_DOWNLOAD_DATES = [Globals.FIRST_DOWNLOAD_DAY + timedelta(hours=index) for index in range(0, ((Globals.LAST_DOWNLOAD_DAY - Globals.FIRST_DOWNLOAD_DAY).days + 1)*24)]
         Globals.NORMALIZED_DOWNLOAD_INDICES = [date_to_index(Globals.FIRST_DOWNLOAD_DAY + timedelta(hours=index)) for index in range(0, ((Globals.LAST_DOWNLOAD_DAY - Globals.FIRST_DOWNLOAD_DAY).days + 1)*24)]
