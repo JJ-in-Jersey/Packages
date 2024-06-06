@@ -66,5 +66,7 @@ def print_file_exists(filepath: Path):
     checkmark = u'\N{check mark}'
     if filepath.exists():
         print(f'   {checkmark}   {str(filepath)}')
+        return True
     else:
         print(f'   x {str(filepath)}')
+        return False
