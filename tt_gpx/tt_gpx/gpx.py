@@ -3,7 +3,6 @@ from tt_navigation.navigation import distance, directions, Heading
 from tt_file_tools.file_tools import read_df, write_df, print_file_exists
 from tt_date_time_tools.date_time_tools import index_to_date
 from tt_jobs.jobs import InterpolatePointJob
-from tt_file_tools.file_tools import print_file_exists
 from tt_globals.globals import Globals
 from os import makedirs
 import pandas as pd
@@ -206,7 +205,7 @@ class Route:
         for iwp in filter(lambda w: isinstance(w, InterpolatedWP), waypoints):
             iwp.create_data_waypoint_list()
 
-          # create edges
+        # create edges
         edge_nodes = [wp for wp in waypoints if isinstance(wp, EdgeNode)]
         self.edges = [Edge(wp, edge_nodes[i+1]) for i, wp in enumerate(edge_nodes[:-1])]
 

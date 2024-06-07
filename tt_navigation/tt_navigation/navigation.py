@@ -56,15 +56,3 @@ class Heading:
             self.angle = self.angle + 180
         elif self.quadrant() == 4:
             self.angle = 360 - self.angle
-
-
-# def heading(start_coords, end_coords):
-#     lat_sign = np.sign(end_coords[0] - start_coords[0])
-#     lon_sign = np.sign(end_coords[1] - start_coords[1])
-#     corner = (end_coords[0], start_coords[1])
-#     lat_dist = distance(corner, start_coords) * lat_sign
-#     lon_dist = distance(end_coords, corner) * lon_sign
-#     angle = int(round(np.rad2deg(np.arctan(lon_dist/lat_dist)), 0))
-#     if angle < 0:
-#         angle = 180 + angle
-#     return angle
