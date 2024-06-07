@@ -206,17 +206,7 @@ class Route:
         for iwp in filter(lambda w: isinstance(w, InterpolatedWP), waypoints):
             iwp.create_data_waypoint_list()
 
-        # # create interpolation groups
-        # self.interpolation_groups = []
-        # interpolated_wps = [wp for wp in waypoints if isinstance(wp, InterpolatedWP)]
-        # for wp in interpolated_wps:
-        #     group = [wp]
-        #     while wp.index + 1 <= max(Waypoint.index_lookup) and isinstance(Waypoint.index_lookup[wp.index + 1], InterpolatedDataWP):
-        #         wp = Waypoint.index_lookup[wp.index + 1]
-        #         group.append(wp)
-        #     self.interpolation_groups.append(group)
-
-        # create edges
+          # create edges
         edge_nodes = [wp for wp in waypoints if isinstance(wp, EdgeNode)]
         self.edges = [Edge(wp, edge_nodes[i+1]) for i, wp in enumerate(edge_nodes[:-1])]
 
