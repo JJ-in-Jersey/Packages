@@ -4,6 +4,7 @@ from tt_file_tools.file_tools import read_df, write_df, print_file_exists
 from tt_date_time_tools.date_time_tools import index_to_date
 from tt_jobs.jobs import InterpolatePointJob
 from tt_file_tools.file_tools import print_file_exists
+from tt_globals.globals import Globals
 from os import makedirs
 import pandas as pd
 
@@ -95,7 +96,7 @@ class InterpolatedWP(EdgeNode):  # result of interpolation of other waypoint dat
         if not output_filepath.exists():
             velocity_data = []
             for i, wp in enumerate(self.data_waypoints):
-                velocity_data.append(read_df(wp.folder.joinpath('normalized_velocity.csv')))
+                velocity_data.append(read_df(wp.folder.joinpath(Globals.WAYPOINT_DATAFILE_NAME)))
                 velocity_data[i]['lat'] = wp.lat
                 velocity_data[i]['lon'] = wp.lon
                 print(i, len(velocity_data[i]), wp.name)
@@ -109,9 +110,9 @@ class InterpolatedWP(EdgeNode):  # result of interpolation of other waypoint dat
             frame['date_time'] = frame['date_index'].apply(index_to_date)
             frame.reset_index(drop=True, inplace=True)
             write_df(frame, output_filepath)
-        else:
-            if print_file_exists(output_filepath):
-                write_df(read_df(output_filepath), self.folder.joinpath('normalized_velocity.csv'))
+
+        if print_file_exists(output_filepath):
+            write_df(read_df(output_filepath), self.folder.joinpath(Globals.WAYPOINT_DATAFILE_NAME))
 
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
