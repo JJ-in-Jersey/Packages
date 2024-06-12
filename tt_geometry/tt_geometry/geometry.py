@@ -1,9 +1,6 @@
 import pandas as pd
 from datetime import datetime as dt, timedelta as td
-from tt_date_time_tools.date_time_tools import index_to_date
-
-
-def time_to_degrees(time): return time.hour * 15 + time.minute * 0.25
+from tt_date_time_tools.date_time_tools import index_to_date, time_to_degrees, round_time
 
 
 class Arc:
@@ -13,14 +10,6 @@ class Arc:
 
     def info(self):
         return pd.Series([self.name, self.start_date, self.start_time, self.start_angle, self.min_time, self.min_angle, self.end_time, self.end_angle, self.elapsed_time])
-
-    @staticmethod
-    def round_time(timestamp, mins=15):
-        return dt.min + round((timestamp.to_pydatetime() - dt.min) / td(minutes=mins)) * td(minutes=mins)
-
-    @staticmethod
-    def time_to_degrees(time):
-        return time.hour * 15 + time.minute * 0.25
 
     def __init__(self, *args):
         # from arc_frame: start_index, start_datetime, min_index, min_datetime, end_index, end_datetime, transit_time
@@ -35,17 +24,17 @@ class Arc:
         self.start_datetime = index_to_date(args[0])
         self.start_date = self.start_datetime.date()
         self.start_time = self.start_datetime.time()
-        self.start_angle = time_to_degrees(self.round_time(self.start_datetime))
+        self.start_angle = time_to_degrees(round_time(self.start_datetime))
 
         self.min_datetime = index_to_date(args[2])
         self.min_date = self.min_datetime.date()
         self.min_time = self.min_datetime.time()
-        self.min_angle = time_to_degrees(self.round_time(self.min_datetime))
+        self.min_angle = time_to_degrees(round_time(self.min_datetime))
 
         self.end_datetime = index_to_date(args[4])
         self.end_date = self.end_datetime.date()
         self.end_time = self.end_datetime.time()
-        self.end_angle = time_to_degrees(self.round_time(self.end_datetime))
+        self.end_angle = time_to_degrees(round_time(self.end_datetime))
 
         if self.start_date != self.end_date:
             self.fractured = True
