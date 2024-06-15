@@ -45,10 +45,9 @@ def noaa_current_fetch(start, end, station: str):
     response = requests.get(url)
     if response.status_code != 200:
         raise SystemExit("request failed")
-
-    frame = pd.read_csv(StringIO(response.content.decode()))
-    print("package frame", len(frame))
-    return frame
+    else:
+        frame = pd.read_csv(StringIO(response.content.decode()))
+        return frame
 
 
 def noaa_current_dataframe(start, end, station: str):
@@ -88,9 +87,9 @@ def noaa_tide_dataframe(start, end, station: str):
     response = requests.get(url)
     if response.status_code != 200:
         raise SystemExit("request failed")
-
-    frame = TideXMLDataframe(response.content).frame
-    return frame
+    else:
+        frame = TideXMLDataframe(response.content).frame
+        return frame
 
 
 def noaa_slack_fetch(start, end, station: str):
@@ -109,9 +108,9 @@ def noaa_slack_fetch(start, end, station: str):
     response = requests.get(url)
     if response.status_code != 200:
         raise SystemExit("request failed")
-
-    frame = pd.read_csv(StringIO(response.content.decode()))
-    return frame
+    else:
+        frame = pd.read_csv(StringIO(response.content.decode()))
+        return frame
 
 
 def noaa_slack_dataframe(start, end, station: str):
