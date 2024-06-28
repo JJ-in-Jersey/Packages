@@ -24,7 +24,7 @@ class Arc:
         self.start_day_arc = None
         self.end_day_arc = None
         self.name = Arc.name
-        self.elapsed_time = str(arg_dict['min_et']).split(' ')[2][:-3]
+        self.elapsed_time = str(arg_dict['min_et'])
 
         self.start_datetime = parser.parse(str(arg_dict['start_datetime']))
         self.start_date = self.start_datetime.date()
