@@ -19,14 +19,12 @@ class Arc:
                           self.end_angle, self.end_round_angle, self.elapsed_time])
 
     def __init__(self, arg_dict: dict):
-        # from arc_frame: start_index, start_datetime, min_index, min_datetime, end_index, end_datetime, transit_time, round_start, round_min, round_end
-        # from arc_frame:     args[0],        args[1],   args[2],      args[3],   args[4],      args[5],      args[6]       arg[7]     arg[8]     arg[9]
 
         self.fractured = False
         self.start_day_arc = None
         self.end_day_arc = None
         self.name = Arc.name
-        self.elapsed_time = str(arg_dict['transit_time']).split(' ')[2][:-3]
+        self.elapsed_time = str(arg_dict['min_et']).split(' ')[2][:-3]
 
         self.start_datetime = parser.parse(str(arg_dict['start_datetime']))
         self.start_date = self.start_datetime.date()
