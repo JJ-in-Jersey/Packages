@@ -40,17 +40,20 @@ class SoupFromXMLResponse:
 
 
 def write_df(df, path):
+    suffix = '.csv'
     df.to_csv(path, index=False)
     spreadsheet_limit = 950000
     if len(df) > spreadsheet_limit:
         num_of_spreadsheets = len(df)/spreadsheet_limit
         whole_spreadsheets = len(df)//spreadsheet_limit
         for i in range(whole_spreadsheets):
+            output_stem = path.parent.joinpath(path.stem+'_spreadsheet_'+str(i))
             temp = df.loc[i*spreadsheet_limit: i*spreadsheet_limit+spreadsheet_limit-1]
-            temp.to_csv(path.parent.joinpath(path.stem+'_spreadsheet_'+str(i)).with_suffix('.csv'), index=False)
+            temp.to_csv(output_stem.with_suffix(output_stem.suffix + suffix), index=False)
         if num_of_spreadsheets > whole_spreadsheets:
+            output_stem = path.parent.joinpath(path.stem+'_spreadsheet_'+str(whole_spreadsheets))
             temp = df.loc[whole_spreadsheets*spreadsheet_limit:]
-            temp.to_csv(path.parent.joinpath(path.stem+'_spreadsheet_'+str(whole_spreadsheets)).with_suffix('.csv'), index=False)
+            temp.to_csv(output_stem.with_suffix(output_stem.suffix + suffix), index=False)
 
 
 def shrink_dataframe(dataframe: pd.DataFrame):
