@@ -35,10 +35,6 @@ class Globals:
 
     CHECKMARK = u'\N{check mark}'
     TIMESTEP = 15  # seconds
-    WINDOW_MARGIN = 20  # minutes on either side of best time
-    TIMESTEP_MARGIN = int(WINDOW_MARGIN * 60 / TIMESTEP)  # number of timesteps to add to minimum to find edges of time windows
-    # BOAT_SPEEDS = [v for v in range(-7, -2, 2)] + [v for v in range(3, 8, 2)]  # knots
-    # BOAT_SPEEDS = [-7 + v*0.5 for v in range(0, 9)] + [3 + v*0.5 for v in range(0, 9)]  # knots
     BOAT_SPEEDS = [-9.0 + v for v in range(0, 7)] + [3.0 + v for v in range(0, 7)]  # knots
 
     WAYPOINT_DATAFILE_NAME = 'normalized_velocity.csv'
