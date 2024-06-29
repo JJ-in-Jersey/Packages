@@ -92,7 +92,7 @@ class FractionalArcStartDay:
         self.end_time = pd.to_datetime(str(dt.today().date())).time()  # set to 00:00:00
         self.end_round_time = self.end_time
         self.end_round_angle = self.end_angle
-        self.end_et = arc.end_et
+        self.end_et = None
 
         if not self.min_date == self.start_date:
             self.min_angle = None
@@ -124,7 +124,7 @@ class FractionalArcEndDay:
         self.start_angle = 0
         self.start_round_time = self.start_time
         self.start_round_angle = self.start_angle
-        self.start_et = arc.start_et
+        self.start_et = None
 
         self.min_date = arc.min_date
         self.min_time = arc.min_time
@@ -145,3 +145,4 @@ class FractionalArcEndDay:
             self.min_time = None
             self.min_round_time = None
             self.min_round_angle = None
+            self.min_et = None

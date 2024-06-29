@@ -36,6 +36,7 @@ class Globals:
     CHECKMARK = u'\N{check mark}'
     TIMESTEP = 15  # seconds
     BOAT_SPEEDS = [-9.0 + v for v in range(0, 7)] + [3.0 + v for v in range(0, 7)]  # knots
+    TIME_WINDOW_SCALE_FACTOR = 1.25
 
     WAYPOINT_DATAFILE_NAME = 'normalized_velocity.csv'
     EDGE_DATAFILE_NAME = 'normalized_velocity_spline_fit.csv'
