@@ -6,14 +6,14 @@ from tt_date_time_tools.date_time_tools import time_to_degrees
 
 class Arc:
 
-    columns = ['name', 'start_date',
+    columns = ['start_date',
                'start_time', 'start_round_time', 'start_angle', 'start_round_angle', 'start_et',
                'min_time', 'min_round_time', 'min_angle', 'min_round_angle', 'min_et',
                'end_time', 'end_round_time', 'end_angle', 'end_round_angle', 'end_et']
     name = None
 
     def info(self):
-        return pd.Series([self.name, self.start_date,
+        return pd.Series([self.start_date,
                           self.start_time, self.start_round_time, self.start_angle, self.start_round_angle, self.start_et,
                           self.min_time, self.min_round_time, self.min_angle, self.min_round_angle, self.min_et,
                           self.end_time, self.end_round_time, self.end_angle, self.end_round_angle, self.end_et])
@@ -23,7 +23,6 @@ class Arc:
         self.fractured = False
         self.start_day_arc = None
         self.end_day_arc = None
-        self.name = Arc.name
         self.elapsed_time = str(arg_dict['min_et'])
 
         self.start_datetime = parser.parse(str(arg_dict['start_datetime']))
@@ -63,14 +62,13 @@ class FractionalArcStartDay:
     #  arc with legitimate start date, end of a day
 
     def info(self):
-        return pd.Series([self.name, self.start_date,
+        return pd.Series([self.start_date,
                           self.start_time, self.start_round_time, self.start_angle, self.start_round_angle, self.start_et,
                           self.min_time, self.min_round_time, self.min_angle, self.min_round_angle, self.min_et,
                           self.end_time, self.end_round_time, self.end_angle, self.end_round_angle, self.end_et])
 
     def __init__(self, arc: Arc):
 
-        self.name = arc.name
         self.elapsed_time = arc.elapsed_time
 
         self.start_date = arc.start_date
@@ -109,14 +107,13 @@ class FractionalArcEndDay:
     #  arc with a legitimate end date, start of a day
 
     def info(self):
-        return pd.Series([self.name, self.start_date,
+        return pd.Series([self.start_date,
                           self.start_time, self.start_round_time, self.start_angle, self.start_round_angle, self.start_et,
                           self.min_time, self.min_round_time, self.min_angle, self.min_round_angle, self.min_et,
                           self.end_time, self.end_round_time, self.end_angle, self.end_round_angle, self.end_et])
 
     def __init__(self, arc: Arc):
 
-        self.name = arc.name
         self.elapsed_time = arc.elapsed_time
 
         self.start_date = arc.start_date + td(days=1)
