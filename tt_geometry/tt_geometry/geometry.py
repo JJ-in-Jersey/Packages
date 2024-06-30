@@ -6,7 +6,7 @@ from tt_date_time_tools.date_time_tools import time_to_degrees
 
 class Arc:
 
-    columns = ['start_date',
+    columns = ['index', 'start_date',
                'start_time', 'start_round_time', 'start_angle', 'start_round_angle', 'start_et',
                'min_time', 'min_round_time', 'min_angle', 'min_round_angle', 'min_et',
                'end_time', 'end_round_time', 'end_angle', 'end_round_angle', 'end_et']
