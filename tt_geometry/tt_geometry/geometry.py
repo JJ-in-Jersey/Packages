@@ -59,8 +59,7 @@ class Arc:
 
 
 class FractionalArcStartDay:
-    #  arc with legitimate start date, end of a day
-
+    #  arc with legitimate start date at the end of a day
     def info(self):
         return pd.Series([self.start_date,
                           self.start_time, self.start_round_time, self.start_angle, self.start_round_angle, self.start_et,
@@ -97,6 +96,7 @@ class FractionalArcStartDay:
             self.min_time = None
             self.min_round_time = None
             self.min_round_angle = None
+            self.min_et = None
 
         if self.min_angle == 0:
             self.min_angle = 360
@@ -104,7 +104,7 @@ class FractionalArcStartDay:
 
 
 class FractionalArcEndDay:
-    #  arc with a legitimate end date, start of a day
+    #  arc with a legitimate end date at the start of a day
 
     def info(self):
         return pd.Series([self.start_date,
@@ -136,7 +136,6 @@ class FractionalArcEndDay:
         self.end_round_angle = arc.end_round_angle
         self.end_et = arc.end_et
 
-        # self.start_angle = 0
         if not self.min_date == self.start_date:
             self.min_angle = None
             self.min_time = None
