@@ -1,7 +1,6 @@
 from bs4 import BeautifulSoup as Soup
 from tt_navigation.navigation import distance, directions, Heading
 from tt_file_tools.file_tools import read_df, write_df, print_file_exists
-from tt_date_time_tools.date_time_tools import index_to_date
 from tt_jobs.jobs import InterpolatePointJob
 from tt_globals.globals import Globals
 from os import makedirs
@@ -90,7 +89,6 @@ class InterpolatedWP(EdgeNode):  # result of interpolation of other waypoint dat
     def interpolate(self, job_manager):
 
         output_filepath = self.folder.joinpath('interpolated_velocity.csv')
-        frame = None
 
         if not output_filepath.exists():
             velocity_data = []
@@ -106,7 +104,7 @@ class InterpolatedWP(EdgeNode):  # result of interpolation of other waypoint dat
             result_array = tuple([job_manager.get(key).date_velocity for key in keys])
             frame = pd.DataFrame(result_array, columns=['date_index', 'velocity'])
             frame.sort_values('date_index', inplace=True)
-            frame['date_time'] = frame['date_index'].apply(index_to_date)
+            frame['date_time'] = pd.to_datetime(frame['date_index'], unit='s').round('min')
             frame.reset_index(drop=True, inplace=True)
             write_df(frame, output_filepath)
 

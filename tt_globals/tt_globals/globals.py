@@ -1,6 +1,8 @@
+import pandas as pd
 from dateparser import parse
 from datetime import timedelta
 from tt_date_time_tools.date_time_tools import date_to_index
+from tt_file_tools.file_tools import read_df, write_df, print_file_exists
 from tt_os_abstraction.os_abstraction import env
 import shutil
 from os import makedirs
@@ -23,7 +25,9 @@ class Globals:
 
     DOWNLOAD_INDEX_RANGE = None
     ELAPSED_TIME_INDEX_RANGE = None
+    TEMPLATE_ELAPSED_TIME_DATAFRAME = None
     TRANSIT_TIME_INDEX_RANGE = None
+    TEMPLATE_TRANSIT_TIME_DATAFRAME = None
 
     PROJECT_FOLDER = None
     WAYPOINTS_FOLDER = None
@@ -84,6 +88,28 @@ class Globals:
 
         for s in Globals.BOAT_SPEEDS:
             makedirs(Globals.TRANSIT_TIMES_FOLDER.joinpath(num2words(s)), exist_ok=True)
+
+    @staticmethod
+    def initialize_structures():
+        print('\nInitializing globals structures')
+
+        et_path = Globals.PROJECT_FOLDER.joinpath('template_elapsed_time_dataframe.csv')
+        if et_path.exists():
+            Globals.TEMPLATE_ELAPSED_TIME_DATAFRAME = read_df(et_path)
+        else:
+            Globals.TEMPLATE_ELAPSED_TIME_DATAFRAME = pd.DataFrame(data={'departure_index': Globals.ELAPSED_TIME_INDEX_RANGE})
+            Globals.TEMPLATE_ELAPSED_TIME_DATAFRAME['date_time'] = pd.to_datetime(Globals.TEMPLATE_ELAPSED_TIME_DATAFRAME['departure_index'], unit='s').round('min')
+            write_df(Globals.TEMPLATE_ELAPSED_TIME_DATAFRAME, et_path)
+        print_file_exists(et_path)
+
+        tt_path = Globals.PROJECT_FOLDER.joinpath('template_transit_time_dataframe.csv')
+        if tt_path.exists():
+            Globals.TEMPLATE_TRANSIT_TIME_DATAFRAME = read_df(tt_path)
+        else:
+            Globals.TEMPLATE_TRANSIT_TIME_DATAFRAME = pd.DataFrame(data={'departure_index': Globals.TRANSIT_TIME_INDEX_RANGE})
+            Globals.TEMPLATE_TRANSIT_TIME_DATAFRAME['date_time'] = pd.to_datetime(Globals.TEMPLATE_TRANSIT_TIME_DATAFRAME['departure_index'], unit='s').round('min')
+            write_df(Globals.TEMPLATE_TRANSIT_TIME_DATAFRAME, tt_path)
+        print_file_exists(tt_path)
 
     def __init__(self):
         pass
