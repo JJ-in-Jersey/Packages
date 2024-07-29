@@ -74,3 +74,9 @@ def print_file_exists(filepath: Path):
     else:
         print(f'   x {str(filepath)}')
         return False
+
+
+def read_text_arr(filepath: Path):
+    with open(filepath) as textFile:
+        lines = [line.split() for line in textFile]
+    return lines
