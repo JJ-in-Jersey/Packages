@@ -77,6 +77,6 @@ def print_file_exists(filepath: Path):
 
 
 def read_text_arr(filepath: Path):
-    with open(filepath) as textFile:
-        lines = [line.split() for line in textFile]
+    with open(filepath) as text_file:
+        lines = [line.splitlines()[0].split(",") for line in text_file]
     return lines
