@@ -4,6 +4,7 @@ from tt_file_tools.file_tools import read_df, write_df, print_file_exists
 from tt_jobs.jobs import InterpolatePointJob
 from tt_globals.globals import Globals
 from os import makedirs
+from pathlib import Path
 import pandas as pd
 
 
@@ -171,18 +172,12 @@ class GPXPath:
 
 class Route:
 
-    def __init__(self, filepath):
+    def __init__(self, tree):
         self.transit_time_lookup = {}
         self.elapsed_time_lookup = {}
         self.whole_path = self.velo_path = None
         self.interpolation_groups = None
         self.waypoints = None
-        self.filepath = filepath
-
-        with open(filepath, 'r') as f:
-            gpxfile = f.read()
-        tree = Soup(gpxfile, 'xml', preserve_whitespace_tags=['name', 'type', 'sym', 'text'])
-        self.write_clean_gpx(filepath, tree)
 
         # build ordered list of all waypoints
         waypoints = []
@@ -209,6 +204,9 @@ class Route:
 
         self.edge_path = GPXPath(self.edges)
 
+
+class GpxFile:
+
     @staticmethod
     def write_clean_gpx(filepath, tree):
         new_filepath = filepath.parent.joinpath(filepath.stem + ' new.gpx')
@@ -218,3 +216,18 @@ class Route:
                 tag.decompose()
         with open(new_filepath, "w") as file:
             file.write(tree.prettify())
+
+    def __init__(self, filepath: Path):
+        self.tree = None
+        self.type = None
+
+        with open(filepath, 'r') as f:
+            gpxfile = f.read()
+        self.tree = Soup(gpxfile, 'xml', preserve_whitespace_tags=['name', 'type', 'sym', 'text'])
+
+        if len(self.tree.find_all('rte')) == 1:
+            self.type = Globals.TYPE['rte']
+        elif len(self.tree.find_all('wpt')) == 1:
+            self.type = Globals.TYPE['wpt']
+
+        GpxFile.write_clean_gpx(filepath, self.tree)

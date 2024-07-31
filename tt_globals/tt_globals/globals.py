@@ -11,6 +11,8 @@ from num2words import num2words
 
 class Globals:
 
+    TYPE = {'rte': 'route', 'wpt': 'point'}
+
     YEAR = None
 
     FIRST_DOWNLOAD_DAY = None
