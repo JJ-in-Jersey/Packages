@@ -1,144 +1,76 @@
 import pandas as pd
 from datetime import datetime as dt, timedelta as td
-from dateutil import parser
 from tt_date_time_tools.date_time_tools import time_to_degrees
 
 
-class Arc:
+class BaseArc:
 
-    columns = ['start_date',
-               'start_time', 'start_round_time', 'start_angle', 'start_round_angle', 'start_et',
-               'min_time', 'min_round_time', 'min_angle', 'min_round_angle', 'min_et',
-               'end_time', 'end_round_time', 'end_angle', 'end_round_angle', 'end_et']
-    name = None
+    columns = None
+    types = {}
 
     def info(self):
-        return pd.Series([self.start_date,
-                          self.start_time, self.start_round_time, self.start_angle, self.start_round_angle, self.start_et,
-                          self.min_time, self.min_round_time, self.min_angle, self.min_round_angle, self.min_et,
-                          self.end_time, self.end_round_time, self.end_angle, self.end_round_angle, self.end_et])
+        return self.arc_dict
 
-    def __init__(self, arg_dict: dict):
+    def __init__(self, args):
+        self.arc_dict = {
+            'start_date': None, 'min_date': None, 'end_date': None,
+            'start_time': None, 'start_round_time': None, 'start_et': None,
+            'min_time': None, 'min_round_time': None, 'min_et': None,
+            'end_time': None, 'end_round_time': None, 'end_et': None
+        }
+
+        for key in self.arc_dict.keys():
+            self.arc_dict[key] = args[key]
+
+        self.arc_dict['start_angle'] = time_to_degrees(self.arc_dict['start_time'])
+        self.arc_dict['start_round_angle'] = time_to_degrees(self.arc_dict['start_round_time'])
+        self.arc_dict['min_angle'] = time_to_degrees(self.arc_dict['min_time'])
+        self.arc_dict['min_round_angle'] = time_to_degrees(self.arc_dict['min_round_time'])
+        self.arc_dict['end_angle'] = time_to_degrees(self.arc_dict['end_time'])
+        self.arc_dict['end_round_angle'] = time_to_degrees(self.arc_dict['end_round_time'])
+        self.arc_dict['arc_angle'] = self.arc_dict['end_angle'] - self.arc_dict['start_angle']
+        self.arc_dict['arc_round_angle'] = self.arc_dict['end_round_angle'] - self.arc_dict['start_round_angle']
+
+        BaseArc.columns = list(self.arc_dict.keys())
+
+
+class Arc(BaseArc):
+
+    def __init__(self, args: dict):
+        super().__init__(args)
 
         self.fractured = False
-        self.start_day_arc = None
-        self.end_day_arc = None
-        self.elapsed_time = str(arg_dict['min_et'])
+        self.start_day_arc = False
+        self.end_day_arc = False
 
-        self.start_datetime = parser.parse(str(arg_dict['start_datetime']))
-        self.start_date = self.start_datetime.date()
-
-        self.start_time = self.start_datetime.time()
-        self.start_angle = time_to_degrees(self.start_time)
-        self.start_round_time = parser.parse(str(arg_dict['start_round_time'])).time()
-        self.start_round_angle = time_to_degrees(self.start_round_time)
-        self.start_et = arg_dict['start_et']
-
-        self.min_datetime = parser.parse(str(arg_dict['min_datetime']))
-        self.min_date = self.min_datetime.date()
-        self.min_time = self.min_datetime.time()
-        self.min_angle = time_to_degrees(self.min_time)
-        self.min_round_time = parser.parse(str(arg_dict['min_round_time'])).time()
-        self.min_round_angle = time_to_degrees(self.min_round_time)
-        self.min_et = arg_dict['min_et']
-
-        self.end_datetime = parser.parse(str(arg_dict['end_datetime']))
-        self.end_date = self.end_datetime.date()
-        self.end_time = self.end_datetime.time()
-        self.end_angle = time_to_degrees(self.end_time)
-        self.end_round_time = parser.parse(str(arg_dict['end_round_time'])).time()
-        self.end_round_angle = time_to_degrees(self.end_round_time)
-        self.end_et = arg_dict['end_et']
-
-        if self.start_date != self.end_date:
+        if self.arc_dict['start_date'] != self.arc_dict['end_date']:
             self.fractured = True
-            if not self.start_angle == 0.0 and not self.start_angle == 360.0:
-                self.start_day_arc = FractionalArcStartDay(self)
-            if not self.end_angle == 360.0 and not self.end_angle == 0.0:
-                self.end_day_arc = FractionalArcEndDay(self)
 
+            if not self.arc_dict['min_date'] == self.arc_dict['start_date']:
+                self.arc_dict['min_angle'] = None
+                self.arc_dict['min_time'] = None
+                self.arc_dict['min_round_time'] = None
+                self.arc_dict['min_round_angle'] = None
+                self.arc_dict['min_et'] = None
 
-class FractionalArcStartDay:
-    #  arc with legitimate start date at the end of a day
-    def info(self):
-        return pd.Series([self.start_date,
-                          self.start_time, self.start_round_time, self.start_angle, self.start_round_angle, self.start_et,
-                          self.min_time, self.min_round_time, self.min_angle, self.min_round_angle, self.min_et,
-                          self.end_time, self.end_round_time, self.end_angle, self.end_round_angle, self.end_et])
+            if not self.arc_dict['start_angle'] == 0.0 and not self.arc_dict['start_angle'] == 360.0:
+                self.start_day_arc = True
+                self.arc_dict['end_angle'] = 360
+                self.arc_dict['end_round_angle'] = self.arc_dict['end_angle']
+                self.arc_dict['end_time'] = pd.to_datetime(str(dt.today().date())).time()  # set to 00:00:00
+                self.arc_dict['end_round_time'] = self.arc_dict['end_time']
+                self.arc_dict['end_et'] = None
 
-    def __init__(self, arc: Arc):
+                if self.arc_dict['min_angle'] == 0:
+                    self.arc_dict['min_angle'] = 360
+                    self.arc_dict['min_round_angle'] = self.arc_dict['min_angle']
 
-        self.elapsed_time = arc.elapsed_time
-
-        self.start_date = arc.start_date
-        self.start_time = arc.start_time
-        self.start_angle = arc.start_angle
-        self.start_round_time = arc.start_round_time
-        self.start_round_angle = arc.start_round_angle
-        self.start_et = arc.start_et
-
-        self.min_date = arc.min_date
-        self.min_time = arc.min_time
-        self.min_angle = arc.min_angle
-        self.min_round_time = arc.min_round_time
-        self.min_round_angle = arc.min_round_angle
-        self.min_et = arc.min_et
-
-        self.end_angle = 360
-        self.end_round_angle = 360
-        self.end_time = pd.to_datetime(str(dt.today().date())).time()  # set to 00:00:00
-        self.end_round_time = self.end_time
-        self.end_round_angle = self.end_angle
-        self.end_et = None
-
-        if not self.min_date == self.start_date:
-            self.min_angle = None
-            self.min_time = None
-            self.min_round_time = None
-            self.min_round_angle = None
-            self.min_et = None
-
-        if self.min_angle == 0:
-            self.min_angle = 360
-            self.min_round_angle = self.min_angle
-
-
-class FractionalArcEndDay:
-    #  arc with a legitimate end date at the start of a day
-
-    def info(self):
-        return pd.Series([self.start_date,
-                          self.start_time, self.start_round_time, self.start_angle, self.start_round_angle, self.start_et,
-                          self.min_time, self.min_round_time, self.min_angle, self.min_round_angle, self.min_et,
-                          self.end_time, self.end_round_time, self.end_angle, self.end_round_angle, self.end_et])
-
-    def __init__(self, arc: Arc):
-
-        self.elapsed_time = arc.elapsed_time
-
-        self.start_date = arc.start_date + td(days=1)
-        self.start_time = pd.to_datetime(str(dt.today().date())).time()
-        self.start_angle = 0
-        self.start_round_time = self.start_time
-        self.start_round_angle = self.start_angle
-        self.start_et = None
-
-        self.min_date = arc.min_date
-        self.min_time = arc.min_time
-        self.min_angle = arc.min_angle
-        self.min_round_time = arc.min_round_time
-        self.min_round_angle = arc.min_round_angle
-        self.min_et = arc.min_et
-
-        self.end_time = arc.end_time
-        self.end_angle = arc.end_angle
-        self.end_round_time = arc.end_round_time
-        self.end_round_angle = arc.end_round_angle
-        self.end_et = arc.end_et
-
-        if not self.min_date == self.start_date:
-            self.min_angle = None
-            self.min_time = None
-            self.min_round_time = None
-            self.min_round_angle = None
-            self.min_et = None
+                # self.start_day_arc = FractionalArcStartDay(self)
+            if not self.arc_dict['end_angle'] == 360.0 and not self.arc_dict['end_angle'] == 0.0:
+                self.end_day_arc = True
+                self.arc_dict['start_date'] = self.arc_dict['start_date'] + td(days=1)
+                self.arc_dict['start_time'] = pd.to_datetime(str(dt.today().date())).time()  # set to 00:00:00
+                self.arc_dict['start_angle'] = 0
+                self.arc_dict['start_round_time'] = self.arc_dict['start_time']
+                self.arc_dict['start_round_angle'] = self.arc_dict['start_angle']
+                self.arc_dict['start_et'] = None
