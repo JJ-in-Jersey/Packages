@@ -48,10 +48,11 @@ class Arc(BaseArc):
         if self.arc_dict['start_date'] != self.arc_dict['end_date']:
             self.fractured = True
 
-        if self.arc_dict['start_angle'] == 0.0 or self.arc_dict['start_angle'] == 360.0:
+        angle_difference = self.arc_dict['end_angle'] - self.arc_dict['start_angle']
+        if not self.fractured and (angle_difference == 360.0 or angle_difference == 0):
             self.zero_angle = True
 
-        if not self.arc_dict['end_angle'] == 360.0 and not self.arc_dict['end_angle'] == 0.0:
+        if self.fractured and not self.zero_angle and self.arc_dict['end_angle'] == 360.0 and not self.arc_dict['end_angle'] == 0.0:
             self.next_day_arc = True
 
         # end of the arc is in the next day and should be set to 00:00:00 for this day
@@ -62,7 +63,7 @@ class Arc(BaseArc):
             self.arc_dict['end_round_time'] = BaseArc.midnight
             self.arc_dict['end_et'] = None
 
-        #  minimum is in the next day, so this day minimum should be zeroed out
+        #  if the minimum is in the next day, this day minimum should be zeroed out
         if (self.fractured and not self.zero_angle and
                 not self.arc_dict['min_date'] == self.arc_dict['start_date']):
             self.arc_dict['min_angle'] = None
