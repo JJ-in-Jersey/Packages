@@ -1,13 +1,10 @@
-import pandas as pd
-from datetime import datetime as dt, timedelta as td
+from datetime import timedelta as td
 from tt_date_time_tools.date_time_tools import time_to_degrees
 
 
 class BaseArc:
 
     columns = None
-    types = {}
-    midnight = pd.to_datetime(str(dt.today().date())).time()  # set to 00:00:00
 
     def info(self):
         return self.arc_dict
@@ -59,8 +56,8 @@ class Arc(BaseArc):
         if self.fractured and not self.zero_angle:
             self.arc_dict['end_angle'] = 360
             self.arc_dict['end_round_angle'] = 360
-            self.arc_dict['end_time'] = BaseArc.midnight
-            self.arc_dict['end_round_time'] = BaseArc.midnight
+            self.arc_dict['end_time'] = self.arc_dict['end_time'].replace(hour=23, minute=59)
+            self.arc_dict['end_round_time'] = self.arc_dict['end_time'].replace(hour=23, minute=59)
             self.arc_dict['end_et'] = None
 
         #  if the minimum is in the next day, this day minimum should be zeroed out
@@ -76,8 +73,8 @@ class Arc(BaseArc):
         if self.fractured and not self.zero_angle and self.next_day_arc:
             new_args = dict(args)
             new_args['start_date'] = new_args['start_date'] + td(days=1)
-            new_args['start_time'] = BaseArc.midnight
-            new_args['start_round_time'] = BaseArc.midnight
+            new_args['start_time'] = new_args['start_date'].replace(hour=0, minute=0)
+            new_args['start_round_time'] = new_args['start_date'].replace(hour=0, minute=0)
             new_args['start_angle'] = 0
             new_args['start_round_angle'] = 0
             new_args['start_et'] = None
