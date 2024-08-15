@@ -54,11 +54,15 @@ class Arc(BaseArc):
             #  reset current day end to midnight
             self.arc_dict['end_datetime'] = self.arc_dict['start_datetime'].replace(hour=0, minute=0)  # force end date to start date
             self.arc_dict['end_round_datetime'] = self.arc_dict['end_datetime']
+            self.arc_dict['end_angle'] = time_to_degrees(self.arc_dict['end_datetime'].time())
+            self.arc_dict['end_round_angle'] = time_to_degrees(self.arc_dict['end_round_datetime'].time())
             self.arc_dict['end_et'] = None
 
             #  set next day start point to midnight
             new_args['start_datetime'] = (new_args['start_datetime'] + td(days=1)).replace(hour=0, minute=0)
             new_args['start_round_datetime'] = new_args['start_datetime']
+            new_args['start_angle'] = time_to_degrees(new_args['start_datetime'].time())
+            new_args['start_round_angle'] = time_to_degrees(new_args['start_round_datetime'].time())
             new_args['start_et'] = None
 
             if not self.arc_dict['min_datetime'] is None:
@@ -69,7 +73,7 @@ class Arc(BaseArc):
                     new_args['min_round_datetime'] = None
                     new_args['min_round_angle'] = None
                     new_args['min_et'] = None
-                else:
+                elif self.arc_dict['min_datetime'].date() == self.arc_dict['end_datetime'].date():
                     #  if minima is in the next day, zero out start day minima
                     self.arc_dict['min_angle'] = None
                     self.arc_dict['min_datetime'] = None
