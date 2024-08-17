@@ -85,7 +85,7 @@ class Arc(BaseArc):
             self.next_day_arc = Arc(new_args)
 
         #  arc starts on first day and ends just over the line the next day, reset end date to first day
-        if not start_and_end_on_same_day and ends_at_midnight:
+        if not start_and_end_on_same_day and ends_at_midnight and start_and_min_on_same_day:
             self.arc_dict['end_datetime'] = self.arc_dict['start_datetime'].replace(hour=0, minute=0)  # force end date to start date
             self.arc_dict['end_round_datetime'] = self.arc_dict['end_datetime']
             self.arc_dict['end_angle'] = 360
