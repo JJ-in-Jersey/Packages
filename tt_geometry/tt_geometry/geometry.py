@@ -43,7 +43,7 @@ class Arc(BaseArc):
 
         start_and_end_on_same_day = self.arc_dict['start_datetime'].date() == self.arc_dict['end_datetime'].date()
         ends_at_midnight = self.arc_dict['end_round_angle'] == 360.0 or self.arc_dict['end_round_angle'] == 0.0
-        start_and_min_on_same_day = self.arc_dict['start_datetime'].date() == self.arc_dict['min_datetime'].date()
+        start_and_min_on_same_day = not self.arc_dict['min_datetime'] is None and self.arc_dict['start_datetime'].date() == self.arc_dict['min_datetime'].date()
 
         # absolutely must split into to arcs, implies creation of a next_day_arc
         # start day and end day are different and arc doesn't end just over the line on the next day
