@@ -23,8 +23,26 @@ class BaseArc:
 
         self.arc_dict['start_angle'] = time_to_degrees(self.arc_dict['start_datetime'].time())
         self.arc_dict['start_round_angle'] = time_to_degrees(self.arc_dict['start_round_datetime'].time())
-        if not self.arc_dict['min_datetime'] is None: self.arc_dict['min_angle'] = time_to_degrees(self.arc_dict['min_datetime'].time())
-        if not self.arc_dict['min_round_datetime'] is None: self.arc_dict['min_round_angle'] = time_to_degrees(self.arc_dict['min_round_datetime'].time())
+
+        if self.arc_dict['min_datetime'] is None:
+            self.arc_dict['min_round_datetime'] = None
+            self.arc_dict['min_angle'] = None
+            self.arc_dict['min_round_angle'] = None
+            self.arc_dict['min_et'] = None
+        else:
+            self.arc_dict['min_angle'] = time_to_degrees(self.arc_dict['min_datetime'].time())
+
+        if self.arc_dict['min_round_datetime'] is None:
+            self.arc_dict['min_round_angle'] = None
+            self.arc_dict['min_et'] = None
+        else:
+            self.arc_dict['min_round_angle'] = time_to_degrees(self.arc_dict['min_round_datetime'].time())
+
+        # if min is at midnight, don't display it
+        if not self.arc_dict['min_round_angle'] is None and (self.arc_dict['min_round_angle'] == 360.0 or self.arc_dict['min_round_angle'] == 0.0):
+            self.arc_dict['min_round_angle'] = None
+            self.arc_dict['min_et'] = None
+
         self.arc_dict['end_angle'] = time_to_degrees(self.arc_dict['end_datetime'].time())
         self.arc_dict['end_round_angle'] = time_to_degrees(self.arc_dict['end_round_datetime'].time())
         self.arc_dict['arc_angle'] = self.arc_dict['end_angle'] - self.arc_dict['start_angle']
@@ -44,6 +62,10 @@ class Arc(BaseArc):
         start_and_end_on_same_day = self.arc_dict['start_datetime'].date() == self.arc_dict['end_datetime'].date()
         ends_at_midnight = self.arc_dict['end_round_angle'] == 360.0 or self.arc_dict['end_round_angle'] == 0.0
         start_and_min_on_same_day = not self.arc_dict['min_datetime'] is None and self.arc_dict['start_datetime'].date() == self.arc_dict['min_datetime'].date()
+
+        # if min rounded angle is midnight, set it none so it doesn't get displayed
+        # if self.arc_dict['min_round_angle'] == 360.0 or self.arc_dict['min_round_angle'] == 0.0:
+        #     self.arc_dict['min_round_angle'] = None
 
         # absolutely must split into to arcs, implies creation of a next_day_arc
         # start day and end day are different and arc doesn't end just over the line on the next day
