@@ -72,7 +72,7 @@ def print_file_exists(filepath: Path):
         print(f'   {checkmark}   {str(filepath)}')
         return True
     else:
-        print(f'   x {str(filepath)}')
+        print(f'   x   {str(filepath)}')
         return False
 
 
