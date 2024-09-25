@@ -173,8 +173,10 @@ class GPXPath:
 class Route:
 
     def __init__(self, tree):
-        self.transit_time_lookup = {}
-        self.elapsed_time_lookup = {}
+        self.location_name = None
+        self.location_code = None
+        self.transit_time_dataframe_to_speed ={}
+        self.elapsed_time_dataframe_to_speed = {}
         self.whole_path = self.velo_path = None
         self.interpolation_groups = None
         self.waypoints = None
