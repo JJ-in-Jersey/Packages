@@ -31,7 +31,8 @@ class ChromeDriver:
             my_options.add_experimental_option('excludeSwitches', ['enable-logging'])
             # my_options.add_argument("--incognito")
             # my_options.add_argument(r'--user-data-dir=' + str(env('user_data')))
-            driver = webdriver.Chrome(service=Service(str(self.installed_driver_file)), options=my_options)
+            # driver = webdriver.Chrome(service=Service(str(self.installed_driver_file)), options=my_options)
+            driver = webdriver.Chrome(options=my_options)
             driver.implicitly_wait(10)  # seconds
             driver.minimize_window()
         else:

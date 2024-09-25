@@ -39,7 +39,7 @@ class SoupFromXMLResponse:
         self.tree = Soup(response, 'xml')
 
 
-def write_df(df, path, debug: bool = False):
+def write_df(df: pd.DataFrame, path: Path, debug: bool = False):
     suffix = '.csv'
     df.to_csv(path, index=False)
     if debug:
@@ -55,7 +55,7 @@ def write_df(df, path, debug: bool = False):
                 output_stem = path.parent.joinpath(path.stem+'_spreadsheet_'+str(whole_spreadsheets))
                 temp = df.loc[whole_spreadsheets*spreadsheet_limit:]
                 temp.to_csv(output_stem.with_suffix(output_stem.suffix + suffix), index=False)
-
+    return path
 
 def shrink_dataframe(dataframe: pd.DataFrame):
     for col in dataframe:
