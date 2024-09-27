@@ -175,7 +175,8 @@ class Route:
     def __init__(self, tree):
         self.location_name = None
         self.location_code = None
-        self.transit_time_csv_to_speed ={}
+        self.transit_time_csv_to_speed = {}
+        self.rounded_transit_time_csv_to_speed = {}
         self.elapsed_time_csv_to_speed = {}
         self.whole_path = self.velo_path = None
         self.interpolation_groups = None
