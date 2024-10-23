@@ -1,5 +1,6 @@
+from datetime import datetime as dt
+
 import pandas as pd
-from dateparser import parse
 from datetime import timedelta
 from tt_date_time_tools.date_time_tools import date_to_index
 from tt_file_tools.file_tools import read_df, write_df, print_file_exists
@@ -53,13 +54,15 @@ class Globals:
 
         Globals.YEAR = args['year']
 
-        Globals.FIRST_DOWNLOAD_DAY = parse('11/1/' + str(Globals.YEAR - 1))
-        Globals.FIRST_DAY = parse('12/1/' + str(Globals.YEAR - 1))
+        Globals.FIRST_DOWNLOAD_DAY = dt(Globals.YEAR - 1, 11, 1)
+        Globals.FIRST_DAY = dt(Globals.YEAR - 1, 12, 1)
+
         Globals.FIRST_DAY_INDEX = date_to_index(Globals.FIRST_DAY)
         Globals.FIRST_DAY_DATE = Globals.FIRST_DAY.date()
 
-        Globals.LAST_DOWNLOAD_DAY = parse('3/1/' + str(Globals.YEAR + 1)) - timedelta(days=1)
-        Globals.LAST_DAY = parse('1/31/' + str(Globals.YEAR + 1))
+        Globals.LAST_DOWNLOAD_DAY = dt(Globals.YEAR + 1, 3, 1)
+        Globals.LAST_DAY = dt(Globals.YEAR + 1, 1, 31)
+        
         Globals.LAST_DAY_INDEX = date_to_index(Globals.LAST_DAY)
         Globals.LAST_DAY_DATE = Globals.LAST_DAY.date()
 
