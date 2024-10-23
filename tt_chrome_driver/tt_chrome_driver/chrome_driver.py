@@ -1,18 +1,18 @@
 from pathlib import Path
 from os import listdir, replace, chmod
 import re
+import io
 import platform
 import requests
 from bs4 import BeautifulSoup as Soup
 from packaging.version import Version
-from urllib.request import urlretrieve
 from time import sleep
 import zipfile
 
 # import logging
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
+# from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 
 from tt_os_abstraction.os_abstraction import env
@@ -59,8 +59,8 @@ class ChromeDriver:
 
     def install_stable_driver(self):
         downloads = Path(env('user_profile')).joinpath('Downloads')
-        file = downloads.joinpath(str(self.latest_stable_version) + '-' + self.lookup['download_url'].rpartition('/')[2])
-        zip_file = zipfile.ZipFile(urlretrieve(self.lookup['download_url'], file)[0], 'r')
+        response = requests.get(self.lookup['download_url'])
+        zip_file = zipfile.ZipFile(io.BytesIO(response.content), 'r')
         with zip_file as zf:
             zf.extractall(downloads)
         source = downloads.joinpath(list(filter(lambda s: 'LICENSE' not in s, zip_file.namelist()))[0])
