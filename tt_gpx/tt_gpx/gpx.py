@@ -49,9 +49,16 @@ class DownloadedDataWP(Waypoint):
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
 
+        self.code = None
+        self.bin_no = None
+
         if gpxtag.link:
             self.noaa_url = gpxtag.find('link').attrs['href']
-            self.code = gpxtag.find('link').find('text').text.split(' ')[0]
+            tagname = gpxtag.find('link').find('text').text.split(' ')[0]
+            tagsplit = tagname.split('_')
+            self.code = tagsplit[0]
+            self.bin_no = None if len(tagsplit) == 1 else tagsplit[-1]
+            print(self.code, self.bin_no, len(tagsplit))
 
 
 class EdgeNode(DownloadedDataWP):

@@ -1,4 +1,5 @@
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from tt_file_tools.file_tools import SoupFromXMLResponse
 from dateparser import parse
 
@@ -134,3 +135,33 @@ def noaa_slack_dataframe(start, end, station: str):
     frame = noaa_slack_fetch(datetime(end.year, 1, 1), end, station)
     slack_frame = pd.concat([slack_frame, frame])
     return slack_frame
+
+#
+# def currents_fetch_month(month: int, year: int, station_code: str, station_bin: int = None, interval_time: int = 30):
+#
+#     if month < 1 or month > 12:
+#         raise ValueError
+#
+#     start = datetime(year, month, 1)
+#     end = start + relativedelta(months=1) - relativedelta(days=1)
+#
+#     bin_no = ""
+#     header = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?"
+#     begin_date = "&begin_date=" + start.strftime("%Y%m%d")  # yyyymmdd
+#     end_date = "&end_date=" + end.strftime("%Y%m%d")  # yyyymmdd
+#     station = "&station=" + station_code  # station code string
+#
+#     interval = "&interval=" + str(interval_time)
+#     if station_bin is not None:
+#         bin_no = "&bin=" + str(station_bin)
+#     footer = "&product=currents_predictions&time_zone=lst_ldt" + interval + "&units=english&format=csv" + bin_no
+#
+#     my_request = header + begin_date + end_date + station + footer
+#     my_response = requests.get(my_request)
+#
+#     if my_response.status_code != 200:
+#         raise SystemExit(f'{station} request failed')
+#     elif my_response.content.decode() == 'Currents predictions are not available from the requested station.':
+#         raise SystemExit(f'{station} predictions are not available')
+#     else:
+#         return pd.read_csv(StringIO(my_response.content.decode()))

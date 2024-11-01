@@ -24,7 +24,9 @@ def wait_for_new_file(folder, event_function):
     return newest_after
 
 
-def read_df(filepath):
+def read_df(filepath: Path):
+    if not filepath.exists():
+        raise FileExistsError(filepath)
     return pd.read_csv(filepath, header='infer')
 
 
