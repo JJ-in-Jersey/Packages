@@ -51,10 +51,11 @@ class QueueManager:
 
                 # check results for complete job and put them on external lookup
                 for key in list(job_key_dict.keys()):
-                    if job_key_dict[key].ready():
-                        job = job_key_dict.pop(key)
-                        job_result = job.get()
-                        results_dict[key] = job_result[1]  # results format is tuple of (key, data, init time)
+                    if job_key_dict[key].ready():  # job is complete, but not necessarily successful
+                        async_return = job_key_dict.pop(key)
+                        if async_return.successful():
+                            job_result = async_return.get()
+                            results_dict[key] = job_result[1]  # results format is tuple of (key, data, init time)
                         q.task_done()
                 sleep(1)
         print(f'-     queue manager\n', flush=True)
