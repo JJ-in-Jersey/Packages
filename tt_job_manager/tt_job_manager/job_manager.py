@@ -9,20 +9,21 @@ class JobManager(metaclass=Singleton):
 
     manager = None
     queue = None
-    results_key_dict = None
+    results_key_dict = {}
 
     @staticmethod
-    def put(job):
+    def submit_job(job):
         JobManager.queue.put(job)
         return job.result_key
 
     @staticmethod
-    def get(key):
+    def get_result(key):
         return JobManager.results_key_dict.pop(key)
 
     @staticmethod
     def wait():
         JobManager.queue.join()
+        
 
     @staticmethod
     def stop_queue():
@@ -56,6 +57,8 @@ class QueueManager:
                         if async_return.successful():
                             job_result = async_return.get()
                             results_dict[key] = job_result[1]  # results format is tuple of (key, data, init time)
+                        else:
+                            results_dict[key] = None
                         q.task_done()
                 sleep(1)
         print(f'-     queue manager\n', flush=True)
