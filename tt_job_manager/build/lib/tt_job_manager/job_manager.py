@@ -23,6 +23,7 @@ class JobManager(metaclass=Singleton):
     @staticmethod
     def wait():
         JobManager.queue.join()
+        
 
     @staticmethod
     def stop_queue():
