@@ -7,6 +7,7 @@ from os import makedirs
 from pathlib import Path
 import pandas as pd
 
+
 class Waypoint:
     waypoints_folder = None
     color = {'TideStationWP': 'Yellow', 'CurrentStationWP': 'Orange',
