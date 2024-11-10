@@ -7,7 +7,6 @@ from os import makedirs
 from pathlib import Path
 import pandas as pd
 
-
 class Waypoint:
     waypoints_folder = None
     color = {'TideStationWP': 'Yellow', 'CurrentStationWP': 'Orange',
@@ -58,7 +57,6 @@ class DownloadedDataWP(Waypoint):
             tagsplit = tagname.split('_')
             self.code = tagsplit[0]
             self.bin_no = None if len(tagsplit) == 1 else tagsplit[-1]
-            print(self.code, self.bin_no, len(tagsplit))
 
 
 class EdgeNode(DownloadedDataWP):
