@@ -1,167 +1,164 @@
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from tt_file_tools.file_tools import SoupFromXMLResponse
-from dateparser import parse
-
+import time
 import pandas as pd
 import requests
 from io import StringIO
 
+from tt_file_tools.file_tools import SoupFromXMLResponse, print_file_exists, read_dict, write_dict
+from tt_globals.globals import PresetGlobals
+from tt_gpx.gpx import Waypoint
 
-class TideXMLDataframe:
+class StationDict:
 
-    def __init__(self, response):
-        tree = SoupFromXMLResponse(response).tree
+    stations_file = PresetGlobals.stations_folder.joinpath('stations.json')
+    dict = {}
 
-        self.frame = pd.DataFrame(columns=['date_time', 'date', 'time', 'HL'])
-        for pr in tree.find_all('pr'):
-            date_time = parse(pr.get('t'))
-            date = date_time.date()
-            time = date_time.time()
-            hl = pr.get('type')
-            self.frame.loc[len(self.frame)] = [date_time, date, time, hl]
+    @staticmethod
+    def make_absolute_path_string(folder_name):
+        return str(PresetGlobals.stations_folder.joinpath(folder_name).absolute())
 
+    def __init__(self):
 
-def noaa_current_fetch(start, end, station: str):
-    # request call returns CSV
+        if print_file_exists(StationDict.stations_file):
+            StationDict.dict = read_dict(StationDict.stations_file)
+        else:
+            StationDict.dict = {}
+            my_request = "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations.xml?type=currentpredictions&units=english"
+            for _ in range(3):
+                try:
+                    print(f'Requesting list of stations')
+                    my_response = requests.get(my_request)
+                    my_response.raise_for_status()
+                    stations_tree = SoupFromXMLResponse(StringIO(my_response.content.decode())).tree
+                    row_array = [{'id': station_tag.find_next('id').text,
+                             'name': station_tag.find_next('name').text,
+                             'lat': float(station_tag.find_next('lat').text),
+                             'lon': float(station_tag.find_next('lng').text),
+                             'type': station_tag.find_next('type').text,}
+                            for station_tag in stations_tree.find_all('Station')]
+                    row_df = pd.DataFrame(row_array).drop_duplicates()
+                    row_df['folder'] = row_df['id'].apply(StationDict.make_absolute_path_string)
+                    row_dict = row_df.to_dict('records')
+                    StationDict.dict = {r['id']: r for r in row_dict}
 
-    if end.year != start.year:
-        raise ValueError
-
-    station_split = station.split('_')
-    station = station_split[0]
-    bin_num = station_split[1] if len(station_split) > 1 else None
-
-    interval = 60
-
-    u1 = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=" + start.strftime("%Y%m%d")
-    u2 = "&end_date=" + end.strftime("%Y%m%d")
-    u3 = "&station=" + station
-    u4 = "&product=currents_predictions&time_zone=lst_ldt&interval=" + str(interval) + "&units=english&format=csv"
-    u5 = "&bin=" + str(bin_num)
-    url_base = u1 + u2 + u3 + u4
-    url = url_base if not bin_num else url_base + u5
-
-    # returns CSV
-    response = requests.get(url)
-    if response.status_code != 200:
-        raise SystemExit(f'{station} request failed')
-    else:
-        frame = pd.read_csv(StringIO(response.content.decode()))
-        return frame
-
-
-def noaa_current_dataframe(start, end, station: str):
-    # return speed of flowing water
-
-    current_frame = pd.DataFrame()
-
-    # start year
-    frame = noaa_current_fetch(start, datetime(start.year, 12, 31), station)
-    current_frame = pd.concat([current_frame, frame])
-
-    # middle_year(s)
-    if start.year + 1 == end.year - 1:
-        frame = noaa_current_fetch(datetime(start.year + 1, 1, 1), datetime(start.year + 1, 12, 31), station)
-        current_frame = pd.concat([current_frame, frame])
-    else:
-        for year in range(start.year + 1, end.year):
-            frame = noaa_current_fetch(datetime(year, 1, 1), datetime(year, 12, 31), station)
-            current_frame = pd.concat([current_frame, frame])
-
-    # end year
-    frame = noaa_current_fetch(datetime(end.year, 1, 1), end, station)
-    current_frame = pd.concat([current_frame, frame])
-
-    return current_frame
+                    print(f'Requesting bins for each station')
+                    for station_id in self.dict.keys():
+                        my_request = "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations/" + station_id + "/bins.xml?units=english"
+                        for _ in range(3):
+                            try:
+                                my_response = requests.get(my_request)
+                                my_response.raise_for_status()
+                                bins_tree = SoupFromXMLResponse(StringIO(my_response.content.decode())).tree
+                                bin_count = int(bins_tree.find("nbr_of_bins").text)
+                                if bin_count and bins_tree.find('Bin').find('depth') is not None:
+                                    bin_dict = {int(tag.num.text): float(tag.depth.text) for tag in bins_tree.find_all('Bin')}
+                                    bin_dict = dict(sorted(bin_dict.items(), key=lambda item: item[1]))
+                                    StationDict.dict[station_id]['bins'] = bin_dict
+                                break
+                            except requests.exceptions.RequestException:
+                                time.sleep(1)
+                    print_file_exists(write_dict(StationDict.stations_file, self.dict))
+                    break
+                except requests.exceptions.RequestException:
+                    time.sleep(1)
 
 
-def noaa_tide_dataframe(start, end, station: str):
-    # return height of flowing water
+class OneMonth:
 
-    u1 = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=" + start.strftime("%Y%m%d")
-    u2 = "&end_date=" + end.strftime("%Y%m%d")
-    u3 = "&station=" + station
-    u4 = "&product=predictions&datum=STND&time_zone=lst_ldt&interval=hilo&units=english&format=xml"
-    url = u1 + u2 + u3 + u4
+    def __init__(self, month: int, year: int, waypoint: Waypoint, interval_time: int = 1):
 
-    response = requests.get(url)
-    if response.status_code != 200:
-        raise SystemExit(f'{station} request failed')
-    else:
-        frame = TideXMLDataframe(response.content).frame
-        return frame
+        self.frame = None
+
+        if month < 1 or month > 12:
+            raise ValueError
+
+        start = datetime(year, month, 1)
+        end = start + relativedelta(months=1) - relativedelta(days=1)
+
+        header = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?"
+        begin_date_field = "&begin_date=" + start.strftime("%Y%m%d")  # yyyymmdd
+        end_date_field = "&end_date=" + end.strftime("%Y%m%d")  # yyyymmdd
+        station_field = "&station=" + waypoint.id  # station id string
+        interval_field = "&interval=" + str(interval_time)
+        footer_wo_bin = "&product=currents_predictions&time_zone=lst_ldt" + interval_field + "&units=english&format=csv"
+        # footer_w_bin = footer_wo_bin + "&bin=" + str(waypoint.bin)
+        # footer = footer_wo_bin if waypoint.bin is None else footer_w_bin
+        footer = footer_wo_bin  # requests wo bin seem to return shallowest predictions
+        my_request = header + begin_date_field + end_date_field + station_field + footer
+
+        self.error = False
+        for _ in range(5):
+            try:
+                self.error = False
+                my_response = requests.get(my_request)
+                my_response.raise_for_status()
+                if 'predictions are not available' in my_response.content.decode():
+                    raise DataNotAvailable('<!> ' + waypoint.id + ' Current predictions are not available')
+                frame = pd.read_csv(StringIO(my_response.content.decode()))
+                if frame.empty or frame.isna().all().all():
+                    raise EmptyDataframe('<!> ' + waypoint.id + 'Dataframe is empty or all NaN')
+                self.frame = frame.rename(columns={heading: heading.strip() for heading in frame.columns.tolist()})
+                self.frame.rename(columns={'Velocity_Major': 'velocity'}, inplace=True)
+                break
+            except requests.exceptions.RequestException:
+                self.error = True
+                time.sleep(1)
+            except DataNotAvailable:
+                self.error = True
+                time.sleep(1)
+            except EmptyDataframe:
+                self.error = True
+                time.sleep(1)
 
 
-def noaa_slack_fetch(start, end, station: str):
-    # request call returns CSV
+class SixteenMonths:
 
-    station_split = station.split('_')
-    station = station_split[0]
-    # bin_num = station_split[1] if len(station_split) > 1 else None
+    def __init__(self, year: int, waypoint: Waypoint):
 
-    u1 = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=" + start.strftime("%Y%m%d")
-    u2 = "&end_date=" + end.strftime("%Y%m%d")
-    u3 = "&station=" + station
-    u4 = "&product=currents_predictions&time_zone=lst_ldt&interval=MAX_SLACK&units=english&format=csv"
-    url = u1 + u2 + u3 + u4
+        months = []
+        failure_message = '<!> ' + waypoint.id + ' CSV Request failed'
 
-    response = requests.get(url)
-    if response.status_code != 200:
-        raise SystemExit(f'{station} request failed')
-    else:
-        frame = pd.read_csv(StringIO(response.content.decode()))
-        return frame
+        for m in range(11, 13):
+            month = OneMonth(m, year - 1, waypoint)
+            if month.error:
+                raise CSVRequestFailed(failure_message)
+            months.append(month)
+        for m in range(1, 13):
+            month = OneMonth(m, year, waypoint)
+            if month.error:
+                raise CSVRequestFailed(failure_message)
+            months.append(month)
+        for m in range(1, 3):
+            month = OneMonth(m, year + 1, waypoint)
+            if month.error:
+                raise CSVRequestFailed('<!> ' + waypoint.id + ' CSV Request failed')
+            months.append(month)
+
+        self.frame = pd.concat([m.frame for m in months], axis=0, ignore_index=True)
+        for m in range(len(months)):
+            del m
 
 
-def noaa_slack_dataframe(start, end, station: str):
-    # return times of change in current, between high and low tide and close to zero
+class NonMonotonic(Exception):
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(self.message)
 
-    slack_frame = pd.DataFrame()
 
-    # start year
-    frame = noaa_slack_fetch(start, datetime(start.year, 12, 31), station)
-    slack_frame = pd.concat([slack_frame, frame])
+class DataNotAvailable(Exception):
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(self.message)
 
-    if start.year + 1 == end.year - 1:
-        frame = noaa_slack_fetch(datetime(start.year + 1, 1, 1), datetime(start.year + 1, 12, 31), station)
-        slack_frame = pd.concat([slack_frame, frame])
-    else:
-        for year in range(start.year + 1, end.year):
-            frame = noaa_slack_fetch(datetime(year, 1, 1), datetime(year, 12, 31), station)
-            slack_frame = pd.concat([slack_frame, frame])
 
-    # end year
-    frame = noaa_slack_fetch(datetime(end.year, 1, 1), end, station)
-    slack_frame = pd.concat([slack_frame, frame])
-    return slack_frame
+class EmptyDataframe(Exception):
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(self.message)
 
-#
-# def currents_fetch_month(month: int, year: int, station_code: str, station_bin: int = None, interval_time: int = 30):
-#
-#     if month < 1 or month > 12:
-#         raise ValueError
-#
-#     start = datetime(year, month, 1)
-#     end = start + relativedelta(months=1) - relativedelta(days=1)
-#
-#     bin_no = ""
-#     header = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?"
-#     begin_date = "&begin_date=" + start.strftime("%Y%m%d")  # yyyymmdd
-#     end_date = "&end_date=" + end.strftime("%Y%m%d")  # yyyymmdd
-#     station = "&station=" + station_code  # station code string
-#
-#     interval = "&interval=" + str(interval_time)
-#     if station_bin is not None:
-#         bin_no = "&bin=" + str(station_bin)
-#     footer = "&product=currents_predictions&time_zone=lst_ldt" + interval + "&units=english&format=csv" + bin_no
-#
-#     my_request = header + begin_date + end_date + station + footer
-#     my_response = requests.get(my_request)
-#
-#     if my_response.status_code != 200:
-#         raise SystemExit(f'{station} request failed')
-#     elif my_response.content.decode() == 'Currents predictions are not available from the requested station.':
-#         raise SystemExit(f'{station} predictions are not available')
-#     else:
-#         return pd.read_csv(StringIO(my_response.content.decode()))
+
+class CSVRequestFailed(Exception):
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(message)
