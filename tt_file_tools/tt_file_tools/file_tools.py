@@ -87,7 +87,6 @@ def read_text_arr(filepath: Path):
 
 def write_dict(file: Path, dictionary: dict):
     with open(file, 'w') as a_file:
-        # noinspection PyTypeChecker
         json.dump(dictionary, a_file)
     return file
 
