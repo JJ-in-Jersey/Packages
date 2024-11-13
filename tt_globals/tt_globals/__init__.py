@@ -1,3 +1,3 @@
-from tt_globals.globals import Globals
+from tt_globals.globals import Globals, PresetGlobals
 
-tt_globals = Globals()
+PresetGlobals.make_folders()
