@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup as Soup
 from pathlib import Path
+import json
 
 
 def newest_file(folder):
@@ -82,3 +83,16 @@ def read_text_arr(filepath: Path):
     with open(filepath) as text_file:
         lines = [line.splitlines()[0].split(",") for line in text_file]
     return lines
+
+
+def write_dict(file: Path, dictionary: dict):
+    with open(file, 'w') as a_file:
+        # noinspection PyTypeChecker
+        json.dump(dictionary, a_file)
+    return file
+
+def read_dict(file: Path):
+    if not file.exists():
+        raise FileExistsError(file)
+    with open(file, 'r') as a_file:
+        return json.load(a_file)
