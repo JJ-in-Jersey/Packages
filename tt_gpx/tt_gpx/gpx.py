@@ -1,39 +1,76 @@
 from bs4 import BeautifulSoup as Soup
-from tt_navigation.navigation import distance, directions, Heading
-from tt_file_tools.file_tools import read_df, write_df, print_file_exists
-from tt_jobs.jobs import InterpolatePointJob
-from tt_globals.globals import Globals
 from os import makedirs
 from pathlib import Path
 import pandas as pd
 
+from tt_navigation.navigation import distance, directions, Heading
+from tt_file_tools.file_tools import read_df, write_df, print_file_exists, SoupFromXMLFile
+from tt_jobs.jobs import InterpolatePointJob
+from tt_globals.globals import PresetGlobals, Globals
+
 
 class Waypoint:
-    waypoints_folder = None
-    color = {'TideStationWP': 'Yellow', 'CurrentStationWP': 'Orange',
-             'LocationWP': 'Green', 'InterpolatedWP': 'Blue',
-             'InterpolatedDataWP': 'Black'}
+
+    download_csv_name = 'downloaded_frame.csv'
+    velocity_csv_name = 'velocity_frame.csv'
+    spline_csv_name = 'cubic_spline_frame.csv'
+
+    waypoint_template_gpx = PresetGlobals.templates_folder.joinpath('waypoint_template.gpx')
+
+    types = {'H': 'Harmonic', 'S': 'Subordinate', 'W': 'Weak'}
+    symbols = {'H': 'Symbol-Pin-Green', 'S': 'Symbol-Pin-Green', 'W': 'Symbol-Pin-Yellow'}
+
     ordinal_number = 0
     index_lookup = {}
     name_lookup = {}
 
-    def __init__(self, gpxtag):
-        self.lat = round(float(gpxtag.attrs['lat']), 4)
-        self.lon = round(float(gpxtag.attrs['lon']), 4)
+    def write_gpx(self):
+        soup = SoupFromXMLFile(self.waypoint_template_gpx).tree
+        soup.find('name').string = self.name
+        soup.find('wpt')['lat'] = self.lat
+        soup.find('wpt')['lon'] = self.lon
+        soup.find('type').string = self.type
+        soup.find('sym').string = self.symbol
+
+        id_tag = soup.new_tag('id')
+        id_tag.string = self.id
+        soup.find('name').insert_after(id_tag)
+
+        folder_tag = soup.new_tag('folder')
+        folder_tag.string = str(self.folder.absolute())
+        soup.find('name').insert_after(folder_tag)
+
+        desc_tag = soup.new_tag('desc')
+        desc_tag.string = self.id
+        soup.find('name').insert_after(desc_tag)
+
+        filename = self.id + '.gpx'
+
+        with open(self.folder.joinpath(filename), 'w') as a_file:
+            a_file.write(str(soup))
+
+        with open(PresetGlobals.gpx_folder.joinpath(filename), 'w') as a_file:
+            a_file.write(str(soup))
+
+    def __init__(self, station: dict):
+
         self.index = self.ordinal_number
+        self.id = station['id']
+        self.name = station['name']
+        self.lat = round(float(station['lat']), 4)
+        self.lon = round(float(station['lon']), 4)
         self.coords = tuple([self.lat, self.lon])
-        self.symbol = gpxtag.sym.text
-        if 'Spot' in gpxtag.sym.text:
-            self.type = 'Harmonic'
-        elif 'Circle' in gpxtag.sym.text:
-            self.type = 'Subordinate'
-        self.name = gpxtag.find('name').text.strip('\n')
-        self.unique_name = str(self.index) + '_' + self.name.split(',')[0].split('(')[0].replace('.', '').strip().replace(" ", "_")
+        self.type = station['type']
+        self.symbol = self.symbols[station['type']]
+
+        self.folder = PresetGlobals.waypoints_folder.joinpath(station['id'])
+        self.download_csv = self.folder.joinpath(self.download_csv_name)
+        self.velocity_csv = self.folder.joinpath(self.velocity_csv_name)
+        self.spline_csv = self.folder.joinpath(self.spline_csv_name)
+        makedirs(self.folder, exist_ok=True)
+
         self.prev_edge = None
         self.next_edge = None
-
-        self.folder = Waypoint.waypoints_folder.joinpath(self.unique_name)
-        makedirs(self.folder, exist_ok=True)
 
         self.index_lookup[self.index] = self
         Waypoint.ordinal_number += 1
@@ -44,48 +81,22 @@ class LocationWP(Waypoint):
         super().__init__(*args)
 
 
-class DownloadedDataWP(Waypoint):
-
-    def __init__(self, gpxtag):
-        super().__init__(gpxtag)
-
-        self.code = None
-        self.bin_no = None
-
-        if gpxtag.link:
-            self.noaa_url = gpxtag.find('link').attrs['href']
-            tagname = gpxtag.find('link').find('text').text.split(' ')[0]
-            tagsplit = tagname.split('_')
-            self.code = tagsplit[0]
-            self.bin_no = None if len(tagsplit) == 1 else tagsplit[-1]
-
-
-class EdgeNode(DownloadedDataWP):
+class EdgeNode(Waypoint):
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
 
 
-class TideStationWP(DownloadedDataWP):
+class SurrogateWP(Waypoint):
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
 
 
-class SurrogateWP(EdgeNode):
+class InterpolatedDataWP(Waypoint):  # downloaded data used to interpolate a location
     def __init__(self, gpxtag):
         super().__init__(gpxtag)
 
 
-class CurrentStationWP(EdgeNode):
-    def __init__(self, gpxtag):
-        super().__init__(gpxtag)
-
-
-class InterpolatedDataWP(DownloadedDataWP):  # downloaded data used to interpolate a location
-    def __init__(self, gpxtag):
-        super().__init__(gpxtag)
-
-
-class InterpolatedWP(EdgeNode):  # result of interpolation of other waypoint data
+class InterpolatedWP(Waypoint):  # result of interpolation of other waypoint data
 
     def create_data_waypoint_list(self):
         index = self.index + 1
@@ -135,9 +146,9 @@ class Edge:  # connection between waypoints with current data
 
         if start_wp == end_wp:
             raise IndexError
-        if not isinstance(start_wp, CurrentStationWP) and not isinstance(start_wp, InterpolatedWP) and not isinstance(start_wp, SurrogateWP):
+        if not isinstance(start_wp, Waypoint) and not isinstance(start_wp, InterpolatedWP) and not isinstance(start_wp, SurrogateWP):
             raise TypeError
-        if not isinstance(end_wp, CurrentStationWP) and not isinstance(end_wp, InterpolatedWP) and not isinstance(end_wp, SurrogateWP):
+        if not isinstance(end_wp, Waypoint) and not isinstance(end_wp, InterpolatedWP) and not isinstance(end_wp, SurrogateWP):
             raise TypeError
 
         self.unique_name = '[' + str(start_wp.unique_name) + '-' + str(end_wp.unique_name) + ']'
@@ -154,7 +165,7 @@ class Edge:  # connection between waypoints with current data
         wp1 = start_wp
         while not wp1 == end_wp:
             wp2 = Waypoint.index_lookup[wp1.index + 1]
-            while isinstance(wp2, InterpolatedDataWP) or isinstance(wp2, TideStationWP):
+            while isinstance(wp2, InterpolatedDataWP):
                 wp2 = Waypoint.index_lookup[wp2.index + 1]
             self.length += round(distance(wp1.coords, wp2.coords), 4)
             wp1 = wp2
@@ -188,19 +199,12 @@ class Route:
         self.interpolation_groups = None
         self.waypoints = None
 
+
         # build ordered list of all waypoints
         waypoints = []
         for tag in tree.find_all('rtept'):
-            if Waypoint.color['TideStationWP'] in tag.sym.text:
-                waypoints.append(TideStationWP(tag))
-            elif Waypoint.color['CurrentStationWP'] in tag.sym.text:
-                waypoints.append(CurrentStationWP(tag))
-            elif Waypoint.color['LocationWP'] in tag.sym.text:
-                waypoints.append(LocationWP(tag))
-            elif Waypoint.color['InterpolatedWP'] in tag.sym.text:
-                waypoints.append(InterpolatedWP(tag))
-            elif Waypoint.color['InterpolatedDataWP'] in tag.sym.text:
-                waypoints.append(InterpolatedDataWP(tag))
+            code = tag.desc.text
+            waypoints.append(Waypoint(code))
         self.waypoints = waypoints
 
         # populate interpolated waypoint data
