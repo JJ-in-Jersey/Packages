@@ -11,7 +11,6 @@ from tt_gpx.gpx import Waypoint
 
 class StationDict:
 
-    stations_file = PresetGlobals.stations_folder.joinpath('stations.json')
     dict = {}
 
     @staticmethod
@@ -20,8 +19,8 @@ class StationDict:
 
     def __init__(self):
 
-        if print_file_exists(StationDict.stations_file):
-            StationDict.dict = read_dict(StationDict.stations_file)
+        if print_file_exists(PresetGlobals.stations_file):
+            StationDict.dict = read_dict(PresetGlobals.stations_file)
         else:
             StationDict.dict = {}
             my_request = "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations.xml?type=currentpredictions&units=english"
@@ -58,7 +57,7 @@ class StationDict:
                                 break
                             except requests.exceptions.RequestException:
                                 time.sleep(1)
-                    print_file_exists(write_dict(StationDict.stations_file, self.dict))
+                    print_file_exists(write_dict(PresetGlobals.stations_file, self.dict))
                     break
                 except requests.exceptions.RequestException:
                     time.sleep(1)
