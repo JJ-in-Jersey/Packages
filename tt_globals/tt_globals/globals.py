@@ -10,6 +10,35 @@ from os import makedirs
 from num2words import num2words
 
 
+class PresetGlobals:
+
+    project_base_folder = env('user_profile').joinpath('Fair Currents')
+    stations_folder = project_base_folder.joinpath('stations')
+    routes_folder = project_base_folder.joinpath('routes')
+    waypoints_folder = stations_folder.joinpath('waypoints')
+    gpx_folder = stations_folder.joinpath('gpx')
+
+    source_base_folder = env('user_profile').joinpath('PycharmProjects').joinpath('Fair Currents')
+    templates_folder = source_base_folder.joinpath('templates')
+
+    checkmark = u'\N{check mark}'
+
+    timestep = 60  # one minute
+    speeds = [-9.0 + v for v in range(0, 7)] + [3.0 + v for v in range(0, 7)]
+    time_window_scale = 1.5
+
+    @staticmethod
+    def make_folders():
+        makedirs(PresetGlobals.project_base_folder, exist_ok=True)
+        makedirs(PresetGlobals.stations_folder, exist_ok=True)
+        makedirs(PresetGlobals.routes_folder, exist_ok=True)
+        makedirs(PresetGlobals.waypoints_folder, exist_ok=True)
+        makedirs(PresetGlobals.gpx_folder, exist_ok=True)
+
+    def __init__(self):
+        pass
+
+
 class Globals:
 
     TYPE = {'rte': 'route', 'wpt': 'point'}
