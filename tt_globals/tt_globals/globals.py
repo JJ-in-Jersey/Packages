@@ -1,13 +1,42 @@
 from datetime import datetime as dt
+from pathlib import Path
 
 import pandas as pd
 from datetime import timedelta
 from tt_date_time_tools.date_time_tools import date_to_index
 from tt_file_tools.file_tools import read_df, write_df, print_file_exists
 from tt_os_abstraction.os_abstraction import env
-import shutil
 from os import makedirs
 from num2words import num2words
+
+class PresetGlobals:
+
+    project_base_folder = env('user_profile').joinpath('Fair Currents')
+    stations_folder = project_base_folder.joinpath('stations')
+    stations_file = stations_folder.joinpath('stations.json')
+    routes_folder = project_base_folder.joinpath('routes')
+    waypoints_folder = stations_folder.joinpath('waypoints')
+    gpx_folder = stations_folder.joinpath('gpx')
+
+    source_base_folder = env('user_profile').joinpath('PycharmProjects').joinpath('Fair Currents')
+    templates_folder = source_base_folder.joinpath('templates')
+
+    checkmark = u'\N{check mark}'
+
+    timestep = 60  # one minute
+    speeds = [-9.0 + v for v in range(0, 7)] + [3.0 + v for v in range(0, 7)]
+    time_window_scale = 1.5
+
+    @staticmethod
+    def make_folders():
+        makedirs(PresetGlobals.project_base_folder, exist_ok=True)
+        makedirs(PresetGlobals.stations_folder, exist_ok=True)
+        makedirs(PresetGlobals.routes_folder, exist_ok=True)
+        makedirs(PresetGlobals.waypoints_folder, exist_ok=True)
+        makedirs(PresetGlobals.gpx_folder, exist_ok=True)
+
+    def __init__(self):
+        pass
 
 
 class PresetGlobals:
@@ -41,7 +70,8 @@ class PresetGlobals:
 
 class Globals:
 
-    TYPE = {'rte': 'route', 'wpt': 'point'}
+    edges_folder = None
+    transit_times_folder = None
 
     YEAR = None
 
@@ -61,24 +91,9 @@ class Globals:
     TRANSIT_TIME_INDEX_RANGE = None
     TEMPLATE_TRANSIT_TIME_DATAFRAME = None
 
-    PROJECT_FOLDER = None
-    WAYPOINTS_FOLDER = None
-    EDGES_FOLDER = None
-    TRANSIT_TIMES_FOLDER = None
 
-    NORMALIZED_DOWNLOAD_DATES = None
-    NORMALIZED_DOWNLOAD_INDICES = None
 
-    CHECKMARK = u'\N{check mark}'
-    TIMESTEP = 15  # seconds
-    BOAT_SPEEDS = [-9.0 + v for v in range(0, 7)] + [3.0 + v for v in range(0, 7)]  # knots
-    TIME_WINDOW_SCALE_FACTOR = 1.5
-
-    WAYPOINT_DATAFILE_NAME = 'normalized_velocity.csv'
-    EDGE_DATAFILE_NAME = 'normalized_velocity_spline_fit.csv'
-
-    @staticmethod
-    def initialize_dates(args):
+    def initialize_dates(self, args):
         print('\nInitializing globals dates')
 
         Globals.YEAR = args['year']
@@ -102,26 +117,22 @@ class Globals:
         Globals.NORMALIZED_DOWNLOAD_DATES = [Globals.FIRST_DOWNLOAD_DAY + timedelta(hours=index) for index in range(0, ((Globals.LAST_DOWNLOAD_DAY - Globals.FIRST_DOWNLOAD_DAY).days + 1)*24)]
         Globals.NORMALIZED_DOWNLOAD_INDICES = [date_to_index(Globals.FIRST_DOWNLOAD_DAY + timedelta(hours=index)) for index in range(0, ((Globals.LAST_DOWNLOAD_DAY - Globals.FIRST_DOWNLOAD_DAY).days + 1)*24)]
 
+
+
+
     @staticmethod
-    def initialize_folders(args):
-        print('\nInitializing globals folders')
+    def create_location_folders(project_name:str, year:int):
+        print('\nInitializing location folders')
 
-        Globals.PROJECT_FOLDER = env('user_profile').joinpath('Developer Workspace/' + args['project_name'] + '_' + str(Globals.YEAR) + '/')
+        project =  Globals.project_base_folder.joinpath(project_name + '_' + str(year))
+        Globals.edges_folder = None if project_name is None else project.joinpath('edges')
+        Globals.transit_times_folder = None if project_name is None else project.joinpath('transit times')
 
-        if args['delete_data']:
-            shutil.rmtree(Globals.PROJECT_FOLDER, ignore_errors=True)
+        makedirs(Globals.edges_folder, exist_ok=True)
+        makedirs(Globals.transit_times_folder, exist_ok=True)
 
-        Globals.WAYPOINTS_FOLDER = Globals.PROJECT_FOLDER.joinpath('Waypoints')
-        Globals.EDGES_FOLDER = Globals.PROJECT_FOLDER.joinpath('Edges')
-        Globals.TRANSIT_TIMES_FOLDER = Globals.PROJECT_FOLDER.joinpath('Transit Times')
-
-        makedirs(Globals.PROJECT_FOLDER, exist_ok=True)
-        makedirs(Globals.WAYPOINTS_FOLDER, exist_ok=True)
-        makedirs(Globals.EDGES_FOLDER, exist_ok=True)
-        makedirs(Globals.TRANSIT_TIMES_FOLDER, exist_ok=True)
-
-        for s in Globals.BOAT_SPEEDS:
-            makedirs(Globals.TRANSIT_TIMES_FOLDER.joinpath(num2words(s)), exist_ok=True)
+        for s in Globals.speeds:
+            makedirs(Globals.transit_times_folder.joinpath(num2words(s)), exist_ok=True)
 
     @staticmethod
     def initialize_structures():
