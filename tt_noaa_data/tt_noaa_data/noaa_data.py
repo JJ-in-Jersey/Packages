@@ -5,7 +5,7 @@ import pandas as pd
 import requests
 from io import StringIO
 
-from tt_file_tools.file_tools import SoupFromXMLResponse, print_file_exists, read_dict, write_dict
+from tt_file_tools.file_tools import SoupFromXMLResponse, print_file_exists, read_dict, write_dict, write_df
 from tt_globals.globals import PresetGlobals
 from tt_gpx.gpx import Waypoint
 
@@ -39,6 +39,7 @@ class StationDict:
                     row_df = pd.DataFrame(row_array).drop_duplicates()
                     row_df['folder'] = row_df['id'].apply(StationDict.make_absolute_path_string)
                     row_dict = row_df.to_dict('records')
+                    print_file_exists(write_df(row_df, PresetGlobals.stations_folder.joinpath('stations.csv')))
                     StationDict.dict = {r['id']: r for r in row_dict}
 
                     print(f'Requesting bins for each station')
