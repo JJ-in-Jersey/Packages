@@ -38,8 +38,9 @@ class BaseWaypoint:
         soup.find('name').insert_after(id_tag)
 
         if self.folder is not None:
+            self.folder = Path(self.folder)
             folder_tag = soup.new_tag('folder')
-            folder_tag.string = str(Path(self.folder).absolute())
+            folder_tag.string = str(self.folder.absolute())
             soup.find('name').insert_after(folder_tag)
 
         desc_tag = soup.new_tag('desc')
@@ -63,9 +64,10 @@ class BaseWaypoint:
         self.symbol = self.symbols[station['type']]
         self.folder = station['folder']
         if self.folder is not None:
-            self.download_csv = Path(self.folder).joinpath(self.download_csv_name)
-            self.velocity_csv = Path(self.folder).joinpath(self.velocity_csv_name)
-            self.spline_csv = Path(self.folder).joinpath(self.spline_csv_name)
+            self.folder = Path(self.folder)
+            self.download_csv = self.folder.joinpath(self.download_csv_name)
+            self.velocity_csv = self.folder.joinpath(self.velocity_csv_name)
+            self.spline_csv = self.folder.joinpath(self.spline_csv_name)
             makedirs(self.folder, exist_ok=True)
 
         self.prev_edge = None
