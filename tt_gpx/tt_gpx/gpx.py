@@ -1,3 +1,4 @@
+import string
 from os import makedirs
 from pathlib import Path
 
@@ -9,8 +10,8 @@ from tt_globals.globals import PresetGlobals
 
 class BaseWaypoint:
 
-    download_csv_name = 'downloaded_frame.csv'
     velocity_csv_name = 'velocity_frame.csv'
+    download_csv_name = 'downloaded_frame.csv'
     spline_csv_name = 'cubic_spline_frame.csv'
 
     types = {'H': 'Harmonic', 'S': 'Subordinate', 'W': 'Weak',
@@ -61,9 +62,9 @@ class BaseWaypoint:
         self.folder = station['folder']
         if self.folder is not None:
             self.folder = Path(self.folder)
-            self.download_csv = self.folder.joinpath(self.download_csv_name)
-            self.velocity_csv = self.folder.joinpath(self.velocity_csv_name)
-            self.spline_csv = self.folder.joinpath(self.spline_csv_name)
+            self.velocity_csv_path = self.folder.joinpath(self.velocity_csv_name)
+            self.download_csv_path = self.folder.joinpath(self.download_csv_name)
+            self.spline_csv_path = self.folder.joinpath(self.spline_csv_name)
             makedirs(self.folder, exist_ok=True)
 
         self.prev_edge = None
@@ -158,7 +159,7 @@ class Edge:  # connection between waypoints with current data
 
 class RouteEdge:
 
-    elapsed_times_csv_name = 'elapsed_times.csv'
+    elapsed_times_csv_name = string.Template('elapsed_timesteps_$SPEED.csv')
 
     def __init__(self, node: EdgeNode):
 
