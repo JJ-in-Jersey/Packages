@@ -37,9 +37,10 @@ class BaseWaypoint:
         id_tag.string = self.id
         soup.find('name').insert_after(id_tag)
 
-        folder_tag = soup.new_tag('folder')
-        folder_tag.string = str(self.folder.absolute())
-        soup.find('name').insert_after(folder_tag)
+        if self.folder is not None:
+            folder_tag = soup.new_tag('folder')
+            folder_tag.string = str(Path(self.folder).absolute())
+            soup.find('name').insert_after(folder_tag)
 
         desc_tag = soup.new_tag('desc')
         desc_tag.string = self.id
