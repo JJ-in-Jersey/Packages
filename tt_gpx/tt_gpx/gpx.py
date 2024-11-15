@@ -1,10 +1,8 @@
 from os import makedirs
-import pandas as pd
 from pathlib import Path
 
-from sympy.codegen.cfunctions import isnan
 from tt_navigation.navigation import distance, directions, Heading
-from tt_file_tools.file_tools import read_df, write_df, print_file_exists, SoupFromXMLFile
+from tt_file_tools.file_tools import SoupFromXMLFile
 from tt_jobs.jobs import InterpolatePointJob
 from tt_globals.globals import PresetGlobals
 
@@ -15,8 +13,6 @@ class BaseWaypoint:
     velocity_csv_name = 'velocity_frame.csv'
     spline_csv_name = 'cubic_spline_frame.csv'
 
-    waypoint_template_gpx = PresetGlobals.templates_folder.joinpath('waypoint_template.gpx')
-
     types = {'H': 'Harmonic', 'S': 'Subordinate', 'W': 'Weak',
              'L': 'Location', 'I': 'Interpolation', 'D': 'Data'}
     symbols = {'H': 'Symbol-Pin-Green', 'S': 'Symbol-Pin-Green',
@@ -26,7 +22,7 @@ class BaseWaypoint:
     ordinal_number = 0
 
     def write_gpx(self):
-        soup = SoupFromXMLFile(self.waypoint_template_gpx).tree
+        soup = SoupFromXMLFile(PresetGlobals.templates_folder.joinpath('waypoint_template.gpx')).tree
         soup.find('name').string = self.name
         soup.find('wpt')['lat'] = self.lat
         soup.find('wpt')['lon'] = self.lon
@@ -96,6 +92,7 @@ class Interpolation(EdgeNode):
     def __init__(self, tag):
         super_dict = {'id': None, 'name': None, 'lat': tag.attrs['lat'], 'lon': tag.attrs['lon'], 'type': 'I', 'folder': None}
         super().__init__(super_dict)
+
 
 class Data(BaseWaypoint):
     def __init__(self, station: dict):
@@ -178,7 +175,6 @@ class RouteEdge:
                 break
 
 
-
 # class RouteEdgeXXX:  # connection between waypoints with current data
 #
 #     edges_folder = None
@@ -213,8 +209,6 @@ class RouteEdge:
 #                 wp2 = Waypoint.index_lookup[wp2.index + 1]
 #             self.length += round(distance(wp1.coords, wp2.coords), 4)
 #             wp1 = wp2
-
-
 # class GPXPath:
 #
 #     def path_integrity(self):
@@ -232,7 +226,6 @@ class RouteEdge:
 
 
 class Route:
-
     def __init__(self, stations_dict: dict, tree):
 
         self.name = tree.find('name').string
