@@ -140,8 +140,6 @@ class Data(BaseWaypoint):
 
 class Edge:  # connection between waypoints with current data
 
-    ordinal_number = 0
-
     def __init__(self, start: EdgeNode, end: EdgeNode):
 
         if start.id == end.id:
@@ -154,13 +152,13 @@ class Edge:  # connection between waypoints with current data
 
         self.start = start
         self.end = end
-        self.name = 'Edge ' + str(Edge.ordinal_number)
+        self.name = 'Edge ' + str(start.index) + ' ' + str(end.index)
         self.length = round(distance(start.coords, end.coords), 4)
-
-        Edge.ordinal_number += 1
 
 
 class RouteEdge:
+
+    elapsed_times_csv_name = 'elapsed_times.csv'
 
     def __init__(self, node: EdgeNode):
 
@@ -173,6 +171,10 @@ class RouteEdge:
             node = self.end
             if not isinstance(self.end, Location):
                 break
+
+        self.name = 'Route Edge ' + str(self.start.index) + '-' + str(self.end.index)
+        self.folder = Route.folder.joinpath(self.name)
+        makedirs(self.folder, exist_ok=True)
 
 
 # class RouteEdgeXXX:  # connection between waypoints with current data
@@ -226,11 +228,14 @@ class RouteEdge:
 
 
 class Route:
+
+    folder = None
+
     def __init__(self, stations_dict: dict, tree):
 
         self.name = tree.find('name').string
         self.code = ''.join(word[0] for word in self.name.upper().split())
-        self.folder = PresetGlobals.project_base_folder.joinpath(self.name)
+        Route.folder = PresetGlobals.project_base_folder.joinpath(self.name)
         makedirs(self.folder, exist_ok=True)
 
         self.waypoints = []
@@ -247,7 +252,7 @@ class Route:
         self.heading = Heading(self.waypoints[0].coords, self.waypoints[-1].coords).angle
         self.directions = directions(self.heading)
 
-        self.folder.joinpath(str(self.heading) + '.heading').touch()
+        Route.folder.joinpath(str(self.heading) + '.heading').touch()
 
         # populate interpolated waypoint data
         # for iwp in filter(lambda w: isinstance(w, InterpolatedWP), self.waypoints):
