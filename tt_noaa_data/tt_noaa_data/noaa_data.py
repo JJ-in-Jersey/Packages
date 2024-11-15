@@ -15,7 +15,7 @@ class StationDict:
 
     @staticmethod
     def make_absolute_path_string(folder_name):
-        return str(PresetGlobals.stations_folder.joinpath(folder_name).absolute())
+        return str(PresetGlobals.waypoints_folder.joinpath(folder_name).absolute())
 
     def __init__(self):
 
