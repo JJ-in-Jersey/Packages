@@ -27,7 +27,7 @@ pip3 install ./tt_os_abstraction
 pip3 install ./tt_semaphore
 pip3 install ./tt_chrome_driver
 pip3 install ./tt_job_manager
-pip3 install ./tt_noaa_data
 pip3 install ./tt_globals
+pip3 install ./tt_noaa_data
 pip3 install ./tt_jobs
 pip3 install ./tt_gpx
