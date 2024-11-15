@@ -17,7 +17,7 @@ class PresetGlobals:
     waypoints_folder = stations_folder.joinpath('waypoints')
     gpx_folder = stations_folder.joinpath('gpx')
 
-    source_base_folder = env('user_profile').joinpath('PycharmProjects').joinpath('Fair Currents')
+    source_base_folder = env('user_profile').joinpath('PycharmProjects').joinpath('Fair-Currents')
     templates_folder = source_base_folder.joinpath('templates')
 
     checkmark = u'\N{check mark}'
