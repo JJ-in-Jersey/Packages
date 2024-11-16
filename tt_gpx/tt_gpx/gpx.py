@@ -173,7 +173,7 @@ class RouteEdge:
             if not isinstance(self.end, Location):
                 break
 
-        self.name = 'Edge ' + str(self.start.index) + '-' + str(self.end.index)
+        self.name = 'Route Edge ' + str(self.start.index) + '-' + str(self.end.index)
         self.folder = Route.folder.joinpath(self.name)
         makedirs(self.folder, exist_ok=True)
 
