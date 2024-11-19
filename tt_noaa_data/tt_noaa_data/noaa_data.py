@@ -154,6 +154,7 @@ class SixteenMonths:
             months.append(month)
 
         self.frame = pd.concat([m.frame for m in months], axis=0, ignore_index=True)
+
         self.frame = self.frame.rename(columns={heading: heading.strip() for heading in self.frame.columns.tolist()})
         self.frame.rename(columns={'Velocity_Major': 'velocity'}, inplace=True)
         self.frame['datetime'] = pd.to_datetime(self.frame['Time'])
