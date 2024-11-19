@@ -147,9 +147,9 @@ class SixteenMonths:
                 raise CSVRequestFailed('<!> ' + waypoint.id + ' CSV Request failed')
             self.months.append(month)
 
-        self.downloaded_frame = pd.concat([m.frame for m in months], axis=0, ignore_index=True)
+        self.downloaded_frame = pd.concat([m.frame for m in self.months], axis=0, ignore_index=True)
 
-        self.frame = self.downloaded_frame.rename(columns={heading: heading.strip() for heading in self.frame.columns.tolist()})
+        self.frame = self.downloaded_frame.rename(columns={heading: heading.strip() for heading in self.downloaded_frame.columns.tolist()})
         self.frame.rename(columns={'Velocity_Major': 'velocity'}, inplace=True)
         self.frame['datetime'] = pd.to_datetime(self.frame['Time'])
         self.frame['timestamp'] = self.frame['datetime'].apply(pd.Timestamp)
