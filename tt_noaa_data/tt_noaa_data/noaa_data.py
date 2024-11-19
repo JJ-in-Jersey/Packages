@@ -112,12 +112,6 @@ class OneMonth:
                 self.frame = pd.read_csv(StringIO(my_response.content.decode()))
                 if self.frame.empty or self.frame.isna().all().all():
                     raise EmptyDataframe('<!> ' + waypoint.id + 'Dataframe is empty or all NaN')
-                # self.frame = frame.rename(columns={heading: heading.strip() for heading in frame.columns.tolist()})
-                # self.frame.rename(columns={'Velocity_Major': 'velocity'}, inplace=True)
-                # self.frame['datetime'] = pd.to_datetime(self.frame['Time'])
-                # self.frame['timestamp'] = self.frame['datetime'].apply(pd.Timestamp)
-                # self.frame['timestamp'] = self.frame['timestamp'].apply(lambda x: x.value/1000000000)
-                # self.frame['time_diff'] = self.frame['timestamp'].diff()
                 break
             except requests.exceptions.RequestException:
                 self.error = True
@@ -134,36 +128,36 @@ class SixteenMonths:
 
     def __init__(self, year: int, waypoint: Waypoint):
 
-        months = []
+        self.months = []
         failure_message = '<!> ' + waypoint.id + ' CSV Request failed'
 
         for m in range(11, 13):
             month = OneMonth(m, year - 1, waypoint)
             if month.error:
                 raise CSVRequestFailed(failure_message)
-            months.append(month)
+            self.months.append(month)
         for m in range(1, 13):
             month = OneMonth(m, year, waypoint)
             if month.error:
                 raise CSVRequestFailed(failure_message)
-            months.append(month)
+            self.months.append(month)
         for m in range(1, 3):
             month = OneMonth(m, year + 1, waypoint)
             if month.error:
                 raise CSVRequestFailed('<!> ' + waypoint.id + ' CSV Request failed')
-            months.append(month)
+            self.months.append(month)
 
-        self.frame = pd.concat([m.frame for m in months], axis=0, ignore_index=True)
+        self.downloaded_frame = pd.concat([m.frame for m in months], axis=0, ignore_index=True)
 
-        self.frame = self.frame.rename(columns={heading: heading.strip() for heading in self.frame.columns.tolist()})
+        self.frame = self.downloaded_frame.rename(columns={heading: heading.strip() for heading in self.frame.columns.tolist()})
         self.frame.rename(columns={'Velocity_Major': 'velocity'}, inplace=True)
         self.frame['datetime'] = pd.to_datetime(self.frame['Time'])
         self.frame['timestamp'] = self.frame['datetime'].apply(pd.Timestamp)
         self.frame['timestamp'] = self.frame['timestamp'].apply(lambda x: x.value / 1000000000)
         self.frame['time_diff'] = self.frame['timestamp'].diff()
 
-        for m in range(len(months)):
-            del m
+        # for m in range(len(months)):
+        #     del m
 
 
 class NonMonotonic(Exception):
