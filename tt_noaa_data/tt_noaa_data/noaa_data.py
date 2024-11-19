@@ -9,13 +9,27 @@ from tt_file_tools.file_tools import SoupFromXMLResponse, print_file_exists, rea
 from tt_globals.globals import PresetGlobals
 from tt_gpx.gpx import Waypoint
 
-class StationDict:
 
+class StationDict:
     dict = {}
 
     @staticmethod
     def make_absolute_path_string(folder_name):
         return str(PresetGlobals.waypoints_folder.joinpath(folder_name).absolute())
+
+    # @staticmethod
+    # def integrity_check(start: datetime, end: datetime, time_series: pd.Series, type: str):
+    #     minutes = {'H': pd.Timedelta(minutes=1), 'S': pd.Timedelta(minutes=6)}
+    #     print(type)
+    #     frame = pd.DataFrame(time_series)
+    #     frame['datetime'] = pd.to_datetime(frame['Time'])
+    #     frame['timestamp'] = frame['datetime'].apply(datetime.timestamp).astype('int')
+    #     frame['time_diff'] = frame['timestamp'].diff()
+    #     frame['correct_diff'] = frame['time_diff'] == minutes[type]
+    #     if type == 'H':
+    #         print(frame['correct_diff'].all())
+    #         print(frame)
+    #     return True
 
     def __init__(self):
 
@@ -31,11 +45,11 @@ class StationDict:
                     my_response.raise_for_status()
                     stations_tree = SoupFromXMLResponse(StringIO(my_response.content.decode())).tree
                     row_array = [{'id': station_tag.find_next('id').text,
-                             'name': station_tag.find_next('name').text,
-                             'lat': float(station_tag.find_next('lat').text),
-                             'lon': float(station_tag.find_next('lng').text),
-                             'type': station_tag.find_next('type').text,}
-                            for station_tag in stations_tree.find_all('Station')]
+                                  'name': station_tag.find_next('name').text,
+                                  'lat': float(station_tag.find_next('lat').text),
+                                  'lon': float(station_tag.find_next('lng').text),
+                                  'type': station_tag.find_next('type').text}
+                                 for station_tag in stations_tree.find_all('Station')]
                     row_df = pd.DataFrame(row_array).drop_duplicates()
                     row_df['folder'] = row_df['id'].apply(StationDict.make_absolute_path_string)
                     row_dict = row_df.to_dict('records')
@@ -95,11 +109,15 @@ class OneMonth:
                 my_response.raise_for_status()
                 if 'predictions are not available' in my_response.content.decode():
                     raise DataNotAvailable('<!> ' + waypoint.id + ' Current predictions are not available')
-                frame = pd.read_csv(StringIO(my_response.content.decode()))
-                if frame.empty or frame.isna().all().all():
+                self.frame = pd.read_csv(StringIO(my_response.content.decode()))
+                if self.frame.empty or self.frame.isna().all().all():
                     raise EmptyDataframe('<!> ' + waypoint.id + 'Dataframe is empty or all NaN')
-                self.frame = frame.rename(columns={heading: heading.strip() for heading in frame.columns.tolist()})
-                self.frame.rename(columns={'Velocity_Major': 'velocity'}, inplace=True)
+                # self.frame = frame.rename(columns={heading: heading.strip() for heading in frame.columns.tolist()})
+                # self.frame.rename(columns={'Velocity_Major': 'velocity'}, inplace=True)
+                # self.frame['datetime'] = pd.to_datetime(self.frame['Time'])
+                # self.frame['timestamp'] = self.frame['datetime'].apply(pd.Timestamp)
+                # self.frame['timestamp'] = self.frame['timestamp'].apply(lambda x: x.value/1000000000)
+                # self.frame['time_diff'] = self.frame['timestamp'].diff()
                 break
             except requests.exceptions.RequestException:
                 self.error = True
@@ -136,6 +154,13 @@ class SixteenMonths:
             months.append(month)
 
         self.frame = pd.concat([m.frame for m in months], axis=0, ignore_index=True)
+        self.frame = self.frame.rename(columns={heading: heading.strip() for heading in self.frame.columns.tolist()})
+        self.frame.rename(columns={'Velocity_Major': 'velocity'}, inplace=True)
+        self.frame['datetime'] = pd.to_datetime(self.frame['Time'])
+        self.frame['timestamp'] = self.frame['datetime'].apply(pd.Timestamp)
+        self.frame['timestamp'] = self.frame['timestamp'].apply(lambda x: x.value / 1000000000)
+        self.frame['time_diff'] = self.frame['timestamp'].diff()
+
         for m in range(len(months)):
             del m
 
@@ -147,6 +172,12 @@ class NonMonotonic(Exception):
 
 
 class DataNotAvailable(Exception):
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(self.message)
+
+
+class DataMissing(Exception):
     def __init__(self, message: str):
         self.message = message
         super().__init__(self.message)

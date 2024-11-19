@@ -1,10 +1,10 @@
-import string
+# import string
 from os import makedirs
 from pathlib import Path
 
 from tt_navigation.navigation import distance, directions, Heading
 from tt_file_tools.file_tools import SoupFromXMLFile
-from tt_jobs.jobs import InterpolatePointJob
+# from tt_jobs.jobs import InterpolatePointJob
 from tt_globals.globals import PresetGlobals
 
 
@@ -159,7 +159,7 @@ class Edge:  # connection between waypoints with current data
 
 class RouteEdge:
 
-    elapsed_times_csv_name = string.Template('elapsed_timesteps_$SPEED.csv')
+    # elapsed_times_csv_name = string.Template('elapsed_timesteps_$SPEED.csv')
 
     def __init__(self, node: EdgeNode):
 
