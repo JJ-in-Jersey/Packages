@@ -87,7 +87,7 @@ class Job:
         print(f'-     {self.job_name} {result[2]} minutes', flush=True)
 
     def error_callback(self, result):
-        print(f'!     {self.job_name} process has raised an error: {result}', flush=True)
+        print(f'!     {self.job_name} error: {result}', flush=True)
 
     def __init__(self, job_name, result_key, function, arguments):
         self.job_name = job_name
