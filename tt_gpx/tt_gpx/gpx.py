@@ -63,9 +63,10 @@ class BaseWaypoint:
         self.folder = station['folder']
         if self.folder is not None:
             self.folder = Path(self.folder)
-            self.velocity_csv_path = self.folder.joinpath(self.velocity_csv_name)
-            self.download_csv_path = self.folder.joinpath(self.download_csv_name)
+            self.raw_csv_path = self.folder.joinpath(self.raw_csv_name)
             self.spline_csv_path = self.folder.joinpath(self.spline_csv_name)
+            self.spline_csv_path = self.folder.joinpath(self.spline_csv_name)
+            self.velocity_csv_path = self.folder.joinpath(self.velocity_csv_name)
             makedirs(self.folder, exist_ok=True)
 
         self.prev_edge = None
