@@ -236,9 +236,6 @@ class SixteenMonths:
             self.frame['timestamp_diff'] = self.frame['timestamp'].diff()
             self.frame['datetime_diff'] = self.frame['datetime'].diff()
 
-        for m in months:
-            del m
-
 
 class NonMonotonic(Exception):
     def __init__(self, message: str):
