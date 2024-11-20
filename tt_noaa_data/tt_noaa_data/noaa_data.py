@@ -100,11 +100,11 @@ class OneMonth:
                     my_response.raise_for_status()
 
                     if 'predictions are not available' in my_response.content.decode():
-                        raise DataNotAvailable(f'<!> {waypoint.id} Predictions are not available')
+                        raise DataNotAvailable(f'<!> {waypoint.id} Predictions not available')
                     self.raw_frame = pd.read_csv(StringIO(my_response.content.decode()))
 
                     if self.raw_frame.empty or self.raw_frame.isna().all().all():
-                        raise EmptyDataframe(f'<!> {waypoint.id} Dataframe is empty or all NaN')
+                        raise EmptyDataframe(f'<!> {waypoint.id} Dataframe empty or NaN')
 
                     break
                 except Exception as err:
@@ -123,7 +123,7 @@ class OneMonth:
             if not self.adj_frame['stamp'].is_monotonic_increasing:
                 write_df(self.raw_frame, waypoint.folder.joinpath(f'month {month} raw frame.csv'))
                 write_df(self.adj_frame, waypoint.folder.joinpath(f'month {month} not monotonic.csv'))
-                self.error = NonMonotonic(f'<!> {waypoint.id} Timestamp is not monotonically increasing')
+                self.error = NonMonotonic(f'<!> {waypoint.id} Data not monotonic')
                 raise self.error
 
             if waypoint.type == 'H':
@@ -131,7 +131,7 @@ class OneMonth:
                 if not self.adj_frame['timestep_match'][1:].all():
                     write_df(self.raw_frame, waypoint.folder.joinpath(f'month {month} raw frame.csv'))
                     write_df(self.adj_frame, waypoint.folder.joinpath(f'month {month} missing data.csv'))
-                    raise DataMissing(f'<!> {waypoint.id} Data is missing')
+                    raise DataMissing(f'<!> {waypoint.id} Data missing')
 
                 if not self.adj_frame['stamp'].is_unique:
                     write_df(self.adj_frame, waypoint.folder.joinpath(f'month {month} duplicate timestamps.csv'))
