@@ -17,19 +17,6 @@ class StationDict:
     def make_absolute_path_string(folder_name):
         return str(PresetGlobals.waypoints_folder.joinpath(folder_name).absolute())
 
-    # @staticmethod
-    # def integrity_check(start: datetime, end: datetime, time_series: pd.Series, type: str):
-    #     minutes = {'H': pd.Timedelta(minutes=1), 'S': pd.Timedelta(minutes=6)}
-    #     print(type)
-    #     frame = pd.DataFrame(time_series)
-    #     frame['datetime'] = pd.to_datetime(frame['Time'])
-    #     frame['timestamp'] = frame['datetime'].apply(datetime.timestamp).astype('int')
-    #     frame['time_diff'] = frame['timestamp'].diff()
-    #     frame['correct_diff'] = frame['time_diff'] == minutes[type]
-    #     if type == 'H':
-    #         print(frame['correct_diff'].all())
-    #         print(frame)
-    #     return True
 
     def __init__(self):
 
@@ -48,16 +35,18 @@ class StationDict:
                                   'name': station_tag.find_next('name').text,
                                   'lat': float(station_tag.find_next('lat').text),
                                   'lon': float(station_tag.find_next('lng').text),
-                                  'type': station_tag.find_next('type').text}
+                                  'type': station_tag.find_next('type').text,
+                                  'folder_name': station_tag.find_next('type').text + ' ' + station_tag.find_next('id').text}
                                  for station_tag in stations_tree.find_all('Station')]
                     row_df = pd.DataFrame(row_array).drop_duplicates()
-                    row_df['folder'] = row_df['id'].apply(StationDict.make_absolute_path_string)
+                    row_df['folder'] = row_df['folder_name'].apply(StationDict.make_absolute_path_string)
                     row_dict = row_df.to_dict('records')
                     print_file_exists(write_df(row_df, PresetGlobals.stations_folder.joinpath('stations.csv')))
                     StationDict.dict = {r['id']: r for r in row_dict}
 
                     print(f'Requesting bins for each station')
                     for station_id in self.dict.keys():
+                        print(f'==>   {station_id}')
                         my_request = "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations/" + station_id + "/bins.xml?units=english"
                         for _ in range(3):
                             try:
@@ -125,28 +114,27 @@ class OneMonth:
             if self.error:
                 raise self.error
 
-            frame = self.raw_frame.rename(columns={h: h.strip() for h in self.raw_frame.columns.tolist()})
-            frame['datetime'] = pd.to_datetime(frame['Time'])
-            frame['timestamp'] = frame['datetime'].apply(pd.Timestamp)
-            frame['timestamp'] = frame['timestamp'].apply(lambda x: x.value / 1000000000)
-            frame['timestamp_diff'] = frame['timestamp'].diff()
-            frame['datetime_diff'] = frame['datetime'].diff()
+            self.adj_frame = self.raw_frame.rename(columns={h: h.strip() for h in self.raw_frame.columns.tolist()})
+            self.adj_frame['stamp'] = self.adj_frame['Time'].apply(pd.Timestamp).apply(lambda x: x.value / 1000000000)
+            self.adj_frame['stamp_diff'] = self.adj_frame['stamp'].diff()
+            self.adj_frame['diff_sign'] = abs(self.adj_frame['stamp_diff']) / self.adj_frame['stamp_diff']
+            self.adj_frame['timestep_match'] = self.adj_frame['stamp_diff'] == self.adj_frame['stamp_diff'].iloc[1]
 
-            if not frame['timestamp'].is_monotonic_increasing:
+            if not self.adj_frame['stamp'].is_monotonic_increasing:
                 write_df(self.raw_frame, waypoint.folder.joinpath(f'month {month} raw frame.csv'))
-                write_df(frame, waypoint.folder.joinpath(f'month {month} not monotonic.csv'))
+                write_df(self.adj_frame, waypoint.folder.joinpath(f'month {month} not monotonic.csv'))
                 self.error = NonMonotonic(f'<!> {waypoint.id} Timestamp is not monotonically increasing')
                 raise self.error
 
             if waypoint.type == 'H':
 
-                if not (frame.iloc[1]['timestamp_diff'] == frame['timestamp_diff'][1:]).all():
+                if not self.adj_frame['timestamp_match'][1:].all():
                     write_df(self.raw_frame, waypoint.folder.joinpath(f'month {month} raw frame.csv'))
-                    write_df(frame, waypoint.folder.joinpath(f'month {month} missing data.csv'))
+                    write_df(self.adj_frame, waypoint.folder.joinpath(f'month {month} missing data.csv'))
                     raise DataMissing(f'<!> {waypoint.id} Data is missing')
 
-                if not frame['timestamp'].is_unique:
-                    write_df(frame, waypoint.folder.joinpath(f'month {month} duplicate timestamps.csv'))
+                if not self.adj_frame['timestamp'].is_unique:
+                    write_df(self.adj_frame, waypoint.folder.joinpath(f'month {month} duplicate timestamps.csv'))
                     raise DuplicateTimestamps(f'<!> {waypoint.id} Duplicate timestamps')
 
         except Exception as err:
@@ -183,13 +171,7 @@ class SixteenMonths:
 
         else:
             self.raw_frame = pd.concat([m.raw_frame for m in months], axis=0, ignore_index=True)
-            self.frame = self.raw_frame.rename(columns={heading: heading.strip() for heading in self.raw_frame.columns.tolist()})
-            self.frame.rename(columns={'Velocity_Major': 'velocity'}, inplace=True)
-            self.frame['datetime'] = pd.to_datetime(self.frame['Time'])
-            self.frame['timestamp'] = self.frame['datetime'].apply(pd.Timestamp)
-            self.frame['timestamp'] = self.frame['timestamp'].apply(lambda x: x.value / 1000000000)
-            self.frame['timestamp_diff'] = self.frame['timestamp'].diff()
-            self.frame['datetime_diff'] = self.frame['datetime'].diff()
+            self.adj_frame = pd.concat([m.adj_frame for m in months], axis=0, ignore_index=True)
 
 
 class NonMonotonic(Exception):
