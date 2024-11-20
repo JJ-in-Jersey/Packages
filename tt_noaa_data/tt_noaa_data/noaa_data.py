@@ -111,21 +111,19 @@ class OneMonth:
                     my_response.raise_for_status()
 
                     if 'predictions are not available' in my_response.content.decode():
-                        self.error = DataNotAvailable(f'<!> {waypoint.id} Predictions are not available')
-                        raise self.error
+                        raise DataNotAvailable(f'<!> {waypoint.id} Predictions are not available')
                     self.raw_frame = pd.read_csv(StringIO(my_response.content.decode()))
 
                     if self.raw_frame.empty or self.raw_frame.isna().all().all():
-                        self.error =  EmptyDataframe(f'<!> {waypoint.id} Dataframe is empty or all NaN')
-                        raise self.error
+                        raise EmptyDataframe(f'<!> {waypoint.id} Dataframe is empty or all NaN')
 
                     break
-                except requests.exceptions.RequestException:
+                except Exception as err:
+                    self.error = err
                     time.sleep(1)
-                except DataNotAvailable:
-                    time.sleep(1)
-                except EmptyDataframe:
-                    time.sleep(1)
+
+            if self.error:
+                raise self.error
 
             frame = self.raw_frame.rename(columns={h: h.strip() for h in self.raw_frame.columns.tolist()})
             frame['datetime'] = pd.to_datetime(frame['Time'])
@@ -145,20 +143,14 @@ class OneMonth:
                 if not (frame.iloc[1]['timestamp_diff'] == frame['timestamp_diff'][1:]).all():
                     write_df(self.raw_frame, waypoint.folder.joinpath(f'month {month} raw frame.csv'))
                     write_df(frame, waypoint.folder.joinpath(f'month {month} missing data.csv'))
-                    self.error = DataMissing(f'<!> {waypoint.id} Data is missing')
-                    raise self.error
+                    raise DataMissing(f'<!> {waypoint.id} Data is missing')
 
                 if not frame['timestamp'].is_unique:
                     write_df(frame, waypoint.folder.joinpath(f'month {month} duplicate timestamps.csv'))
-                    self.error = DuplicateTimestamps(f'<!> {waypoint.id} Duplicate timestamps')
-                    raise self.error
+                    raise DuplicateTimestamps(f'<!> {waypoint.id} Duplicate timestamps')
 
-        except DataMissing:
-            pass
-        except NonMonotonic:
-            pass
-        except DuplicateTimestamps:
-            pass
+        except Exception as err:
+            self.error = err
 
 class SixteenMonths:
 
@@ -166,67 +158,30 @@ class SixteenMonths:
         self.error = False
 
         months = []
-        for m in range(11, 13):
-            try:
+        try:
+            for m in range(11, 13):
                 month = OneMonth(m, year - 1, waypoint)
                 if month.error:
-                    self.error = month.error
                     raise month.error
                 months.append(month)
-            except requests.exceptions.RequestException:
-                pass
-            except DataNotAvailable:
-                pass
-            except EmptyDataframe:
-                pass
-            except DataMissing:
-                pass
-            except NonMonotonic:
-                pass
-            except DuplicateTimestamps:
-                pass
 
-        for m in range(1, 13):
-            try:
+            for m in range(1, 13):
                 month = OneMonth(m, year, waypoint)
                 if month.error:
-                    self.error = month.error
                     raise month.error
                 months.append(month)
-            except requests.exceptions.RequestException:
-                pass
-            except DataNotAvailable:
-                pass
-            except EmptyDataframe:
-                pass
-            except DataMissing:
-                pass
-            except NonMonotonic:
-                pass
-            except DuplicateTimestamps:
-                pass
 
-        for m in range(1, 3):
-            try:
+            for m in range(1, 3):
                 month = OneMonth(m, year + 1, waypoint)
                 if month.error:
                     self.error = month.error
                     raise month.error
                 months.append(month)
-            except requests.exceptions.RequestException:
-                pass
-            except DataNotAvailable:
-                pass
-            except EmptyDataframe:
-                pass
-            except DataMissing:
-                pass
-            except NonMonotonic:
-                pass
-            except DuplicateTimestamps:
-                pass
 
-        if not self.error:
+        except Exception as err:
+            self.error = err
+
+        else:
             self.raw_frame = pd.concat([m.raw_frame for m in months], axis=0, ignore_index=True)
             self.frame = self.raw_frame.rename(columns={heading: heading.strip() for heading in self.raw_frame.columns.tolist()})
             self.frame.rename(columns={'Velocity_Major': 'velocity'}, inplace=True)
@@ -266,8 +221,3 @@ class EmptyDataframe(Exception):
         self.message = message
         super().__init__(self.message)
 
-
-# class CSVRequestFailed(Exception):
-#     def __init__(self, message: str):
-#         self.message = message
-#         super().__init__(message)
