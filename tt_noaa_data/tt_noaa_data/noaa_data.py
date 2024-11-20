@@ -133,7 +133,7 @@ class OneMonth:
                     write_df(self.adj_frame, waypoint.folder.joinpath(f'month {month} missing data.csv'))
                     raise DataMissing(f'<!> {waypoint.id} Data is missing')
 
-                if not self.adj_frame['timestamp'].is_unique:
+                if not self.adj_frame['stamp'].is_unique:
                     write_df(self.adj_frame, waypoint.folder.joinpath(f'month {month} duplicate timestamps.csv'))
                     raise DuplicateTimestamps(f'<!> {waypoint.id} Duplicate timestamps')
 
