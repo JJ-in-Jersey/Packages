@@ -128,7 +128,7 @@ class OneMonth:
 
             if waypoint.type == 'H':
 
-                if not self.adj_frame['timestamp_match'][1:].all():
+                if not self.adj_frame['timestep_match'][1:].all():
                     write_df(self.raw_frame, waypoint.folder.joinpath(f'month {month} raw frame.csv'))
                     write_df(self.adj_frame, waypoint.folder.joinpath(f'month {month} missing data.csv'))
                     raise DataMissing(f'<!> {waypoint.id} Data is missing')
