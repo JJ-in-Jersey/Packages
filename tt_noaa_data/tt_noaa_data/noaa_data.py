@@ -1,7 +1,7 @@
-from datetime import datetime
 from dateutil.relativedelta import relativedelta
-import time
+from datetime import datetime as dt
 import pandas as pd
+import time
 import requests
 from io import StringIO
 
@@ -69,6 +69,15 @@ class StationDict:
 
 class OneMonth:
 
+    @staticmethod
+    def adjust_frame(raw_frame: pd.DataFrame):
+        frame = raw_frame.rename(columns={h: h.strip() for h in raw_frame.columns.tolist()})
+        frame['stamp'] = pd.to_datetime(frame['Time'], utc=True).apply(dt.timestamp).astype(int)
+        frame['diff'] = frame['stamp'].diff()
+        frame['diff_sign'] = abs(frame['diff']) / frame['diff']
+        frame['timestep_match'] = frame['diff'] == frame['diff'].iloc[1]
+        return frame
+
     def __init__(self, month: int, year: int, waypoint: Waypoint, interval_time: int = 1):
 
         self.raw_frame = None
@@ -78,7 +87,7 @@ class OneMonth:
             self.error = ValueError
             raise self.error
 
-        start = datetime(year, month, 1)
+        start = dt(year, month, 1)
         end = start + relativedelta(months=1) - relativedelta(days=1)
 
         header = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?"
@@ -86,16 +95,16 @@ class OneMonth:
         end_date_field = "&end_date=" + end.strftime("%Y%m%d")  # yyyymmdd
         station_field = "&station=" + waypoint.id  # station id string
         interval_field = "&interval=" + str(interval_time)
-        footer_wo_bin = "&product=currents_predictions&time_zone=lst_ldt" + interval_field + "&units=english&format=csv"
+        time_zone_field = '&time_zone=gmt'
+        footer_wo_bin = "&product=currents_predictions" + interval_field + "&units=english&format=csv"
         # footer_w_bin = footer_wo_bin + "&bin=" + str(waypoint.bin)
         # footer = footer_wo_bin if waypoint.bin is None else footer_w_bin
         footer = footer_wo_bin  # requests wo bin seem to return shallowest predictions
-        my_request = header + begin_date_field + end_date_field + station_field + footer
+        my_request = header + begin_date_field + end_date_field + station_field + time_zone_field + footer
 
         try:
             for _ in range(5):
                 try:
-                    self.error = False
                     my_response = requests.get(my_request)
                     my_response.raise_for_status()
 
@@ -114,27 +123,23 @@ class OneMonth:
             if self.error:
                 raise self.error
 
-            self.adj_frame = self.raw_frame.rename(columns={h: h.strip() for h in self.raw_frame.columns.tolist()})
-            self.adj_frame['stamp'] = self.adj_frame['Time'].apply(pd.Timestamp).apply(lambda x: x.value / 1000000000)
-            self.adj_frame['stamp_diff'] = self.adj_frame['stamp'].diff()
-            self.adj_frame['diff_sign'] = abs(self.adj_frame['stamp_diff']) / self.adj_frame['stamp_diff']
-            self.adj_frame['timestep_match'] = self.adj_frame['stamp_diff'] == self.adj_frame['stamp_diff'].iloc[1]
+            adj_frame = OneMonth.adjust_frame(self.raw_frame)
 
-            if not self.adj_frame['stamp'].is_monotonic_increasing:
+            if not adj_frame['stamp'].is_monotonic_increasing:
                 write_df(self.raw_frame, waypoint.folder.joinpath(f'month {month} raw frame.csv'))
-                write_df(self.adj_frame, waypoint.folder.joinpath(f'month {month} not monotonic.csv'))
+                write_df(adj_frame, waypoint.folder.joinpath(f'month {month} not monotonic.csv'))
                 self.error = NonMonotonic(f'<!> {waypoint.id} Data not monotonic')
                 raise self.error
 
             if waypoint.type == 'H':
 
-                if not self.adj_frame['timestep_match'][1:].all():
+                if not adj_frame['timestep_match'][1:].all():
                     write_df(self.raw_frame, waypoint.folder.joinpath(f'month {month} raw frame.csv'))
-                    write_df(self.adj_frame, waypoint.folder.joinpath(f'month {month} missing data.csv'))
+                    write_df(adj_frame, waypoint.folder.joinpath(f'month {month} missing data.csv'))
                     raise DataMissing(f'<!> {waypoint.id} Data missing')
 
-                if not self.adj_frame['stamp'].is_unique:
-                    write_df(self.adj_frame, waypoint.folder.joinpath(f'month {month} duplicate timestamps.csv'))
+                if not adj_frame['stamp'].is_unique:
+                    write_df(adj_frame, waypoint.folder.joinpath(f'month {month} duplicate timestamps.csv'))
                     raise DuplicateTimestamps(f'<!> {waypoint.id} Duplicate timestamps')
 
         except Exception as err:
@@ -171,8 +176,7 @@ class SixteenMonths:
 
         else:
             self.raw_frame = pd.concat([m.raw_frame for m in months], axis=0, ignore_index=True)
-            self.adj_frame = pd.concat([m.adj_frame for m in months], axis=0, ignore_index=True)
-
+            self.adj_frame = OneMonth.adjust_frame(self.raw_frame)
 
 class NonMonotonic(Exception):
     def __init__(self, message: str):
