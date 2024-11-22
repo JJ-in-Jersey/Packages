@@ -123,11 +123,11 @@ class OneMonth:
             if self.error:
                 raise self.error
 
-            write_df(self.raw_frame, waypoint.folder.joinpath(f'month {month} raw frame.csv'))
             adj_frame = OneMonth.adjust_frame(self.raw_frame)
 
             if not adj_frame['stamp'].is_monotonic_increasing:
-                adj_frame.sort_values(by='stamp', inplace=True, ignore_index=True)
+                adj_frame = self.raw_frame.sort_values(by='Time', ignore_index=True)
+                adj_frame = OneMonth.adjust_frame(adj_frame)
                 # write_df(adj_frame, waypoint.folder.joinpath(f'month {month} not monotonic.csv'))
                 # self.error = NonMonotonic(f'<!> {waypoint.id} Data not monotonic')
                 # raise self.error
@@ -135,10 +135,12 @@ class OneMonth:
             if waypoint.type == 'H':
 
                 if not adj_frame['timestep_match'][1:].all():
+                    write_df(self.raw_frame, waypoint.folder.joinpath(f'month {month} raw frame.csv'))
                     write_df(adj_frame, waypoint.folder.joinpath(f'month {month} missing data.csv'))
                     raise DataMissing(f'<!> {waypoint.id} Data missing')
 
                 if not adj_frame['stamp'].is_unique:
+                    write_df(self.raw_frame, waypoint.folder.joinpath(f'month {month} raw frame.csv'))
                     write_df(adj_frame, waypoint.folder.joinpath(f'month {month} duplicate timestamps.csv'))
                     raise DuplicateTimestamps(f'<!> {waypoint.id} Duplicate timestamps')
 
