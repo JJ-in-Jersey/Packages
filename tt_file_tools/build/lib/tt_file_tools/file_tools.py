@@ -90,7 +90,6 @@ def write_dict(file: Path, dictionary: dict):
         json.dump(dictionary, a_file)
     return file
 
-
 def read_dict(file: Path):
     if not file.exists():
         raise FileExistsError(file)
