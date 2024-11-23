@@ -72,6 +72,8 @@ class OneMonth:
     @staticmethod
     def adjust_frame(raw_frame: pd.DataFrame):
         frame = raw_frame.rename(columns={h: h.strip() for h in raw_frame.columns.tolist()})
+        frame.sort_values(by='Time', ignore_index=True, inplace=True)
+        frame['duplicated'] = frame.duplicated(subset='Time')
         frame['stamp'] = pd.to_datetime(frame['Time'], utc=True).apply(dt.timestamp).astype(int)
         frame['diff'] = frame['stamp'].diff()
         frame['diff_sign'] = abs(frame['diff']) / frame['diff']
@@ -81,6 +83,7 @@ class OneMonth:
     def __init__(self, month: int, year: int, waypoint: Waypoint, interval_time: int = 1):
 
         self.raw_frame = None
+        self.adj_frame = None
         self.error = False
 
         if month < 1 or month > 12:
@@ -110,10 +113,13 @@ class OneMonth:
 
                     if 'predictions are not available' in my_response.content.decode():
                         raise DataNotAvailable(f'<!> {waypoint.id} Predictions not available')
+
                     self.raw_frame = pd.read_csv(StringIO(my_response.content.decode()))
 
                     if self.raw_frame.empty or self.raw_frame.isna().all().all():
                         raise EmptyDataframe(f'<!> {waypoint.id} Dataframe empty or NaN')
+                    if not self.raw_frame['Time'].is_unique:
+                        raise DuplicateTimestamps(f'<!> {waypoint.id} Duplicate timestamps')
 
                     break
                 except Exception as err:
@@ -123,29 +129,21 @@ class OneMonth:
             if self.error:
                 raise self.error
 
-            adj_frame = OneMonth.adjust_frame(self.raw_frame)
+            self.adj_frame = OneMonth.adjust_frame(self.raw_frame)
 
-            if not adj_frame['stamp'].is_monotonic_increasing:
-                adj_frame = self.raw_frame.sort_values(by='Time', ignore_index=True)
-                adj_frame = OneMonth.adjust_frame(adj_frame)
-                # write_df(adj_frame, waypoint.folder.joinpath(f'month {month} not monotonic.csv'))
-                # self.error = NonMonotonic(f'<!> {waypoint.id} Data not monotonic')
-                # raise self.error
-
-            if waypoint.type == 'H':
-
-                if not adj_frame['timestep_match'][1:].all():
-                    write_df(self.raw_frame, waypoint.folder.joinpath(f'month {month} raw frame.csv'))
-                    write_df(adj_frame, waypoint.folder.joinpath(f'month {month} missing data.csv'))
-                    raise DataMissing(f'<!> {waypoint.id} Data missing')
-
-                if not adj_frame['stamp'].is_unique:
-                    write_df(self.raw_frame, waypoint.folder.joinpath(f'month {month} raw frame.csv'))
-                    write_df(adj_frame, waypoint.folder.joinpath(f'month {month} duplicate timestamps.csv'))
-                    raise DuplicateTimestamps(f'<!> {waypoint.id} Duplicate timestamps')
+            if not self.adj_frame['stamp'].is_monotonic_increasing:
+                raise NonMonotonic(f'<!> {waypoint.id} Data not monotonic')
+            if waypoint.type == 'H' and not self.adj_frame['timestep_match'].all():
+                raise DataMissing(f'<!> {waypoint.id} Data missing')
 
         except Exception as err:
+            waypoint.folder.joinpath(f'{waypoint.id} {err} .error').touch()
+            if self.raw_frame is not None:
+                write_df(self.raw_frame, waypoint.folder.joinpath(f'month {month} raw frame.csv'))
+            if self.adj_frame is not None:
+                write_df(self.adj_frame, waypoint.folder.joinpath(f'month {month} adj frame.csv'))
             self.error = err
+
 
 class SixteenMonths:
 
@@ -180,6 +178,7 @@ class SixteenMonths:
             self.raw_frame = pd.concat([m.raw_frame for m in months], axis=0, ignore_index=True)
             self.adj_frame = OneMonth.adjust_frame(self.raw_frame)
 
+
 class NonMonotonic(Exception):
     def __init__(self, message: str):
         self.message = message
@@ -208,4 +207,3 @@ class EmptyDataframe(Exception):
     def __init__(self, message: str):
         self.message = message
         super().__init__(self.message)
-
