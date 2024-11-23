@@ -60,6 +60,7 @@ def write_df(df: pd.DataFrame, path: Path, debug: bool = False):
                 temp.to_csv(output_stem.with_suffix(output_stem.suffix + suffix), index=False)
     return path
 
+
 def shrink_dataframe(dataframe: pd.DataFrame):
     for col in dataframe:
         if dataframe[col].dtype == np.int64:
@@ -89,6 +90,7 @@ def write_dict(file: Path, dictionary: dict):
     with open(file, 'w') as a_file:
         json.dump(dictionary, a_file)
     return file
+
 
 def read_dict(file: Path):
     if not file.exists():
