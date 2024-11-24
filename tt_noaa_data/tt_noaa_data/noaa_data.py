@@ -4,6 +4,9 @@ import pandas as pd
 import time
 import requests
 from io import StringIO
+from pathlib import Path
+from os import listdir
+from os.path import isfile
 
 from tt_file_tools.file_tools import SoupFromXMLResponse, print_file_exists, read_dict, write_dict, write_df
 from tt_globals.globals import PresetGlobals
@@ -70,6 +73,20 @@ class StationDict:
 class OneMonth:
 
     @staticmethod
+    def connection_error(folder: str):
+        folder_path = Path(folder)
+        if bool([f for f in listdir(folder_path) if isfile(folder_path.joinpath(f)) and 'connection_error' in f]):
+            return True
+        return False
+
+    @staticmethod
+    def content_error(folder: str):
+        folder_path = Path(folder)
+        if bool([f for f in listdir(folder_path) if isfile(folder_path.joinpath(f)) and 'content_error' in f]):
+            return True
+        return False
+
+    @staticmethod
     def adjust_frame(raw_frame: pd.DataFrame):
         frame = raw_frame.rename(columns={h: h.strip() for h in raw_frame.columns.tolist()})
         frame.sort_values(by='Time', ignore_index=True, inplace=True)
@@ -85,6 +102,7 @@ class OneMonth:
         self.raw_frame = None
         self.adj_frame = None
         self.error = False
+        error_type = None
         error_types = {'content': 'content_error', 'connection': 'connection_error'}
 
         if month < 1 or month > 12:
