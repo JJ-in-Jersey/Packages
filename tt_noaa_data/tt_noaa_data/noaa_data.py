@@ -14,7 +14,7 @@ class StationDict:
     dict = {}
 
     @staticmethod
-    def make_absolute_path_string(folder_name):
+    def absolute_path_string(folder_name):
         return str(PresetGlobals.waypoints_folder.joinpath(folder_name).absolute())
 
 
@@ -39,7 +39,7 @@ class StationDict:
                                   'folder_name': station_tag.find_next('type').text + ' ' + station_tag.find_next('id').text}
                                  for station_tag in stations_tree.find_all('Station')]
                     row_df = pd.DataFrame(row_array).drop_duplicates()
-                    row_df['folder'] = row_df['folder_name'].apply(StationDict.make_absolute_path_string)
+                    row_df['folder'] = row_df['folder_name'].apply(StationDict.absolute_path_string)
                     row_dict = row_df.to_dict('records')
                     print_file_exists(write_df(row_df, PresetGlobals.stations_folder.joinpath('stations.csv')))
                     StationDict.dict = {r['id']: r for r in row_dict}
@@ -111,16 +111,12 @@ class OneMonth:
                     my_response = requests.get(my_request)
                     my_response.raise_for_status()
 
+                    # trap for download/communication errors
                     if 'predictions are not available' in my_response.content.decode():
                         raise DataNotAvailable(f'<!> {waypoint.id} Predictions not available')
-
                     self.raw_frame = pd.read_csv(StringIO(my_response.content.decode()))
-
                     if self.raw_frame.empty or self.raw_frame.isna().all().all():
                         raise EmptyDataframe(f'<!> {waypoint.id} Dataframe empty or NaN')
-                    if not self.raw_frame['Time'].is_unique:
-                        raise DuplicateTimestamps(f'<!> {waypoint.id} Duplicate timestamps')
-
                     break
                 except Exception as err:
                     self.error = err
@@ -129,20 +125,24 @@ class OneMonth:
             if self.error:
                 raise self.error
 
+            # trap for file/data integrity errors
             self.adj_frame = OneMonth.adjust_frame(self.raw_frame)
 
+            if not self.adj_frame['Time'].is_unique:
+                raise DuplicateTimestamps(f'<!> {waypoint.id} Duplicate timestamps')
             if not self.adj_frame['stamp'].is_monotonic_increasing:
                 raise NonMonotonic(f'<!> {waypoint.id} Data not monotonic')
             if waypoint.type == 'H' and not self.adj_frame['timestep_match'].all():
                 raise DataMissing(f'<!> {waypoint.id} Data missing')
 
         except Exception as err:
-            waypoint.folder.joinpath(f'{waypoint.id} {err} .error').touch()
+            self.error = err
+            error_text = type(err).__name__
+            waypoint.folder.joinpath(f'{waypoint.id} {error_text} .error').touch()
             if self.raw_frame is not None:
                 write_df(self.raw_frame, waypoint.folder.joinpath(f'month {month} raw frame.csv'))
             if self.adj_frame is not None:
                 write_df(self.adj_frame, waypoint.folder.joinpath(f'month {month} adj frame.csv'))
-            self.error = err
 
 
 class SixteenMonths:
