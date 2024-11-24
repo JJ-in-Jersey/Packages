@@ -25,7 +25,7 @@ class StationDict:
         else:
             StationDict.dict = {}
             my_request = "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations.xml?type=currentpredictions&units=english"
-            for _ in range(3):
+            for _ in range(5):
                 try:
                     print(f'Requesting list of stations')
                     my_response = requests.get(my_request)
@@ -60,7 +60,7 @@ class StationDict:
                                     StationDict.dict[station_id]['bins'] = bin_dict
                                 break
                             except requests.exceptions.RequestException:
-                                time.sleep(1)
+                                time.sleep(2)
                     print_file_exists(write_dict(PresetGlobals.stations_file, self.dict))
                     break
                 except requests.exceptions.RequestException:
@@ -120,7 +120,7 @@ class OneMonth:
                     break
                 except Exception as err:
                     self.error = err
-                    time.sleep(1)
+                    time.sleep(2)
 
             if self.error:
                 raise self.error
