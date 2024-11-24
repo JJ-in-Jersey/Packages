@@ -132,7 +132,7 @@ class OneMonth:
                 raise DuplicateTimestamps(f'<!> {waypoint.id} Duplicate timestamps')
             if not self.adj_frame['stamp'].is_monotonic_increasing:
                 raise NonMonotonic(f'<!> {waypoint.id} Data not monotonic')
-            if waypoint.type == 'H' and not self.adj_frame['timestep_match'].all():
+            if waypoint.type == 'H' and not self.adj_frame['timestep_match'][1:].all():
                 raise DataMissing(f'<!> {waypoint.id} Data missing')
 
         except Exception as err:
