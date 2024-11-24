@@ -85,6 +85,7 @@ class OneMonth:
         self.raw_frame = None
         self.adj_frame = None
         self.error = False
+        error_types = {'content': 'content_error', 'connection': 'connection_error'}
 
         if month < 1 or month > 12:
             self.error = ValueError
@@ -120,6 +121,7 @@ class OneMonth:
                     break
                 except Exception as err:
                     self.error = err
+                    error_type = error_types['connection']
                     time.sleep(2)
 
             if self.error:
@@ -129,16 +131,19 @@ class OneMonth:
             self.adj_frame = OneMonth.adjust_frame(self.raw_frame)
 
             if not self.adj_frame['Time'].is_unique:
+                error_type = error_types['content']
                 raise DuplicateTimestamps(f'<!> {waypoint.id} Duplicate timestamps')
             if not self.adj_frame['stamp'].is_monotonic_increasing:
+                error_type = error_types['content']
                 raise NonMonotonic(f'<!> {waypoint.id} Data not monotonic')
             if waypoint.type == 'H' and not self.adj_frame['timestep_match'][1:].all():
+                error_type = error_types['content']
                 raise DataMissing(f'<!> {waypoint.id} Data missing')
 
         except Exception as err:
             self.error = err
             error_text = type(err).__name__
-            waypoint.folder.joinpath(f'{waypoint.id} {error_text} .error').touch()
+            waypoint.folder.joinpath(f'{waypoint.id} {error_text}.{error_type}').touch()
             if self.raw_frame is not None:
                 write_df(self.raw_frame, waypoint.folder.joinpath(f'month {month} raw frame.csv'))
             if self.adj_frame is not None:
