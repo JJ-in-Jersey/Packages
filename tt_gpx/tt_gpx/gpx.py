@@ -1,5 +1,8 @@
 # import string
-from os import makedirs
+from os import makedirs, listdir
+from os.path import isfile, isdir, islink
+from os import unlink as delete_file
+from shutil import rmtree as delete_folder
 from pathlib import Path
 
 from tt_navigation.navigation import distance, directions, Heading
@@ -49,6 +52,19 @@ class BaseWaypoint:
             a_file.write(str(soup))
         with open(PresetGlobals.gpx_folder.joinpath(self.id + '.gpx'), 'w') as a_file:
             a_file.write(str(soup))
+
+
+    def empty_folder(self):
+        folder = self.folder
+        for path in [folder.joinpath(f) for f in listdir(folder)]:
+            try:
+                if isfile(path) or islink(path):
+                    delete_file(path)
+                elif isdir(path):
+                    delete_folder(path)
+            except OSError(f'Cannot remove {path}') as err:
+                print(err)
+
 
     def __init__(self, station: dict):
 
