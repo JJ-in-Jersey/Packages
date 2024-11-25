@@ -58,10 +58,11 @@ class BaseWaypoint:
         folder = self.folder
         for path in [folder.joinpath(f) for f in listdir(folder)]:
             try:
-                if isfile(path) or islink(path):
-                    delete_file(path)
-                elif isdir(path):
-                    delete_folder(path)
+                if path.exists():
+                    if isfile(path) or islink(path):
+                        delete_file(path)
+                    elif isdir(path):
+                        delete_folder(path)
             except OSError(f'Cannot remove {path}') as err:
                 print(err)
 
