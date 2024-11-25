@@ -130,7 +130,7 @@ class OneMonth:
                     my_response = requests.get(my_request)
                     my_response.raise_for_status()
 
-                    # trap for download/communication errors
+                    # trap for download/communication errors - connection errors
                     if 'predictions are not available' in my_response.content.decode():
                         raise DataNotAvailable(f'<!> {waypoint.id} Predictions not available')
                     self.raw_frame = pd.read_csv(StringIO(my_response.content.decode()))
@@ -145,7 +145,7 @@ class OneMonth:
             if self.error:
                 raise self.error
 
-            # trap for file/data integrity errors
+            # trap for file/data integrity errors - content errors
             self.adj_frame = OneMonth.adjust_frame(self.raw_frame)
 
             if not self.adj_frame['Time'].is_unique:
