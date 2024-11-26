@@ -198,8 +198,8 @@ class SixteenMonths:
             self.error = err
 
         else:
-            self.raw_frame = pd.concat([m.raw_frame for m in months], axis=0, ignore_index=True)
-            self.adj_frame = OneMonth.adjust_frame(self.raw_frame)
+            self.adj_frame = OneMonth.adjust_frame(pd.concat([m.raw_frame for m in months], axis=0, ignore_index=True))
+            del months
 
 
 class NonMonotonic(Exception):
