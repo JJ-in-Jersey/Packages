@@ -48,8 +48,8 @@ class BaseWaypoint:
         desc_tag.string = self.id
         soup.find('name').insert_after(desc_tag)
 
-        with open(self.folder.joinpath(self.id + '.gpx'), 'w') as a_file:
-            a_file.write(str(soup))
+        # with open(self.folder.joinpath(self.id + '.gpx'), 'w') as a_file:
+        #     a_file.write(str(soup))
         with open(PresetGlobals.gpx_folder.joinpath(self.id + '.gpx'), 'w') as a_file:
             a_file.write(str(soup))
 
