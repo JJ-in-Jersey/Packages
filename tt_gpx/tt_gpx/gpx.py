@@ -14,7 +14,7 @@ from tt_globals.globals import PresetGlobals
 class BaseWaypoint:
 
     raw_csv_name = 'raw_frame.csv'
-    download_csv_name = 'adjusted_frame.csv'
+    adjusted_csv_name = 'adjusted_frame.csv'
     velocity_csv_name = 'velocity_frame.csv'
     spline_csv_name = 'cubic_spline_frame.csv'
 
