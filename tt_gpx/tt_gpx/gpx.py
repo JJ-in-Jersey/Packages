@@ -4,6 +4,7 @@ from os.path import isfile, isdir, islink
 from os import unlink as delete_file
 from shutil import rmtree as delete_folder
 from pathlib import Path
+from bs4 import BeautifulSoup as Soup
 
 from tt_navigation.navigation import distance, directions, Heading
 from tt_file_tools.file_tools import SoupFromXMLFile
@@ -251,7 +252,7 @@ class Route:
 
     folder = None
 
-    def __init__(self, stations_dict: dict, tree):
+    def __init__(self, stations_dict: dict, tree: Soup):
 
         self.name = tree.find('name').string
         self.code = ''.join(word[0] for word in self.name.upper().split())
@@ -270,7 +271,7 @@ class Route:
                 self.waypoints.append(Data(stations_dict[tag.desc.text]))
 
         self.heading = Heading(self.waypoints[0].coords, self.waypoints[-1].coords).angle
-        self.directions = directions(self.heading)
+        self.direction = directions(self.heading)[0]
 
         Route.folder.joinpath(str(self.heading) + '.heading').touch()
 
@@ -294,29 +295,29 @@ class Route:
         # self.edge_path = GPXPath(self.edges)
 
 
-# class GpxFile:
-#
-#     @staticmethod
-#     def write_clean_gpx(filepath, tree):
-#         new_filepath = filepath.parent.joinpath(filepath.stem + ' new.gpx')
-#         tag_names = ['extensions', 'time']
-#         for name in tag_names:
-#             for tag in tree.find_all(name):
-#                 tag.decompose()
-#         with open(new_filepath, "w") as file:
-#             file.write(tree.prettify())
-#
-#     def __init__(self, filepath: Path):
-#         self.tree = None
-#         self.type = None
-#
-#         with open(filepath, 'r') as f:
-#             gpxfile = f.read()
-#         self.tree = Soup(gpxfile, 'xml', preserve_whitespace_tags=['name', 'type', 'sym', 'text'])
-#
-#         if len(self.tree.find_all('rte')) == 1:
-#             self.type = Globals.TYPE['rte']
-#         elif len(self.tree.find_all('wpt')) == 1:
-#             self.type = Globals.TYPE['wpt']
-#
-#         GpxFile.write_clean_gpx(filepath, self.tree)
+class GpxFile:
+
+    @staticmethod
+    def write_clean_gpx(filepath, tree):
+        new_filepath = filepath.parent.joinpath(filepath.stem + ' new.gpx')
+        tag_names = ['extensions', 'time']
+        for name in tag_names:
+            for tag in tree.find_all(name):
+                tag.decompose()
+        with open(new_filepath, "w") as file:
+            file.write(tree.prettify())
+
+    def __init__(self, filepath: Path):
+        self.tree = None
+        self.type = None
+
+        with open(filepath, 'r') as f:
+            gpxfile = f.read()
+        self.tree = Soup(gpxfile, 'xml', preserve_whitespace_tags=['name', 'type', 'sym', 'text'])
+
+        # if len(self.tree.find_all('rte')) == 1:
+        #     self.type = Globals.TYPE['rte']
+        # elif len(self.tree.find_all('wpt')) == 1:
+        #     self.type = Globals.TYPE['wpt']
+
+        GpxFile.write_clean_gpx(filepath, self.tree)
