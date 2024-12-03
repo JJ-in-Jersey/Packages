@@ -177,7 +177,7 @@ class Edge:  # connection between waypoints with current data
         self.length = round(distance(start.coords, end.coords), 4)
 
 
-class RouteEdge:
+class Segment:
 
     # elapsed_times_csv_name = string.Template('elapsed_timesteps_$SPEED.csv')
 
@@ -193,7 +193,7 @@ class RouteEdge:
             if not isinstance(self.end, Location):
                 break
 
-        self.name = 'Route Edge ' + str(self.start.index) + '-' + str(self.end.index)
+        self.name = 'Segment ' + str(self.start.index) + '-' + str(self.end.index)
         self.folder = Route.folder.joinpath(self.name)
         makedirs(self.folder, exist_ok=True)
 
@@ -281,16 +281,16 @@ class Route:
 
         edge_nodes = [wp for wp in self.waypoints if isinstance(wp, EdgeNode)]
         self.edges = [Edge(wp, edge_nodes[i+1]) for i, wp in enumerate(edge_nodes[:-1])]
-        self.route_edges = []
+        self.segments = []
         node = edge_nodes[0]
         while node.next_edge is not None:
-            re = RouteEdge(node)
-            self.route_edges.append(re)
-            node = re.end
+            seg = Segment(node)
+            self.segments.append(seg)
+            node = seg.end
 
-        if round(sum([e.length for e in self.edges]), 4) != round(sum([e.length for e in self.route_edges]), 4):
+        if round(sum([e.length for e in self.edges]), 4) != round(sum([e.length for e in self.segments]), 4):
             raise ValueError
-        self.length = round(sum([e.length for e in self.route_edges]), 4)
+        self.length = round(sum([e.length for e in self.segments]), 4)
 
         # self.edge_path = GPXPath(self.edges)
 

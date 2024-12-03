@@ -89,12 +89,13 @@ class OneMonth:
     @staticmethod
     def adjust_frame(raw_frame: pd.DataFrame):
         frame = raw_frame.rename(columns={h: h.strip() for h in raw_frame.columns.tolist()})
+        frame.Time = pd.to_datetime(frame.Time, utc=True)
         # frame.sort_values(by='Time', ignore_index=True, inplace=True)
         frame['duplicated'] = frame.duplicated(subset='Time')
-        frame['stamp'] = pd.to_datetime(frame['Time'], utc=True).apply(dt.timestamp).astype(int)
-        frame['diff'] = frame['stamp'].diff()
-        frame['diff_sign'] = abs(frame['diff']) / frame['diff']
-        frame['timestep_match'] = frame['diff'] == frame['diff'].iloc[1]
+        frame['stamp'] = frame.Time.apply(dt.timestamp).astype(int)
+        frame['diff'] = frame.stamp.diff()
+        frame['diff_sign'] = abs(frame.diff) / frame.diff
+        frame['timestep_match'] = frame.diff == frame.diff.iloc[1]
         return frame
 
     def __init__(self, month: int, year: int, waypoint: Waypoint, interval_time: int = 1):
@@ -148,10 +149,10 @@ class OneMonth:
             # trap for file/data integrity errors - content errors
             self.adj_frame = OneMonth.adjust_frame(self.raw_frame)
 
-            if not self.adj_frame['Time'].is_unique:
+            if not self.adj_frame.Time.is_unique:
                 error_type = error_types['content']
                 raise DuplicateTimestamps(f'<!> {waypoint.id} Duplicate timestamps')
-            if not self.adj_frame['stamp'].is_monotonic_increasing:
+            if not self.adj_frame.stamp.is_monotonic_increasing:
                 error_type = error_types['content']
                 raise NonMonotonic(f'<!> {waypoint.id} Data not monotonic')
             if waypoint.type == 'H' and not self.adj_frame['timestep_match'][1:].all():

@@ -23,7 +23,7 @@ class PresetGlobals:
     checkmark = u'\N{check mark}'
 
     timestep = 60  # one minute
-    speeds = [-9.0 + v for v in range(0, 7)] + [3.0 + v for v in range(0, 7)]
+    speeds = [-10 + v for v in range(0, 8)] + [3 + v for v in range(0, 8)]
     time_window_scale = 1.5
 
     @staticmethod
