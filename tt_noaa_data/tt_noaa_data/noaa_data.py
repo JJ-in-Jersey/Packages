@@ -94,8 +94,8 @@ class OneMonth:
         frame['duplicated'] = frame.duplicated(subset='Time')
         frame['stamp'] = frame.Time.apply(dt.timestamp).astype(int)
         frame['diff'] = frame.stamp.diff()
-        frame['diff_sign'] = abs(frame.diff) / frame.diff
-        frame['timestep_match'] = frame.diff == frame.diff.iloc[1]
+        frame['diff_sign'] = abs(frame['diff']) / frame['diff']
+        frame['timestep_match'] = frame['diff'] == frame['diff'].iloc[1]
         return frame
 
     def __init__(self, month: int, year: int, waypoint: Waypoint, interval_time: int = 1):
