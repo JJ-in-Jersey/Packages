@@ -194,8 +194,6 @@ class Segment:
                 break
 
         self.name = 'Segment ' + str(self.start.index) + '-' + str(self.end.index)
-        self.folder = Route.folder.joinpath(self.name)
-        makedirs(self.folder, exist_ok=True)
 
 
 # class RouteEdgeXXX:  # connection between waypoints with current data
@@ -250,13 +248,15 @@ class Segment:
 
 class Route:
 
-    folder = None
+    @staticmethod
+    def elapsed_time_filepath(self, speed: int):
+        return self.folder.joinpath('elapsed_timesteps ' + str(speed) + '.csv')
 
     def __init__(self, stations_dict: dict, tree: Soup):
 
         self.name = tree.find('name').string
         self.code = ''.join(word[0] for word in self.name.upper().split())
-        Route.folder = PresetGlobals.project_base_folder.joinpath(self.name)
+        self.folder = PresetGlobals.project_base_folder.joinpath(self.name)
         makedirs(self.folder, exist_ok=True)
 
         self.waypoints = []
@@ -273,7 +273,7 @@ class Route:
         self.heading = Heading(self.waypoints[0].coords, self.waypoints[-1].coords).angle
         self.direction = directions(self.heading)[0]
 
-        Route.folder.joinpath(str(self.heading) + '.heading').touch()
+        self.folder.joinpath(str(self.heading) + '.heading').touch()
 
         # populate interpolated waypoint data
         # for iwp in filter(lambda w: isinstance(w, InterpolatedWP), self.waypoints):
@@ -291,8 +291,6 @@ class Route:
         if round(sum([e.length for e in self.edges]), 4) != round(sum([e.length for e in self.segments]), 4):
             raise ValueError
         self.length = round(sum([e.length for e in self.segments]), 4)
-
-        # self.edge_path = GPXPath(self.edges)
 
 
 class GpxFile:
