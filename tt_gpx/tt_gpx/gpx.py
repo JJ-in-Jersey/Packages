@@ -5,6 +5,8 @@ from os import unlink as delete_file
 from shutil import rmtree as delete_folder
 from pathlib import Path
 from bs4 import BeautifulSoup as Soup
+from num2words import num2words
+from string import Template
 
 from tt_navigation.navigation import distance, directions, Heading
 from tt_file_tools.file_tools import SoupFromXMLFile
@@ -179,7 +181,7 @@ class Edge:  # connection between waypoints with current data
 
 class Segment:
 
-    # elapsed_times_csv_name = string.Template('elapsed_timesteps_$SPEED.csv')
+    prefix = 'Segment'
 
     def __init__(self, node: EdgeNode):
 
@@ -193,64 +195,23 @@ class Segment:
             if not isinstance(self.end, Location):
                 break
 
-        self.name = 'Segment ' + str(self.start.index) + '-' + str(self.end.index)
-
-
-# class RouteEdgeXXX:  # connection between waypoints with current data
-#
-#     edges_folder = None
-#     edge_range = None
-#
-#     def __init__(self, start_wp, end_wp):
-#
-#         if start_wp.id == end_wp.id:
-#             raise IndexError
-#         if not isinstance(start_wp, EdgeNode) or not isinstance(end_wp, EdgeNode):
-#             raise TypeError
-#
-#         self.final_data_filepath = None
-#         self.elapsed_time_data = None
-#         self.length = 0
-#
-#         self.unique_name = '[' + str(start_wp.unique_name) + '-' + str(end_wp.unique_name) + ']'
-#         self.start = start_wp
-#         self.end = end_wp
-#         start_wp.next_edge = self
-#         end_wp.prev_edge = self
-#
-#         if Edge.edges_folder is None:
-#             raise TypeError
-#         self.folder = Edge.edges_folder.joinpath(self.unique_name)
-#         makedirs(self.folder, exist_ok=True)
-#
-#         wp1 = start_wp
-#         while not wp1 == end_wp:
-#             wp2 = Waypoint.index_lookup[wp1.index + 1]
-#             while isinstance(wp2, InterpolatedDataWP):
-#                 wp2 = Waypoint.index_lookup[wp2.index + 1]
-#             self.length += round(distance(wp1.coords, wp2.coords), 4)
-#             wp1 = wp2
-# class GPXPath:
-#
-#     def path_integrity(self):
-#         for i, edge in enumerate(self.edges[:-1]):
-#             if not edge.end == self.edges[i + 1].start:
-#                 raise RecursionError
-#
-#     def __init__(self, edges):
-#         self.edges = edges
-#         self.path_integrity()
-#         self.name = '{' + str(self.edges[0].start.index) + '-' + str(self.edges[-1].end.index) + '}'
-#         self.length = round(sum([edge.length for edge in self.edges]), 4)
-#         self.route_heading = Heading(self.edges[0].start.coords, self.edges[-1].end.coords).angle
-#         self.direction = directions(self.route_heading)[0]
+        self.name = Segment.prefix + ' ' + str(self.start.index) + '-' + str(self.end.index)
 
 
 class Route:
 
-    @staticmethod
-    def elapsed_time_filepath(self, speed: int):
-        return self.folder.joinpath('elapsed_timesteps ' + str(speed) + '.csv')
+    filenames_dict = {'elapsed timesteps': Template('elapsed_timesteps $speed.csv'),
+                      'transit timesteps': Template('transit_timesteps $speed.csv'),
+                      'savgol': Template('savgol $speed.csv'),
+                      'minima': Template('minima $speed.csv')}
+
+    def times_folder(self, speed: int):
+        folder_path = self.folder.joinpath(num2words(speed))
+        makedirs(folder_path, exist_ok=True)
+        return folder_path
+
+    def filepath(self, name: str, speed: int):
+        return self.times_folder(speed).joinpath(Route.filenames_dict[name].substitute({'speed': speed}))
 
     def __init__(self, stations_dict: dict, tree: Soup):
 
@@ -312,10 +273,5 @@ class GpxFile:
         with open(filepath, 'r') as f:
             gpxfile = f.read()
         self.tree = Soup(gpxfile, 'xml', preserve_whitespace_tags=['name', 'type', 'sym', 'text'])
-
-        # if len(self.tree.find_all('rte')) == 1:
-        #     self.type = Globals.TYPE['rte']
-        # elif len(self.tree.find_all('wpt')) == 1:
-        #     self.type = Globals.TYPE['wpt']
 
         GpxFile.write_clean_gpx(filepath, self.tree)
