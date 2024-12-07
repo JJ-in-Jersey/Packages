@@ -16,8 +16,8 @@ class BaseArc:
         self.next_day_arc = None
 
         self.arc_dict = {
-            'start_datetime': None, 'min_datetime': None, 'end_datetime': None,
-            'start_round_datetime': None, 'min_round_datetime': None, 'end_round_datetime': None,
+            'start_eastern': None, 'min_eastern': None, 'end_eastern': None,
+            'start_round': None, 'min_round': None, 'end_round': None,
             'start_et': None, 'min_et': None, 'end_et': None,
             'start_angle':None, 'min_angle': None, 'end_angle': None,
             'start_round_angle': None, 'min_round_angle': None, 'end_round_angle': None
@@ -26,15 +26,15 @@ class BaseArc:
         for key in args.keys():
             self.arc_dict[key] = args[key]
 
-        self.arc_dict['start_angle'] = time_to_degrees(self.arc_dict['start_datetime'].time())
-        self.arc_dict['start_round_angle'] = time_to_degrees(self.arc_dict['start_round_datetime'].time())
-        self.arc_dict['end_angle'] = time_to_degrees(self.arc_dict['end_datetime'].time())
-        self.arc_dict['end_round_angle'] = time_to_degrees(self.arc_dict['end_round_datetime'].time())
+        self.arc_dict['start_angle'] = time_to_degrees(self.arc_dict['start_eastern'].time())
+        self.arc_dict['start_round_angle'] = time_to_degrees(self.arc_dict['start_round'].time())
+        self.arc_dict['end_angle'] = time_to_degrees(self.arc_dict['end_eastern'].time())
+        self.arc_dict['end_round_angle'] = time_to_degrees(self.arc_dict['end_round'].time())
 
-        if not self.arc_dict['min_datetime'] is None:
-            self.arc_dict['min_angle'] = time_to_degrees(self.arc_dict['min_datetime'].time())
-            if not self.arc_dict['min_round_datetime'] is None:
-                self.arc_dict['min_round_angle'] = time_to_degrees(self.arc_dict['min_round_datetime'].time())
+        if not self.arc_dict['min_eastern'] is None:
+            self.arc_dict['min_angle'] = time_to_degrees(self.arc_dict['min_eastern'].time())
+            if not self.arc_dict['min_round'] is None:
+                self.arc_dict['min_round_angle'] = time_to_degrees(self.arc_dict['min_round'].time())
                 # if min is at midnight, don't display it
                 if  abs(self.arc_dict['min_round_angle']) == 360.0 or abs(self.arc_dict['min_round_angle']) == 0.0:
                     self.arc_dict['min_et'] = None
@@ -47,8 +47,8 @@ class Arc(BaseArc):
     def __init__(self, args: dict):
         super().__init__(args)
 
-        start_and_end_on_same_day = self.arc_dict['start_datetime'].date() == self.arc_dict['end_datetime'].date()
-        start_and_min_on_same_day = not self.arc_dict['min_datetime'] is None and self.arc_dict['start_datetime'].date() == self.arc_dict['min_datetime'].date()
+        start_and_end_on_same_day = self.arc_dict['start_eastern'].date() == self.arc_dict['end_eastern'].date()
+        start_and_min_on_same_day = not self.arc_dict['min_eastern'] is None and self.arc_dict['start_eastern'].date() == self.arc_dict['min_eastern'].date()
 
         # create a copy of the arguments before any adjustments in case we add a next day
         next_day_args = deepcopy(args)
@@ -58,16 +58,16 @@ class Arc(BaseArc):
             ends_at_midnight = abs(self.arc_dict['end_round_angle']) == 360.0 or abs(self.arc_dict['end_round_angle']) == 0.0
             # same day, but starts at midnight
             if starts_at_midnight:
-                self.arc_dict['start_datetime'] = self.arc_dict['start_datetime'].replace(hour=0, minute=0)
-                self.arc_dict['start_round_datetime'] = self.arc_dict['start_datetime']
+                self.arc_dict['start_eastern'] = self.arc_dict['start_eastern'].replace(hour=0, minute=0)
+                self.arc_dict['start_round'] = self.arc_dict['start_eastern']
                 self.arc_dict['start_angle'] = 0.0
                 self.arc_dict['start_round_angle'] = 0.0
                 self.arc_dict['start_et'] = None
 
             #  same day, but ends near midnight
             if ends_at_midnight:
-                self.arc_dict['end_datetime'] = self.arc_dict['start_datetime'].replace(hour=0, minute=0)
-                self.arc_dict['end_round_datetime'] = self.arc_dict['end_datetime']
+                self.arc_dict['end_eastern'] = self.arc_dict['start_eastern'].replace(hour=0, minute=0)
+                self.arc_dict['end_round'] = self.arc_dict['end_eastern']
                 self.arc_dict['end_angle'] = 360.0
                 self.arc_dict['end_round_angle'] = 360.0
                 self.arc_dict['end_et'] = None
@@ -77,15 +77,15 @@ class Arc(BaseArc):
         if not start_and_end_on_same_day:
 
             # create arguments for next day arc, starts at midnight
-            next_day_args['start_datetime'] = (next_day_args['start_datetime'] + td(days=1)).replace(hour=0, minute=0)
-            next_day_args['start_round_datetime'] = next_day_args['start_datetime']  # same as above
+            next_day_args['start_eastern'] = (next_day_args['start_eastern'] + td(days=1)).replace(hour=0, minute=0)
+            next_day_args['start_round'] = next_day_args['start_eastern']  # same as above
             next_day_args['start_angle'] = 0.0
             next_day_args['start_round_angle'] = 0.0
             next_day_args['start_et'] = None  # because et was for start in prior day
 
             #  reset current day, ends at midnight
-            self.arc_dict['end_datetime'] = self.arc_dict['start_datetime'].replace(hour=0, minute=0)
-            self.arc_dict['end_round_datetime'] = self.arc_dict['end_datetime']  # same as above
+            self.arc_dict['end_eastern'] = self.arc_dict['start_eastern'].replace(hour=0, minute=0)
+            self.arc_dict['end_round'] = self.arc_dict['end_eastern']  # same as above
             self.arc_dict['end_angle'] = 360.0
             self.arc_dict['end_round_angle'] = 360.0
             self.arc_dict['end_et'] = None  # because the et was for end in the next day
@@ -94,8 +94,8 @@ class Arc(BaseArc):
             if start_and_min_on_same_day:
                 next_day_args['min_angle'] = None
                 next_day_args['min_round_angle'] = None
-                next_day_args['min_datetime'] = None
-                next_day_args['min_round_datetime'] = None
+                next_day_args['min_eastern'] = None
+                next_day_args['min_round'] = None
                 next_day_args['min_et'] = None
 
 
@@ -103,8 +103,8 @@ class Arc(BaseArc):
             if not start_and_min_on_same_day:
                 self.arc_dict['min_angle'] = None
                 self.arc_dict['min_round_angle'] = None
-                self.arc_dict['min_datetime'] = None
-                self.arc_dict['min_round_datetime'] = None
+                self.arc_dict['min_eastern'] = None
+                self.arc_dict['min_round'] = None
                 self.arc_dict['min_et'] = None
 
             self.next_day_arc = Arc(next_day_args)
