@@ -200,18 +200,22 @@ class Segment:
 
 class Route:
 
-    filenames_dict = {'elapsed timesteps': Template('elapsed_timesteps $speed.csv'),
+    template_dict = {'elapsed timesteps': Template('elapsed_timesteps $speed.csv'),
                       'transit timesteps': Template('transit_timesteps $speed.csv'),
                       'savgol': Template('savgol $speed.csv'),
-                      'minima': Template('minima $speed.csv')}
+                      'minima': Template('minima $speed.csv'),
+                      'arcs': Template('arcs $speed.csv'),
+                      'transit times': Template('transit times $loc.csv'),
+                      'first_day': Template('$year/12/1'),
+                      'last_day': Template('$year/1/31')}
 
     def times_folder(self, speed: int):
         folder_path = self.folder.joinpath(num2words(speed))
         makedirs(folder_path, exist_ok=True)
         return folder_path
 
-    def filepath(self, name: str, speed: int):
-        return self.times_folder(speed).joinpath(Route.filenames_dict[name].substitute({'speed': speed}))
+    def filepath(self, name: str, field):
+        return self.times_folder(field).joinpath(Route.template_dict[name].substitute({'speed': field}))
 
     def __init__(self, stations_dict: dict, tree: Soup):
 
