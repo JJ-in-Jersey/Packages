@@ -1,4 +1,3 @@
-# import string
 from os import makedirs, listdir
 from os.path import isfile, isdir, islink
 from os import unlink as delete_file
@@ -21,12 +20,10 @@ class BaseWaypoint:
     velocity_csv_name = 'velocity_frame.csv'
     spline_csv_name = 'cubic_spline_frame.csv'
 
-    types = {'H': 'Harmonic', 'S': 'Subordinate', 'W': 'Weak',
-             'L': 'Location', 'I': 'Interpolation', 'D': 'Data'}
-    symbols = {'H': 'Symbol-Pin-Green', 'S': 'Symbol-Pin-Green',
-               'W': 'Symbol-Pin-Yellow', 'L': 'Symbol-Pin-White',
-               'I': 'Symbol-Pin-Blue', 'D': 'Symbol-Pin-Orange'}
-
+    code_types = {'H': 'Harmonic', 'S': 'Subordinate', 'W': 'Weak', 'L': 'Location', 'E': 'Empty', 'P': 'Pseudo'}
+    code_symbols = {'H': 'Symbol-Pin-Green', 'S': 'Symbol-Pin-Green', 'W': 'Symbol-Pin-Yellow',
+                    'L': 'Symbol-Pin-White', 'E': 'Symbol-Pin-Orange', 'P': 'Symbol-Pin-Blue'}
+    symbol_codes = {'Symbol-Pin-Yellow': 'W', 'Symbol-Pin-White': 'L', 'Symbol-Pin-Orange': 'E', 'Symbol-Pin-Blue': 'P' }
     ordinal_number = 0
 
     def write_gpx(self):
@@ -51,8 +48,6 @@ class BaseWaypoint:
         desc_tag.string = self.id
         soup.find('name').insert_after(desc_tag)
 
-        # with open(self.folder.joinpath(self.id + '.gpx'), 'w') as a_file:
-        #     a_file.write(str(soup))
         with open(PresetGlobals.gpx_folder.joinpath(self.id + '.gpx'), 'w') as a_file:
             a_file.write(str(soup))
 
@@ -79,7 +74,7 @@ class BaseWaypoint:
         self.lon = round(float(station['lon']), 4)
         self.coords = tuple([self.lat, self.lon])
         self.type = station['type']
-        self.symbol = self.symbols[station['type']]
+        self.symbol = self.code_symbols[station['type']]
         self.folder = station['folder']
         if self.folder is not None:
             self.folder = Path(self.folder)
@@ -111,9 +106,10 @@ class Location(EdgeNode):
         super().__init__(super_dict)
 
 
-class Interpolation(EdgeNode):
+class Empty(BaseWaypoint):
     def __init__(self, tag):
-        super_dict = {'id': None, 'name': None, 'lat': tag.attrs['lat'], 'lon': tag.attrs['lon'], 'type': 'I', 'folder': None}
+        super_dict = {'id': tag.find('name').text, 'name': tag.find('name').text, 'lat': tag.attrs['lat'],
+                    'lon': tag.attrs['lon'], 'type': BaseWaypoint.symbol_codes[tag.find('sym').text], 'folder': None}
         super().__init__(super_dict)
 
 
@@ -209,6 +205,17 @@ class Route:
                       'first_day': Template('$year/12/1'),
                       'last_day': Template('$year/1/31')}
 
+
+    def make_folder(self):
+        makedirs(self.folder, exist_ok=True)
+
+
+    def touch_heading(self):
+        if self.folder.exists():
+            self.folder.joinpath(str(self.heading) + '.heading').touch()
+        else:
+            raise FileExistsError(self.folder)
+
     def times_folder(self, speed: int):
         folder_path = self.folder.joinpath(num2words(speed))
         makedirs(folder_path, exist_ok=True)
@@ -222,27 +229,20 @@ class Route:
         self.name = tree.find('name').string
         self.code = ''.join(word[0] for word in self.name.upper().split())
         self.folder = PresetGlobals.project_base_folder.joinpath(self.name)
-        makedirs(self.folder, exist_ok=True)
 
         self.waypoints = []
         for tag in tree.find_all('rtept'):
-            if tag.sym.text == Waypoint.symbols['H'] or tag.sym == Waypoint.symbols['S']:
+            if tag.sym.text == Waypoint.code_symbols['H'] or tag.sym == Waypoint.code_symbols['S']:
                 self.waypoints.append(Waypoint(stations_dict[tag.desc.text]))
-            elif tag.sym.text == Waypoint.symbols['L']:
+            elif tag.sym.text == Waypoint.code_symbols['L']:
                 self.waypoints.append(Location(tag))
-            elif tag.sym.text == Waypoint.symbols['I']:
-                self.waypoints.append(Interpolation(tag))
-            elif tag.sym.text == Waypoint.symbols['D']:
+            elif tag.sym.text == Waypoint.code_symbols['E']:
+                self.waypoints.append(Empty(tag))
+            elif tag.sym.text == Waypoint.code_symbols['D']:
                 self.waypoints.append(Data(stations_dict[tag.desc.text]))
 
         self.heading = Heading(self.waypoints[0].coords, self.waypoints[-1].coords).angle
         self.direction = directions(self.heading)[0]
-
-        self.folder.joinpath(str(self.heading) + '.heading').touch()
-
-        # populate interpolated waypoint data
-        # for iwp in filter(lambda w: isinstance(w, InterpolatedWP), self.waypoints):
-        #     iwp.create_data_waypoint_list()
 
         edge_nodes = [wp for wp in self.waypoints if isinstance(wp, EdgeNode)]
         self.edges = [Edge(wp, edge_nodes[i+1]) for i, wp in enumerate(edge_nodes[:-1])]

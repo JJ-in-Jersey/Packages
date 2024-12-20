@@ -6,7 +6,7 @@ import requests
 from io import StringIO
 from pathlib import Path
 from os import listdir
-from os.path import isfile
+from os.path import isfile, basename
 
 from tt_file_tools.file_tools import SoupFromXMLResponse, print_file_exists, read_dict, write_dict, write_df
 from tt_globals.globals import PresetGlobals
@@ -19,6 +19,17 @@ class StationDict:
     @staticmethod
     def absolute_path_string(folder_name):
         return str(PresetGlobals.waypoints_folder.joinpath(folder_name).absolute())
+
+
+    @staticmethod
+    def add_waypoint(route_waypoint: Waypoint):
+        if bool(StationDict.dict) and not route_waypoint.id in StationDict.dict:
+            row = {'id': route_waypoint.id, 'name': route_waypoint.name,
+                   'lat': route_waypoint.lat, 'lon': route_waypoint.lon,
+                   'type': route_waypoint.type, 'folder_name': basename(route_waypoint.folder),
+                   'folder': StationDict.absolute_path_string(basename(route_waypoint.folder))}
+            StationDict.dict[row['id']] = row
+            print_file_exists(write_dict(PresetGlobals.stations_file, StationDict.dict))
 
 
     def __init__(self):
@@ -42,13 +53,12 @@ class StationDict:
                                   'folder_name': station_tag.find_next('type').text + ' ' + station_tag.find_next('id').text}
                                  for station_tag in stations_tree.find_all('Station')]
                     row_df = pd.DataFrame(row_array).drop_duplicates()
-                    row_df['folder'] = row_df['folder_name'].apply(StationDict.absolute_path_string)
+                    row_df['folder'] = row_df['folder_name'].apply(self.absolute_path_string)
                     row_dict = row_df.to_dict('records')
-                    print_file_exists(write_df(row_df, PresetGlobals.stations_folder.joinpath('stations.csv')))
                     StationDict.dict = {r['id']: r for r in row_dict}
 
                     print(f'Requesting bins for each station')
-                    for station_id in self.dict.keys():
+                    for station_id in StationDict.dict.keys():
                         print(f'==>   {station_id}')
                         my_request = "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations/" + station_id + "/bins.xml?units=english"
                         for _ in range(3):
@@ -64,7 +74,7 @@ class StationDict:
                                 break
                             except requests.exceptions.RequestException:
                                 time.sleep(2)
-                    print_file_exists(write_dict(PresetGlobals.stations_file, self.dict))
+                    print_file_exists(write_dict(PresetGlobals.stations_file, StationDict.dict))
                     break
                 except requests.exceptions.RequestException:
                     time.sleep(1)
