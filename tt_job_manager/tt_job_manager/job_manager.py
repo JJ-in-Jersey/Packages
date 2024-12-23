@@ -84,7 +84,7 @@ class Job:
         return tuple([self.result_key, self.execute_function(*self.execute_function_arguments), mins_secs(perf_counter()-init_time)])
 
     def execute_callback(self, result):
-        print(f'-     {self.job_name} {result[2]} minutes', flush=True)
+        print(f'-     {self.job_name} {result[2]}', flush=True)
 
     def error_callback(self, result):
         print(f'!     {self.job_name} error: {result}', flush=True)
