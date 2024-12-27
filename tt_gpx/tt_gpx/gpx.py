@@ -23,7 +23,7 @@ class BaseWaypoint:
     code_types = {'H': 'Harmonic', 'S': 'Subordinate', 'W': 'Weak', 'L': 'Location', 'E': 'Empty', 'P': 'Pseudo'}
     code_symbols = {'H': 'Symbol-Pin-Green', 'S': 'Symbol-Pin-Green', 'W': 'Symbol-Pin-Yellow',
                     'L': 'Symbol-Pin-White', 'E': 'Symbol-Pin-Orange', 'P': 'Symbol-Pin-Blue'}
-    symbol_codes = {'Symbol-Pin-Yellow': 'W', 'Symbol-Pin-White': 'L', 'Symbol-Pin-Orange': 'E', 'Symbol-Pin-Blue': 'P' }
+    symbol_codes = {'Symbol-Pin-Yellow': 'W', 'Symbol-Pin-White': 'L', 'Symbol-Pin-Orange': 'E', 'Symbol-Pin-Blue': 'P'}
     ordinal_number = 0
 
     def write_gpx(self):
@@ -75,14 +75,15 @@ class BaseWaypoint:
         self.coords = tuple([self.lat, self.lon])
         self.type = station['type']
         self.symbol = self.code_symbols[station['type']]
-        self.folder = station['folder']
-        if self.folder is not None:
-            self.folder = Path(self.folder)
-            self.raw_csv_path = self.folder.joinpath(self.raw_csv_name)
-            self.adjusted_csv_path = self.folder.joinpath(self.adjusted_csv_name)
-            self.spline_csv_path = self.folder.joinpath(self.spline_csv_name)
-            self.velocity_csv_path = self.folder.joinpath(self.velocity_csv_name)
-            makedirs(self.folder, exist_ok=True)
+        if bool(station['folder']):
+            self.folder = Path(station['folder'])
+        else:
+            self.folder = PresetGlobals.waypoints_folder.joinpath(self.name)
+        self.raw_csv_path = self.folder.joinpath(self.raw_csv_name)
+        self.adjusted_csv_path = self.folder.joinpath(self.adjusted_csv_name)
+        self.spline_csv_path = self.folder.joinpath(self.spline_csv_name)
+        self.velocity_csv_path = self.folder.joinpath(self.velocity_csv_name)
+        makedirs(self.folder, exist_ok=True)
 
         self.prev_edge = None
         self.next_edge = None
@@ -109,7 +110,7 @@ class Location(EdgeNode):
 class Empty(BaseWaypoint):
     def __init__(self, tag):
         super_dict = {'id': tag.find('name').text, 'name': tag.find('name').text, 'lat': tag.attrs['lat'],
-                    'lon': tag.attrs['lon'], 'type': BaseWaypoint.symbol_codes[tag.find('sym').text], 'folder': None}
+                      'lon': tag.attrs['lon'], 'type': BaseWaypoint.symbol_codes[tag.find('sym').text], 'folder': None}
         super().__init__(super_dict)
 
 
@@ -117,44 +118,6 @@ class Data(BaseWaypoint):
     def __init__(self, station: dict):
         station['type'] = 'D'
         super().__init__(station)
-
-
-# class InterpolatedWP(Waypoint):  # result of interpolation of other waypoint data
-#
-#     def create_data_waypoint_list(self):
-#         index = self.index + 1
-#         while index <= max(Waypoint.index_lookup) and isinstance(Waypoint.index_lookup[index], InterpolatedDataWP):
-#             self.data_waypoints.append(Waypoint.index_lookup[index])
-#             index += 1
-#
-#     def interpolate(self, job_manager):
-#
-#         output_filepath = self.folder.joinpath('interpolated_velocity.csv')
-#
-#         if not output_filepath.exists():
-#             velocity_data = []
-#             for i, wp in enumerate(self.data_waypoints):
-#                 velocity_data.append(read_df(wp.velocity_csv))
-#                 velocity_data[i]['lat'] = wp.lat
-#                 velocity_data[i]['lon'] = wp.lon
-#                 print(i, len(velocity_data[i]), wp.name)
-#
-#             keys = [job_manager.put(InterpolatePointJob(self, velocity_data, i)) for i in range(len(velocity_data[0]))]
-#             job_manager.wait()
-#
-#             result_array = tuple([job_manager.get(key).date_velocity for key in keys])
-#             frame = pd.DataFrame(result_array, columns=['date_index', 'velocity'])
-#             frame.sort_values('date_index', inplace=True)
-#             frame['date_time'] = pd.to_datetime(frame['date_index'], unit='s').round('min')
-#             frame.reset_index(drop=True, inplace=True)
-#             write_df(frame, output_filepath)
-#
-#         if print_file_exists(output_filepath):
-#             write_df(read_df(output_filepath), self.folder.joinpath(wp.velocity_frame))
-#
-#     def __init__(self, gpxtag):
-#         super().__init__(gpxtag)
-#         self.data_waypoints = []
 
 
 class Edge:  # connection between waypoints with current data
@@ -197,13 +160,13 @@ class Segment:
 class Route:
 
     template_dict = {'elapsed timesteps': Template('elapsed_timesteps $speed.csv'),
-                      'transit timesteps': Template('transit_timesteps $speed.csv'),
-                      'savgol': Template('savgol $speed.csv'),
-                      'minima': Template('minima $speed.csv'),
-                      'arcs': Template('arcs $speed.csv'),
-                      'transit times': Template('transit times $loc.csv'),
-                      'first_day': Template('$year/12/1'),
-                      'last_day': Template('$year/1/31')}
+                     'transit timesteps': Template('transit_timesteps $speed.csv'),
+                     'savgol': Template('savgol $speed.csv'),
+                     'minima': Template('minima $speed.csv'),
+                     'arcs': Template('arcs $speed.csv'),
+                     'transit times': Template('transit times $loc.csv'),
+                     'first_day': Template('$year/12/1'),
+                     'last_day': Template('$year/1/31')}
 
 
     def make_folder(self):

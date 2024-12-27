@@ -1,8 +1,9 @@
 from tt_singleton.singleton import Singleton
 from tt_semaphore import simple_semaphore as semaphore
-from tt_date_time_tools.date_time_tools import mins_secs
 from multiprocessing import Manager, Pool, cpu_count, Process
-from time import sleep, perf_counter
+from time import sleep
+# from tt_date_time_tools.date_time_tools import mins_secs
+# from time import sleep, perf_counter
 
 
 class JobManager(metaclass=Singleton):
@@ -79,12 +80,14 @@ class WaitForProcess(Process, metaclass=Singleton):
 class Job:
 
     def execute(self):
-        init_time = perf_counter()
+        # init_time = perf_counter()
         print(f'+     {self.job_name}', flush=True)
-        return tuple([self.result_key, self.execute_function(*self.execute_function_arguments), mins_secs(perf_counter()-init_time)])
+        # return tuple([self.result_key, self.execute_function(*self.execute_function_arguments), mins_secs(perf_counter()-init_time)])
+        return tuple([self.result_key, self.execute_function(*self.execute_function_arguments)])
 
     def execute_callback(self, result):
-        print(f'-     {self.job_name} {result[2]}', flush=True)
+        # print(f'-     {self.job_name} {result[2]}', flush=True)
+        print(f'-     {self.job_name}', flush=True)
 
     def error_callback(self, result):
         print(f'!     {self.job_name} error: {result}', flush=True)
