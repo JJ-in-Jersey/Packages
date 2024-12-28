@@ -103,7 +103,7 @@ class Waypoint(EdgeNode):
 
 class Location(EdgeNode):
     def __init__(self, tag):
-        super_dict = {'id': None, 'name': None, 'lat': tag.attrs['lat'], 'lon': tag.attrs['lon'], 'type': 'L', 'folder': None}
+        super_dict = {'id': None, 'name': tag.find('name').text, 'lat': tag.attrs['lat'], 'lon': tag.attrs['lon'], 'type': 'L', 'folder': None}
         super().__init__(super_dict)
 
 
@@ -114,10 +114,9 @@ class Empty(BaseWaypoint):
         super().__init__(super_dict)
 
 
-class Data(BaseWaypoint):
-    def __init__(self, station: dict):
-        station['type'] = 'D'
-        super().__init__(station)
+class Pseudo(EdgeNode):
+    def __init__(self, *args):
+        super().__init__(*args)
 
 
 class Edge:  # connection between waypoints with current data
@@ -146,14 +145,17 @@ class Segment:
 
         self.length = 0
         self.start = node
+        self.node_list = [node.name]
 
         while node.next_edge is not None:
+            self.node_list.extend([node.next_edge.length, node.next_edge.end.name])
             self.length += node.next_edge.length
             self.end = node.next_edge.end
             node = self.end
             if not isinstance(self.end, Location):
                 break
 
+        self.length = round(self.length, 4)
         self.name = Segment.prefix + ' ' + str(self.start.index) + '-' + str(self.end.index)
 
 
@@ -201,8 +203,8 @@ class Route:
                 self.waypoints.append(Location(tag))
             elif tag.sym.text == Waypoint.code_symbols['E']:
                 self.waypoints.append(Empty(tag))
-            elif tag.sym.text == Waypoint.code_symbols['D']:
-                self.waypoints.append(Data(stations_dict[tag.desc.text]))
+            elif tag.sym.text == Waypoint.code_symbols['P']:
+                self.waypoints.append(Pseudo(stations_dict[tag.desc.text]))
 
         self.heading = Heading(self.waypoints[0].coords, self.waypoints[-1].coords).angle
         self.direction = directions(self.heading)[0]
