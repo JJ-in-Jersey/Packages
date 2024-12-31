@@ -145,10 +145,10 @@ class Segment:
 
         self.length = 0
         self.start = node
-        self.node_list = [node.name]
+        self.node_list = [node]
 
         while node.next_edge is not None:
-            self.node_list.extend([node.next_edge.length, node.next_edge.end.name])
+            self.node_list.extend([node.next_edge.end])
             self.length += node.next_edge.length
             self.end = node.next_edge.end
             node = self.end
@@ -193,7 +193,7 @@ class Route:
 
         self.name = tree.find('name').string
         self.code = ''.join(word[0] for word in self.name.upper().split())
-        self.folder = PresetGlobals.project_base_folder.joinpath(self.name)
+        self.folder = PresetGlobals.project_base_folder.joinpath(self.code)
 
         self.waypoints = []
         for tag in tree.find_all('rtept'):
