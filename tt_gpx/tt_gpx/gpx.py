@@ -147,11 +147,13 @@ class Segment:
         self.start = node
         self.node_list = [node]
 
-        while node.next_edge is not None and isinstance(node.next_edge.end, Location):
+        while node.next_edge is not None:
             self.node_list.extend([node.next_edge.end])
             self.length += node.next_edge.length
             self.end = node.next_edge.end
             node = self.end
+            if not isinstance(self.end, Location):
+                break
 
         self.length = round(self.length, 4)
         self.name = Segment.prefix + ' ' + str(self.start.index) + '-' + str(self.end.index)
