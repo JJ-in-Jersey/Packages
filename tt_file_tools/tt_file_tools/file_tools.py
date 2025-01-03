@@ -28,7 +28,7 @@ def wait_for_new_file(folder, event_function):
 def read_df(filepath: Path):
     if not filepath.exists():
         raise FileExistsError(filepath)
-    return pd.read_csv(filepath, header='infer')
+    return pd.read_csv(filepath, header='infer', parse_dates=True)
 
 
 class SoupFromXMLFile:
@@ -88,6 +88,7 @@ def read_text_arr(filepath: Path):
 
 def write_dict(file: Path, dictionary: dict):
     with open(file, 'w') as a_file:
+        # noinspection PyTypeChecker
         json.dump(dictionary, a_file)
     return file
 
