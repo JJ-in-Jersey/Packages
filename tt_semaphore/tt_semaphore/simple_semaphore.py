@@ -1,6 +1,5 @@
 from pathlib import Path
 from os import remove
-
 from tt_os_abstraction.os_abstraction import env
 
 

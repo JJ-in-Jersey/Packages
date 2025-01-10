@@ -9,7 +9,6 @@ from string import Template
 
 from tt_navigation.navigation import distance, directions, Heading
 from tt_file_tools.file_tools import SoupFromXMLFile
-# from tt_jobs.jobs import InterpolatePointJob
 from tt_globals.globals import PresetGlobals
 
 
