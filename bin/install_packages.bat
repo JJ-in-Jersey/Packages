@@ -15,6 +15,8 @@ pip uninstall tt_semaphore -y
 pip uninstall tt_singleton -y
 pip uninstall tt_chrome_driver -y
 
+pip install ./tt_singleton
+pip install ./tt_navigation
 pip install ./tt_date_time_tools
 pip install ./tt_file_tools
 pip install ./tt_geometry
@@ -24,10 +26,8 @@ pip install ./tt_interpolation
 pip install ./tt_job_manager
 pip install ./tt_jobs
 pip install ./tt_os_abstraction
-pip install ./tt_navigation
 pip install ./tt_noaa_data
 pip install ./tt_semaphore
-pip install ./tt_singleton
 REM pip install ./tt_chrome_driver
 
 pause
