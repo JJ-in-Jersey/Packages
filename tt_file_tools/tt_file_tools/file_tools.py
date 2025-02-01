@@ -42,9 +42,9 @@ class SoupFromXMLResponse:
         self.tree = Soup(response, 'xml')
 
 
-def write_df(df: pd.DataFrame, path: Path, debug: bool = False):
+def write_df(df: pd.DataFrame, path: Path, idx: bool = False, debug: bool = False):
     suffix = '.csv'
-    df.to_csv(path, index=False)
+    df.to_csv(path, index=idx)
     if debug:
         spreadsheet_limit = 950000
         if len(df) > spreadsheet_limit:
