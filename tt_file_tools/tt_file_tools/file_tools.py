@@ -1,5 +1,6 @@
 from time import sleep
 from glob import glob
+import os
 from os.path import join, getctime
 import numpy as np
 import pandas as pd
@@ -98,3 +99,12 @@ def read_dict(file: Path):
         raise FileExistsError(file)
     with open(file, 'r') as a_file:
         return json.load(a_file)
+
+
+def list_all_files(folder_path):
+    file_list = []
+    for root, _, files in os.walk(folder_path):
+        for file in files:
+            full_path = join(root, file)
+            file_list.append(full_path)
+    return file_list
