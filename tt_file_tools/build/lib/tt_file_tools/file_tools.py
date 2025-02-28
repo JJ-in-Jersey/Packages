@@ -1,5 +1,6 @@
 from time import sleep
 from glob import glob
+import os
 from os.path import join, getctime
 import numpy as np
 import pandas as pd
@@ -28,7 +29,7 @@ def wait_for_new_file(folder, event_function):
 def read_df(filepath: Path):
     if not filepath.exists():
         raise FileExistsError(filepath)
-    return pd.read_csv(filepath, header='infer')
+    return pd.read_csv(filepath, header='infer', parse_dates=True)
 
 
 class SoupFromXMLFile:
@@ -42,9 +43,9 @@ class SoupFromXMLResponse:
         self.tree = Soup(response, 'xml')
 
 
-def write_df(df: pd.DataFrame, path: Path, debug: bool = False):
+def write_df(df: pd.DataFrame, path: Path, idx: bool = False, debug: bool = False):
     suffix = '.csv'
-    df.to_csv(path, index=False)
+    df.to_csv(path, index=idx)
     if debug:
         spreadsheet_limit = 950000
         if len(df) > spreadsheet_limit:
@@ -59,6 +60,7 @@ def write_df(df: pd.DataFrame, path: Path, debug: bool = False):
                 temp = df.loc[whole_spreadsheets*spreadsheet_limit:]
                 temp.to_csv(output_stem.with_suffix(output_stem.suffix + suffix), index=False)
     return path
+
 
 def shrink_dataframe(dataframe: pd.DataFrame):
     for col in dataframe:
@@ -87,11 +89,22 @@ def read_text_arr(filepath: Path):
 
 def write_dict(file: Path, dictionary: dict):
     with open(file, 'w') as a_file:
+        # noinspection PyTypeChecker
         json.dump(dictionary, a_file)
     return file
+
 
 def read_dict(file: Path):
     if not file.exists():
         raise FileExistsError(file)
     with open(file, 'r') as a_file:
         return json.load(a_file)
+
+
+def list_all_files(folder_path):
+    file_list = []
+    for root, _, files in os.walk(folder_path):
+        for file in files:
+            full_path = join(root, file)
+            file_list.append(full_path)
+    return file_list
