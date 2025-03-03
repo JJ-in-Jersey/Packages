@@ -19,24 +19,24 @@ class BaseArc:
             'start_eastern': None, 'min_eastern': None, 'end_eastern': None,
             'start_round': None, 'min_round': None, 'end_round': None,
             'start_tt': None, 'min_tt': None, 'end_tt': None,
-            'start_angle':None, 'min_angle': None, 'end_angle': None,
+            'start_angle': None, 'min_angle': None, 'end_angle': None,
             'start_round_angle': None, 'min_round_angle': None, 'end_round_angle': None
         }
 
         for key in args.keys():
             self.arc_dict[key] = args[key]
 
-        self.arc_dict['start_angle'] = time_to_degrees(self.arc_dict['start_eastern'].time())
-        self.arc_dict['start_round_angle'] = time_to_degrees(self.arc_dict['start_round'].time())
-        self.arc_dict['end_angle'] = time_to_degrees(self.arc_dict['end_eastern'].time())
-        self.arc_dict['end_round_angle'] = time_to_degrees(self.arc_dict['end_round'].time())
+        self.arc_dict['start_angle'] = time_to_degrees(self.arc_dict['start_eastern'])
+        self.arc_dict['start_round_angle'] = time_to_degrees(self.arc_dict['start_round'])
+        self.arc_dict['end_angle'] = time_to_degrees(self.arc_dict['end_eastern'])
+        self.arc_dict['end_round_angle'] = time_to_degrees(self.arc_dict['end_round'])
 
         if not self.arc_dict['min_eastern'] is None:
-            self.arc_dict['min_angle'] = time_to_degrees(self.arc_dict['min_eastern'].time())
+            self.arc_dict['min_angle'] = time_to_degrees(self.arc_dict['min_eastern'])
             if not self.arc_dict['min_round'] is None:
-                self.arc_dict['min_round_angle'] = time_to_degrees(self.arc_dict['min_round'].time())
+                self.arc_dict['min_round_angle'] = time_to_degrees(self.arc_dict['min_round'])
                 # if min is at midnight, don't display it
-                if  abs(self.arc_dict['min_round_angle']) == 360.0 or abs(self.arc_dict['min_round_angle']) == 0.0:
+                if abs(self.arc_dict['min_round_angle']) == 360.0 or abs(self.arc_dict['min_round_angle']) == 0.0:
                     self.arc_dict['min_tt'] = None
 
         BaseArc.columns = list(self.arc_dict.keys())
@@ -114,4 +114,4 @@ class Arc(BaseArc):
         # purge from list later
         angle_round_difference = self.arc_dict['end_round_angle'] - self.arc_dict['start_round_angle']
         if abs(angle_round_difference) == 360.0 or abs(angle_round_difference) == 0.0:
-                self.zero_angle = True
+            self.zero_angle = True
