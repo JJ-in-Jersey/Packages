@@ -2,7 +2,6 @@ from os import environ
 from pathlib import Path
 import platform
 
-
 if platform.system() == 'Darwin':
     platform_lookup = {
                     'user_profile': Path(environ['HOME']),
@@ -25,7 +24,6 @@ elif platform.system() == 'Windows':
                     'browser_exe': Path('C:/Program Files/Google/Chrome/Application/Chrome.exe'),
                     'user_data': Path(environ['USERPROFILE']).joinpath('AppData/Local/Google/Chrome/User Data')
                     }
-
 
 def env(var_name):
     return platform_lookup[var_name]
