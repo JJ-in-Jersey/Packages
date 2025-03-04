@@ -1,5 +1,7 @@
 #!/bin/sh
 
+pip3 cache purge
+
 cd $HOME/PycharmProjects/Packages
 
 pip3 uninstall tt_date_time_tools -y
