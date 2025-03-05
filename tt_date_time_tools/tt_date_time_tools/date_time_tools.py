@@ -1,6 +1,5 @@
 import dateparser
 import pandas as pd
-from sympy.combinatorics.group_numbers import is_nilpotent_number
 
 
 def hours_mins(secs): return "%d:%02d" % (secs // 3600, secs % 3600 // 60)
