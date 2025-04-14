@@ -19,6 +19,7 @@ class PresetGlobals:
     speeds = [-10 + v for v in range(0, 8)] + [3 + v for v in range(0, 8)]
     time_window_scale = 1.5
     savgol_size = 20000
+    savgol_order = 1
 
     @staticmethod
     def make_folders():
