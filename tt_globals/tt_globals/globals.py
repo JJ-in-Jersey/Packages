@@ -18,7 +18,7 @@ class PresetGlobals:
     timestep = 60  # 60 seconds, one minute
     speeds = [-10 + v for v in range(0, 8)] + [3 + v for v in range(0, 8)]
     time_window_scale = 1.5
-    savgol_size = 20000
+    savgol_size = 1100
     savgol_order = 1
 
     @staticmethod
