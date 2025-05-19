@@ -36,4 +36,6 @@ pip install ./tt_noaa_data
 REM pip install ./tt_chrome_driver
 REM pip install ./tt_jobs
 
+python %userprofile%/PycharmProjects/Packages/bin/cleanup.py
+
 pause
