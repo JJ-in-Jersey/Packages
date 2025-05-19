@@ -1,5 +1,7 @@
 #!/bin/sh
 
+python %HOME/PycharmProjects/Packages/bin/cleanup.py
+
 pip3 cache purge
 
 cd $HOME/PycharmProjects/Packages
@@ -34,3 +36,4 @@ pip3 install ./tt_gpx
 pip3 install ./tt_job_manager
 pip3 install ./tt_noaa_data
 
+python %HOME/PycharmProjects/Packages/bin/cleanup.py
