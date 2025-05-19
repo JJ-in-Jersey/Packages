@@ -23,7 +23,7 @@ class StationDict:
 
     @staticmethod
     def add_waypoint(route_waypoint: Waypoint):
-        if bool(StationDict.dict) and not route_waypoint.id in StationDict.dict:
+        if bool(StationDict.dict) and route_waypoint.id not in StationDict.dict:
             row = {'id': route_waypoint.id, 'name': route_waypoint.name,
                    'lat': route_waypoint.lat, 'lon': route_waypoint.lon,
                    'type': route_waypoint.type, 'folder_name': basename(route_waypoint.folder),
