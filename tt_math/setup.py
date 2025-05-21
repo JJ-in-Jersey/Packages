@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='tt_exceptions',
-    packages=find_packages(include=['tt_exceptions', 'tt_exceptions.*']),
+    name='tt_math',
+    packages=find_packages(include=['tt_math', 'tt_math.*']),
 )

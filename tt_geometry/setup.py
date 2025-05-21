@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='tt_exceptions',
-    packages=find_packages(include=['tt_exceptions', 'tt_exceptions.*']),
+    name='tt_geometry',
+    packages=find_packages(include=['tt_geometry', 'tt_geometry.*']),
     install_requires=['tt_date_time_tools']
 )

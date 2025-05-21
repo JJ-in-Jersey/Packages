@@ -211,33 +211,3 @@ class SixteenMonths:
         else:
             self.adj_frame = OneMonth.adjust_frame(pd.concat([m.raw_frame for m in months], axis=0, ignore_index=True))
             del months
-
-
-class NonMonotonic(Exception):
-    def __init__(self, message: str):
-        self.message = message
-        super().__init__(self.message)
-
-
-class DataNotAvailable(Exception):
-    def __init__(self, message: str):
-        self.message = message
-        super().__init__(self.message)
-
-
-class DataMissing(Exception):
-    def __init__(self, message: str):
-        self.message = message
-        super().__init__(self.message)
-
-
-class DuplicateTimestamps(Exception):
-    def __init__(self, message: str):
-        self.message = message
-        super().__init__(self.message)
-
-
-class EmptyDataframe(Exception):
-    def __init__(self, message: str):
-        self.message = message
-        super().__init__(self.message)
