@@ -113,7 +113,7 @@ class Empty(BaseWaypoint):
         super().__init__(super_dict)
 
 
-class Pseudo(EdgeNode):
+class Pseudo(Empty):
     def __init__(self, *args):
         super().__init__(*args)
 
@@ -203,7 +203,7 @@ class Route:
             elif tag.sym.text == Waypoint.code_symbols['E']:
                 self.waypoints.append(Empty(tag))
             elif tag.sym.text == Waypoint.code_symbols['P']:
-                self.waypoints.append(Pseudo(stations_dict[tag.desc.text]))
+                self.waypoints.append(Pseudo(tag))
 
         self.heading = Heading(self.waypoints[0].coords, self.waypoints[-1].coords).angle
         self.direction = directions(self.heading)[0]
