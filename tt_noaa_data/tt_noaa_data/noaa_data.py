@@ -1,6 +1,8 @@
 from dateutil.relativedelta import relativedelta
 from datetime import datetime as dt
-import pandas as pd
+from tt_dataframe.dataframe import DataFrame
+from pandas import concat, to_datetime
+# import pandas as pd
 import time
 import requests
 from io import StringIO
@@ -8,7 +10,8 @@ from pathlib import Path
 from os import listdir
 from os.path import isfile, basename
 
-from tt_file_tools.file_tools import SoupFromXMLResponse, print_file_exists, read_dict, write_dict, write_df
+# from tt_file_tools.file_tools import SoupFromXMLResponse, print_file_exists, read_dict, write_dict, write_df
+from tt_file_tools.file_tools import SoupFromXMLResponse, print_file_exists, read_dict, write_dict
 from tt_globals.globals import PresetGlobals
 from tt_gpx.gpx import Waypoint
 from tt_exceptions.exceptions import DataNotAvailable, EmptyDataframe, DuplicateTimestamps, NonMonotonic, DataMissing
@@ -53,7 +56,8 @@ class StationDict:
                                   'type': station_tag.find_next('type').text,
                                   'folder_name': station_tag.find_next('type').text + ' ' + station_tag.find_next('id').text}
                                  for station_tag in stations_tree.find_all('Station')]
-                    row_df = pd.DataFrame(row_array).drop_duplicates()
+                    row_df = DataFrame(row_array).drop_duplicates()
+                    # row_df = pd.DataFrame(row_array).drop_duplicates()
                     row_df['folder'] = row_df['folder_name'].apply(self.absolute_path_string)
                     row_dict = row_df.to_dict('records')
                     StationDict.dict = {r['id']: r for r in row_dict}
@@ -98,9 +102,11 @@ class OneMonth:
         return False
 
     @staticmethod
-    def adjust_frame(raw_frame: pd.DataFrame):
+    # def adjust_frame(raw_frame: pd.DataFrame):
+    def adjust_frame(raw_frame: DataFrame):
         frame = raw_frame.rename(columns={h: h.strip() for h in raw_frame.columns.tolist()})
-        frame.Time = pd.to_datetime(frame.Time, utc=True)
+        # frame.Time = pd.to_datetime(frame.Time, utc=True)
+        frame.Time = to_datetime(frame.Time, utc=True)
         # frame.sort_values(by='Time', ignore_index=True, inplace=True)
         frame['duplicated'] = frame.duplicated(subset='Time')
         frame['stamp'] = frame.Time.apply(dt.timestamp).astype(int)
@@ -145,7 +151,8 @@ class OneMonth:
                     # trap for download/communication errors - connection errors
                     if 'predictions are not available' in my_response.content.decode():
                         raise DataNotAvailable(f'<!> {waypoint.id} Predictions not available')
-                    self.raw_frame = pd.read_csv(StringIO(my_response.content.decode()))
+                    # self.raw_frame = pd.read_csv(StringIO(my_response.content.decode()))
+                    self.raw_frame = DataFrame(csv_arg=StringIO(my_response.content.decode()))
                     if self.raw_frame.empty or self.raw_frame.isna().all().all():
                         raise EmptyDataframe(f'<!> {waypoint.id} Dataframe empty or NaN')
                     break
@@ -175,9 +182,9 @@ class OneMonth:
             error_text = type(err).__name__
             waypoint.folder.joinpath(f'{waypoint.id} {error_text}.{error_type}').touch()
             if self.raw_frame is not None:
-                write_df(self.raw_frame, waypoint.folder.joinpath(f'month {month} raw frame.csv'))
+                self.raw_frame.write(waypoint.folder.joinpath(f'month {month} raw frame.csv'))
             if self.adj_frame is not None:
-                write_df(self.adj_frame, waypoint.folder.joinpath(f'month {month} adj frame.csv'))
+                self.adj_frame.write(waypoint.folder.joinpath(f'month {month} adj frame.csv'))
 
 
 class SixteenMonths:
@@ -210,5 +217,6 @@ class SixteenMonths:
             self.error = err
 
         else:
-            self.adj_frame = OneMonth.adjust_frame(pd.concat([m.raw_frame for m in months], axis=0, ignore_index=True))
+            # self.adj_frame = OneMonth.adjust_frame(pd.concat([m.raw_frame for m in months], axis=0, ignore_index=True))
+            self.adj_frame = OneMonth.adjust_frame(concat([m.raw_frame for m in months], axis=0, ignore_index=True))
             del months
