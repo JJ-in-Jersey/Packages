@@ -2,8 +2,6 @@ from time import sleep
 from glob import glob
 import os
 from os.path import join, getctime
-import numpy as np
-import pandas as pd
 from bs4 import BeautifulSoup as Soup
 from pathlib import Path
 import json
@@ -26,12 +24,6 @@ def wait_for_new_file(folder, event_function):
     return newest_after
 
 
-def read_df(filepath: Path):
-    if not filepath.exists():
-        raise FileExistsError(filepath)
-    return pd.read_csv(filepath, header='infer', parse_dates=True)
-
-
 class SoupFromXMLFile:
     def __init__(self, filepath):
         with open(filepath, 'r') as f:
@@ -41,34 +33,6 @@ class SoupFromXMLFile:
 class SoupFromXMLResponse:
     def __init__(self, response):
         self.tree = Soup(response, 'xml')
-
-
-def write_df(df: pd.DataFrame, path: Path, idx: bool = False, debug: bool = False):
-    suffix = '.csv'
-    df.to_csv(path, index=idx)
-    if debug:
-        spreadsheet_limit = 950000
-        if len(df) > spreadsheet_limit:
-            num_of_spreadsheets = len(df)/spreadsheet_limit
-            whole_spreadsheets = len(df)//spreadsheet_limit
-            for i in range(whole_spreadsheets):
-                output_stem = path.parent.joinpath(path.stem+'_spreadsheet_'+str(i))
-                temp = df.loc[i*spreadsheet_limit: i*spreadsheet_limit+spreadsheet_limit-1]
-                temp.to_csv(output_stem.with_suffix(output_stem.suffix + suffix), index=False)
-            if num_of_spreadsheets > whole_spreadsheets:
-                output_stem = path.parent.joinpath(path.stem+'_spreadsheet_'+str(whole_spreadsheets))
-                temp = df.loc[whole_spreadsheets*spreadsheet_limit:]
-                temp.to_csv(output_stem.with_suffix(output_stem.suffix + suffix), index=False)
-    return path
-
-
-def shrink_dataframe(dataframe: pd.DataFrame):
-    for col in dataframe:
-        if dataframe[col].dtype == np.int64:
-            dataframe[col] = dataframe[col].astype(np.int16)
-        elif dataframe[col].dtype == np.float64:
-            dataframe[col] = dataframe[col].astype(np.float16)
-    return dataframe
 
 
 def print_file_exists(filepath: Path):
