@@ -152,7 +152,7 @@ class OneMonth:
                     if 'predictions are not available' in my_response.content.decode():
                         raise DataNotAvailable(f'<!> {waypoint.id} Predictions not available')
                     # self.raw_frame = pd.read_csv(StringIO(my_response.content.decode()))
-                    self.raw_frame = DataFrame(csv_arg=StringIO(my_response.content.decode()))
+                    self.raw_frame = DataFrame(source=StringIO(my_response.content.decode()))
                     if self.raw_frame.empty or self.raw_frame.isna().all().all():
                         raise EmptyDataframe(f'<!> {waypoint.id} Dataframe empty or NaN')
                     break
@@ -182,9 +182,9 @@ class OneMonth:
             error_text = type(err).__name__
             waypoint.folder.joinpath(f'{waypoint.id} {error_text}.{error_type}').touch()
             if self.raw_frame is not None:
-                self.raw_frame.write(waypoint.folder.joinpath(f'month {month} raw frame.csv'))
+                self.raw_frame.save_to_csv(waypoint.folder.joinpath(f'month {month} raw frame.csv'))
             if self.adj_frame is not None:
-                self.adj_frame.write(waypoint.folder.joinpath(f'month {month} adj frame.csv'))
+                self.adj_frame.save_to_csv(waypoint.folder.joinpath(f'month {month} adj frame.csv'))
 
 
 class SixteenMonths:
