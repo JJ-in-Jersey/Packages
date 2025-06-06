@@ -2,7 +2,6 @@ from dateutil.relativedelta import relativedelta
 from datetime import datetime as dt
 from tt_dataframe.dataframe import DataFrame
 from pandas import concat, to_datetime
-# import pandas as pd
 import time
 import requests
 from io import StringIO
@@ -10,7 +9,6 @@ from pathlib import Path
 from os import listdir
 from os.path import isfile, basename
 
-# from tt_file_tools.file_tools import SoupFromXMLResponse, print_file_exists, read_dict, write_dict, write_df
 from tt_file_tools.file_tools import SoupFromXMLResponse, print_file_exists, read_dict, write_dict
 from tt_globals.globals import PresetGlobals
 from tt_gpx.gpx import Waypoint
@@ -57,7 +55,6 @@ class StationDict:
                                   'folder_name': station_tag.find_next('type').text + ' ' + station_tag.find_next('id').text}
                                  for station_tag in stations_tree.find_all('Station')]
                     row_df = DataFrame(row_array).drop_duplicates()
-                    # row_df = pd.DataFrame(row_array).drop_duplicates()
                     row_df['folder'] = row_df['folder_name'].apply(self.absolute_path_string)
                     row_dict = row_df.to_dict('records')
                     StationDict.dict = {r['id']: r for r in row_dict}
@@ -151,8 +148,7 @@ class OneMonth:
                     # trap for download/communication errors - connection errors
                     if 'predictions are not available' in my_response.content.decode():
                         raise DataNotAvailable(f'<!> {waypoint.id} Predictions not available')
-                    # self.raw_frame = pd.read_csv(StringIO(my_response.content.decode()))
-                    self.raw_frame = DataFrame(source=StringIO(my_response.content.decode()))
+                    self.raw_frame = DataFrame(csv_source=StringIO(my_response.content.decode()))
                     if self.raw_frame.empty or self.raw_frame.isna().all().all():
                         raise EmptyDataframe(f'<!> {waypoint.id} Dataframe empty or NaN')
                     break
@@ -217,6 +213,5 @@ class SixteenMonths:
             self.error = err
 
         else:
-            # self.adj_frame = OneMonth.adjust_frame(pd.concat([m.raw_frame for m in months], axis=0, ignore_index=True))
             self.adj_frame = OneMonth.adjust_frame(concat([m.raw_frame for m in months], axis=0, ignore_index=True))
             del months
