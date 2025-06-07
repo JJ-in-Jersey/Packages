@@ -7,7 +7,10 @@ class DataFrame(PandasDataFrame):
     def __init__(self, data=None, index=None, columns=None, dtype=None, copy=None, csv_source: Path | StringIO = None):
 
         if csv_source is not None:
+            index_column_name = 'Unnamed: 0'
             data = read_csv(csv_source)
+            if index_column_name in data.columns.to_list():
+                data.drop(index_column_name, axis=1, inplace=True)
         super().__init__(data=data, index=index, columns=columns, dtype=dtype, copy=copy)
 
     @property
