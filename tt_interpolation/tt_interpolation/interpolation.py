@@ -1,9 +1,13 @@
 import numpy as np
+from pandas import Series
 from sympy.geometry import Point3D, Line, Segment, Plane
 from sympy import symbols
 
-from scipy.interpolate import Rbf
+from scipy.interpolate import Rbf, CubicSpline
 from matplotlib import pyplot as plot
+
+from tt_exceptions.exceptions import DuplicateValues, LengthMismatch, NonMonotonic
+from tt_dataframe.dataframe import DataFrame
 
 
 def step_size(segments): return np.array([s.length for s in segments]).min() / Interpolator.num_edge_points
@@ -65,6 +69,7 @@ class Interpolator:
         self.plot_point(self.input_point, 'black', 'o')
         plot.show(block=False)
         plot.pause(0.001)
+        return None
 
     def show_interpolated_point(self):
         if self.output_point is None:
@@ -75,6 +80,7 @@ class Interpolator:
         self.plot_segment(Segment(self.input_point, self.output_point), 'black', '--', 0.25)
         plot.show(block=False)
         plot.pause(0.001)
+        return None
 
     @staticmethod
     def close_plot():
@@ -125,3 +131,20 @@ class Interpolator:
 
         if self.shape == Interpolator.SURFACE:
             self.surface = Rbf(self.edge_plot_points[0], self.edge_plot_points[1], self.edge_plot_points[2], function='thin_plate', smooth=100.0)
+
+
+class CubicSplineFrame(DataFrame):
+    def __init__(self, x_series: Series, y_series: Series, step: int | float):
+
+        if not x_series.is_unique:
+            raise DuplicateValues(f'<!> Duplicate x values')
+        if not x_series.is_monotonic_increasing:
+            raise NonMonotonic(f'<!> x values not monotonic')
+        if len(x_series) != len(y_series):
+            raise LengthMismatch(f'<!> x series and y series have different lengths')
+
+        cs = CubicSpline(x_series, y_series)
+        x_values_array = np.array([x for x in range(x_series.iat[0], x_series.iat[-1], step)])
+        y_values_array = cs(x_values_array)
+        df = DataFrame({x_series.name: x_values_array, y_series.name: y_values_array})
+        super().__init__(df)
