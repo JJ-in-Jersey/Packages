@@ -16,7 +16,7 @@ class DataMissing(Exception):
         super().__init__(self.message)
 
 
-class DuplicateTimestamps(Exception):
+class DuplicateValues(Exception):
     def __init__(self, message: str):
         self.message = message
         super().__init__(self.message)
@@ -41,6 +41,12 @@ class FileIsEmpty(Exception):
 
 
 class FileSampleIsEmpty(Exception):
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(message)
+
+
+class LengthMismatch(Exception):
     def __init__(self, message: str):
         self.message = message
         super().__init__(message)
