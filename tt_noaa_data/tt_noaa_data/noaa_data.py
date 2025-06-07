@@ -12,7 +12,7 @@ from os.path import isfile, basename
 from tt_file_tools.file_tools import SoupFromXMLResponse, print_file_exists, read_dict, write_dict
 from tt_globals.globals import PresetGlobals
 from tt_gpx.gpx import Waypoint
-from tt_exceptions.exceptions import DataNotAvailable, EmptyDataframe, DuplicateTimestamps, NonMonotonic, DataMissing
+from tt_exceptions.exceptions import DataNotAvailable, EmptyDataframe, DuplicateValues, NonMonotonic, DataMissing
 
 
 class StationDict:
@@ -165,7 +165,7 @@ class OneMonth:
 
             if not self.adj_frame.Time.is_unique:
                 error_type = error_types['content']
-                raise DuplicateTimestamps(f'<!> {waypoint.id} Duplicate timestamps')
+                raise DuplicateValues(f'<!> {waypoint.id} Duplicate timestamps')
             if not self.adj_frame.stamp.is_monotonic_increasing:
                 error_type = error_types['content']
                 raise NonMonotonic(f'<!> {waypoint.id} Data not monotonic')
@@ -178,9 +178,9 @@ class OneMonth:
             error_text = type(err).__name__
             waypoint.folder.joinpath(f'{waypoint.id} {error_text}.{error_type}').touch()
             if self.raw_frame is not None:
-                self.raw_frame.save_to_csv(waypoint.folder.joinpath(f'month {month} raw frame.csv'))
+                self.raw_frame.write(waypoint.folder.joinpath(f'month {month} raw frame.csv'))
             if self.adj_frame is not None:
-                self.adj_frame.save_to_csv(waypoint.folder.joinpath(f'month {month} adj frame.csv'))
+                self.adj_frame.write(waypoint.folder.joinpath(f'month {month} adj frame.csv'))
 
 
 class SixteenMonths:
