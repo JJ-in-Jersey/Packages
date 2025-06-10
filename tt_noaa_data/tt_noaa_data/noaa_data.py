@@ -1,6 +1,7 @@
 from dateutil.relativedelta import relativedelta
 from datetime import datetime as dt
 from tt_dataframe.dataframe import DataFrame
+from tt_dictionary.dictionary import Dictionary
 from pandas import concat, to_datetime
 import time
 import requests
@@ -9,37 +10,19 @@ from pathlib import Path
 from os import listdir
 from os.path import isfile, basename
 
-from tt_file_tools.file_tools import SoupFromXMLResponse, print_file_exists, read_dict, write_dict
+from tt_file_tools.file_tools import SoupFromXMLResponse, print_file_exists
 from tt_globals.globals import PresetGlobals
 from tt_gpx.gpx import Waypoint
 from tt_exceptions.exceptions import DataNotAvailable, EmptyDataframe, DuplicateValues, NonMonotonic, DataMissing
 
 
-class StationDict:
-    dict = {}
-
-    @staticmethod
-    def absolute_path_string(folder_name):
-        return str(PresetGlobals.waypoints_folder.joinpath(folder_name).absolute())
-
-
-    @staticmethod
-    def add_waypoint(route_waypoint: Waypoint):
-        if bool(StationDict.dict) and route_waypoint.id not in StationDict.dict:
-            row = {'id': route_waypoint.id, 'name': route_waypoint.name,
-                   'lat': route_waypoint.lat, 'lon': route_waypoint.lon,
-                   'type': route_waypoint.type, 'folder_name': basename(route_waypoint.folder),
-                   'folder': StationDict.absolute_path_string(basename(route_waypoint.folder))}
-            StationDict.dict[row['id']] = row
-            print_file_exists(write_dict(PresetGlobals.stations_file, StationDict.dict))
-
+class StationDict(Dictionary):
 
     def __init__(self):
 
-        if print_file_exists(PresetGlobals.stations_file):
-            StationDict.dict = read_dict(PresetGlobals.stations_file)
+        if PresetGlobals.stations_file.exists():
+            super().__init__(json_source=PresetGlobals.stations_file)
         else:
-            StationDict.dict = {}
             my_request = "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations.xml?type=currentpredictions&units=english"
             for _ in range(5):
                 try:
@@ -57,10 +40,10 @@ class StationDict:
                     row_df = DataFrame(row_array).drop_duplicates()
                     row_df['folder'] = row_df['folder_name'].apply(self.absolute_path_string)
                     row_dict = row_df.to_dict('records')
-                    StationDict.dict = {r['id']: r for r in row_dict}
+                    self.update({r['id']: r for r in row_dict})
 
                     print(f'Requesting bins for each station')
-                    for station_id in StationDict.dict.keys():
+                    for station_id in self.keys():
                         print(f'==>   {station_id}')
                         my_request = "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations/" + station_id + "/bins.xml?units=english"
                         for _ in range(3):
@@ -72,14 +55,29 @@ class StationDict:
                                 if bin_count and bins_tree.find('Bin').find('depth') is not None:
                                     bin_dict = {int(tag.num.text): float(tag.depth.text) for tag in bins_tree.find_all('Bin')}
                                     bin_dict = dict(sorted(bin_dict.items(), key=lambda item: item[1]))
-                                    StationDict.dict[station_id]['bins'] = bin_dict
+                                    self[station_id]['bins'] = bin_dict
                                 break
                             except requests.exceptions.RequestException:
                                 time.sleep(2)
-                    print_file_exists(write_dict(PresetGlobals.stations_file, StationDict.dict))
+                    print_file_exists(self.write(PresetGlobals.stations_file))
+                    super().__init__(json_source=PresetGlobals.stations_file)
                     break
                 except requests.exceptions.RequestException:
                     time.sleep(1)
+
+
+    @staticmethod
+    def absolute_path_string(folder_name):
+        return str(PresetGlobals.waypoints_folder.joinpath(folder_name).absolute())
+
+    def add_waypoint(self, route_waypoint: Waypoint):
+        if route_waypoint.id not in self:
+            row = {'id': route_waypoint.id, 'name': route_waypoint.name,
+                   'lat': route_waypoint.lat, 'lon': route_waypoint.lon,
+                   'type': route_waypoint.type, 'folder_name': basename(route_waypoint.folder),
+                   'folder': StationDict.absolute_path_string(basename(route_waypoint.folder))}
+            self[row['id']] = row
+            print_file_exists(self.write(PresetGlobals.stations_file))
 
 
 class OneMonth:
@@ -102,9 +100,7 @@ class OneMonth:
     # def adjust_frame(raw_frame: pd.DataFrame):
     def adjust_frame(raw_frame: DataFrame):
         frame = raw_frame.rename(columns={h: h.strip() for h in raw_frame.columns.tolist()})
-        # frame.Time = pd.to_datetime(frame.Time, utc=True)
         frame.Time = to_datetime(frame.Time, utc=True)
-        # frame.sort_values(by='Time', ignore_index=True, inplace=True)
         frame['duplicated'] = frame.duplicated(subset='Time')
         frame['stamp'] = frame.Time.apply(dt.timestamp).astype(int)
         frame['diff'] = frame.stamp.diff()
