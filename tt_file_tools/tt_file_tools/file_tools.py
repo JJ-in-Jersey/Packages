@@ -51,20 +51,6 @@ def read_text_arr(filepath: Path):
     return lines
 
 
-def write_dict(file: Path, dictionary: dict):
-    with open(file, 'w') as a_file:
-        # noinspection PyTypeChecker
-        json.dump(dictionary, a_file)
-    return file
-
-
-def read_dict(file: Path):
-    if not file.exists():
-        raise FileExistsError(file)
-    with open(file, 'r') as a_file:
-        return json.load(a_file)
-
-
 def list_all_files(folder_path):
     file_list = []
     for root, _, files in os.walk(folder_path):
