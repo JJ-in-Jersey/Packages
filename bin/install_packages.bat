@@ -11,6 +11,7 @@ pip install ./tt_singleton
 pip install ./tt_semaphore
 pip install ./tt_exceptions
 pip install ./tt_dataframe
+pip install ./tt_dictionary
 pip install ./tt_date_time_tools
 pip install ./tt_file_tools
 pip install ./tt_geometry
