@@ -197,7 +197,7 @@ class Route:
         self.waypoints = []
         for tag in tree.find_all('rtept'):
             if tag.sym.text == Waypoint.code_symbols['H'] or tag.sym == Waypoint.code_symbols['S']:
-                self.waypoints.append(Waypoint(stations_dict[tag.desc.text]))
+                self.waypoints.append(Waypoint(stations_dict[str(tag.desc.text).replace('\n', '').strip()]))
             elif tag.sym.text == Waypoint.code_symbols['L']:
                 self.waypoints.append(Location(tag))
             elif tag.sym.text == Waypoint.code_symbols['E']:
