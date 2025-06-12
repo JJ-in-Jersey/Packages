@@ -9,7 +9,7 @@ from string import Template
 
 from tt_navigation.navigation import distance, directions, Heading
 from tt_file_tools.file_tools import SoupFromXMLFile
-from tt_globals.globals import PresetGlobals
+from tt_globals.globals import PresetGlobals as pg
 
 
 class BaseWaypoint:
@@ -26,7 +26,7 @@ class BaseWaypoint:
     ordinal_number = 0
 
     def write_gpx(self):
-        soup = SoupFromXMLFile(PresetGlobals.templates_folder.joinpath('waypoint_template.gpx')).tree
+        soup = SoupFromXMLFile(pg.templates_folder.joinpath('waypoint_template.gpx')).tree
         soup.find('name').string = self.name
         soup.find('wpt')['lat'] = self.lat
         soup.find('wpt')['lon'] = self.lon
@@ -47,7 +47,7 @@ class BaseWaypoint:
         desc_tag.string = self.id
         soup.find('name').insert_after(desc_tag)
 
-        with open(PresetGlobals.gpx_folder.joinpath(self.id + '.gpx'), 'w') as a_file:
+        with open(pg.gpx_folder.joinpath(self.id + '.gpx'), 'w') as a_file:
             a_file.write(str(soup))
 
 
@@ -77,7 +77,7 @@ class BaseWaypoint:
         if bool(station['folder']):
             self.folder = Path(station['folder'])
         else:
-            self.folder = PresetGlobals.waypoints_folder.joinpath(self.name)
+            self.folder = pg.waypoints_folder.joinpath(self.name)
         self.raw_csv_path = self.folder.joinpath(self.raw_csv_name)
         self.adjusted_csv_path = self.folder.joinpath(self.adjusted_csv_name)
         self.spline_csv_path = self.folder.joinpath(self.spline_csv_name)
@@ -192,7 +192,7 @@ class Route:
 
         self.name = tree.find('name').string
         self.code = ''.join(word[0] for word in self.name.upper().split())
-        self.folder = PresetGlobals.project_base_folder.joinpath(self.code)
+        self.folder = pg.project_base_folder.joinpath(self.code)
 
         self.waypoints = []
         for tag in tree.find_all('rtept'):
