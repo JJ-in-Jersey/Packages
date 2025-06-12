@@ -1,7 +1,5 @@
 from dateutil.relativedelta import relativedelta
 from datetime import datetime as dt
-from tt_dataframe.dataframe import DataFrame
-from tt_dictionary.dictionary import Dictionary
 from pandas import concat, to_datetime
 import time
 import requests
@@ -10,10 +8,12 @@ from pathlib import Path
 from os import listdir
 from os.path import isfile, basename
 
+from tt_dataframe.dataframe import DataFrame
+from tt_dictionary.dictionary import Dictionary
 from tt_file_tools.file_tools import SoupFromXMLResponse, print_file_exists
 from tt_globals.globals import PresetGlobals
 from tt_gpx.gpx import Waypoint
-from tt_exceptions.exceptions import DataNotAvailable, EmptyDataframe, DuplicateValues, NonMonotonic, DataMissing
+from tt_exceptions.exceptions import DataNotAvailable, EmptyRequestResponse, DuplicateValues, NonMonotonic, DataMissing
 
 
 class StationDict(Dictionary):
@@ -80,45 +80,62 @@ class StationDict(Dictionary):
             print_file_exists(self.write(PresetGlobals.stations_file))
 
 
-class OneMonth:
-
-    @staticmethod
-    def connection_error(folder: str):
-        folder_path = Path(folder)
-        if bool([f for f in listdir(folder_path) if isfile(folder_path.joinpath(f)) and 'connection_error' in f]):
-            return True
-        return False
-
-    @staticmethod
-    def content_error(folder: str):
-        folder_path = Path(folder)
-        if bool([f for f in listdir(folder_path) if isfile(folder_path.joinpath(f)) and 'content_error' in f]):
-            return True
-        return False
-
-    @staticmethod
-    # def adjust_frame(raw_frame: pd.DataFrame):
-    def adjust_frame(raw_frame: DataFrame):
-        frame = raw_frame.rename(columns={h: h.strip() for h in raw_frame.columns.tolist()})
-        frame.Time = to_datetime(frame.Time, utc=True)
-        frame['duplicated'] = frame.duplicated(subset='Time')
-        frame['stamp'] = frame.Time.apply(dt.timestamp).astype(int)
-        frame['diff'] = frame.stamp.diff()
-        frame['diff_sign'] = abs(frame['diff']) / frame['diff']
-        frame['timestep_match'] = frame['diff'] == frame['diff'].iloc[1]
-        return frame
+class OneMonth(DataFrame):
 
     def __init__(self, month: int, year: int, waypoint: Waypoint, interval_time: int = 1):
 
-        self.raw_frame = None
-        self.adj_frame = None
-        self.error = False
-        error_type = None
-        error_types = {'content': 'content_error', 'connection': 'connection_error'}
+        error = None
+        frame = None
+        my_response = None
 
         if month < 1 or month > 12:
-            self.error = ValueError
-            raise self.error
+            raise ValueError
+
+        try:
+            for _ in range(5):
+                try:
+                    my_response = requests.get(self.url(month, year, waypoint))
+                    my_response.raise_for_status()
+                    if not my_response.content or not my_response.text.strip() or bool(len(my_response.content)):
+                        raise EmptyRequestResponse
+                    if 'predictions are not available' in my_response.content.decode():
+                        raise DataNotAvailable
+                    break  # break try-5 loop because the request was successful
+                except Exception as e:
+                    time.sleep(2)
+        except Exception as e:
+            print(f'<!> {type(e).__name__} {waypoint.id}')
+            raise
+
+        try:
+            frame = DataFrame(csv_source=StringIO(my_response.content.decode()))
+            if frame.empty or frame.isna().all().all():
+                raise EmptyRequestResponse(f'<!> {waypoint.id} Dataframe empty or NaN')
+            frame.Time = to_datetime(frame.Time, utc=True)
+            frame['duplicated'] = frame.duplicated(subset='Time')
+            frame['stamp'] = frame.Time.apply(dt.timestamp).astype(int)
+            frame['diff'] = frame.stamp.diff()
+            frame['diff_sign'] = abs(frame['diff']) / frame['diff']
+            frame['timestep_match'] = frame['diff'] == frame['diff'].iloc[1]
+
+            if frame.Time.is_unique:
+                raise DuplicateValues(f'<!> {waypoint.id} Duplicate timestamps')
+            if not frame.stamp.is_monotonic_increasing:
+                raise NonMonotonic(f'<!> {waypoint.id} Data not monotonic')
+            if waypoint.type == 'H' and not frame['timestep_match'][1:].all():
+                raise DataMissing(f'<!> {waypoint.id} Data missing')
+        except Exception as e:
+            frame.write(folder.joinpath(f'{waypoint.id} {type(e).__name__}.csv'))
+            print(f'<!> {type(e).__name__} {waypoint.id}')
+            raise
+
+        super().__init__(data=frame)
+
+    @staticmethod
+    def url(month: int, year: int, waypoint: Waypoint, interval_time: int = 1 ):
+
+        if month < 1 or month > 12:
+            raise ValueError
 
         start = dt(year, month, 1)
         end = start + relativedelta(months=1) - relativedelta(days=1)
@@ -133,81 +150,26 @@ class OneMonth:
         # footer_w_bin = footer_wo_bin + "&bin=" + str(waypoint.bin)
         # footer = footer_wo_bin if waypoint.bin is None else footer_w_bin
         footer = footer_wo_bin  # requests wo bin seem to return shallowest predictions
-        my_request = header + begin_date_field + end_date_field + station_field + time_zone_field + footer
 
-        try:
-            for _ in range(5):
-                try:
-                    my_response = requests.get(my_request)
-                    my_response.raise_for_status()
-
-                    # trap for download/communication errors - connection errors
-                    if 'predictions are not available' in my_response.content.decode():
-                        raise DataNotAvailable(f'<!> {waypoint.id} Predictions not available')
-                    self.raw_frame = DataFrame(csv_source=StringIO(my_response.content.decode()))
-                    if self.raw_frame.empty or self.raw_frame.isna().all().all():
-                        raise EmptyDataframe(f'<!> {waypoint.id} Dataframe empty or NaN')
-                    break
-                except Exception as err:
-                    self.error = err
-                    error_type = error_types['connection']
-                    time.sleep(2)
-
-            if self.error:
-                raise self.error
-
-            # trap for file/data integrity errors - content errors
-            self.adj_frame = OneMonth.adjust_frame(self.raw_frame)
-
-            if not self.adj_frame.Time.is_unique:
-                error_type = error_types['content']
-                raise DuplicateValues(f'<!> {waypoint.id} Duplicate timestamps')
-            if not self.adj_frame.stamp.is_monotonic_increasing:
-                error_type = error_types['content']
-                raise NonMonotonic(f'<!> {waypoint.id} Data not monotonic')
-            if waypoint.type == 'H' and not self.adj_frame['timestep_match'][1:].all():
-                error_type = error_types['content']
-                raise DataMissing(f'<!> {waypoint.id} Data missing')
-
-        except Exception as err:
-            self.error = err
-            error_text = type(err).__name__
-            waypoint.folder.joinpath(f'{waypoint.id} {error_text}.{error_type}').touch()
-            if self.raw_frame is not None:
-                self.raw_frame.write(waypoint.folder.joinpath(f'month {month} raw frame.csv'))
-            if self.adj_frame is not None:
-                self.adj_frame.write(waypoint.folder.joinpath(f'month {month} adj frame.csv'))
+        return header + begin_date_field + end_date_field + station_field + time_zone_field + footer
 
 
 class SixteenMonths:
 
     def __init__(self, year: int, waypoint: Waypoint):
-        self.error = False
 
-        months = []
+        self.adj_frame = DataFrame
         try:
             for m in range(11, 13):
                 month = OneMonth(m, year - 1, waypoint)
-                if month.error:
-                    raise month.error
-                months.append(month)
-
+                concat(self.adj_frame, month, axis=0)
             for m in range(1, 13):
                 month = OneMonth(m, year, waypoint)
-                if month.error:
-                    raise month.error
-                months.append(month)
-
+                concat(self.adj_frame, month, axis=0)
             for m in range(1, 3):
                 month = OneMonth(m, year + 1, waypoint)
-                if month.error:
-                    self.error = month.error
-                    raise month.error
-                months.append(month)
-
-        except Exception as err:
-            self.error = err
-
-        else:
-            self.adj_frame = OneMonth.adjust_frame(concat([m.raw_frame for m in months], axis=0, ignore_index=True))
-            del months
+                concat(self.adj_frame, month, axis=0)
+        except Exception as e:
+            self.adj_frame.write(folder.joinpath(f'{waypoint.id} {type(e).__name__}.csv'))
+            print(f'<!> {type(e).__name__} {waypoint.id}')
+            raise
