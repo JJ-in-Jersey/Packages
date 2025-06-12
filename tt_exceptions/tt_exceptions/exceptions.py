@@ -22,7 +22,7 @@ class DuplicateValues(Exception):
         super().__init__(self.message)
 
 
-class EmptyDataframe(Exception):
+class EmptyRequestResponse(Exception):
     def __init__(self, message: str):
         self.message = message
         super().__init__(self.message)
@@ -50,3 +50,9 @@ class LengthMismatch(Exception):
     def __init__(self, message: str):
         self.message = message
         super().__init__(message)
+
+
+class IndexGreaterThanThree(Exception):
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(self.message)
