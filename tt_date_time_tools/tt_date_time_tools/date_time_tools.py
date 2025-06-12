@@ -1,5 +1,5 @@
 import dateparser
-import pandas as pd
+from pandas import Timestamp
 
 
 def hours_mins(secs): return "%d:%02d" % (secs // 3600, secs % 3600 // 60)
@@ -8,11 +8,11 @@ def hours_mins(secs): return "%d:%02d" % (secs // 3600, secs % 3600 // 60)
 def mins_secs(secs): return "%d:%02d" % (secs // 60, secs % 60)
 
 
-def time_to_degrees(time):
+def time_to_degrees(time: str | Timestamp):
     if isinstance(time, str):
         time = dateparser.parse(time)
         return time.hour * 15 + time.minute * 0.25
-    elif isinstance(time, pd.Timestamp):
+    elif isinstance(time, Timestamp):
         return time.hour * 15 + time.minute * 0.25
-    elif time is None:
-        return None
+    else:
+        raise TypeError
