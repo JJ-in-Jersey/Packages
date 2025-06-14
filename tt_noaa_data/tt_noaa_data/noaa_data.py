@@ -1,7 +1,8 @@
 from dateutil.relativedelta import relativedelta
 from datetime import datetime as dt
 from pandas import concat, to_datetime
-import time
+from numpy import sign
+from time import sleep
 import requests
 from io import StringIO
 from pathlib import Path
@@ -58,12 +59,12 @@ class StationDict(Dictionary):
                                     self[station_id]['bins'] = bin_dict
                                 break
                             except requests.exceptions.RequestException:
-                                time.sleep(2)
+                                sleep(2)
                     print_file_exists(self.write(PresetGlobals.stations_file))
                     super().__init__(json_source=PresetGlobals.stations_file)
                     break
                 except requests.exceptions.RequestException:
-                    time.sleep(1)
+                    sleep(1)
 
 
     @staticmethod
@@ -84,7 +85,6 @@ class OneMonth(DataFrame):
 
     def __init__(self, month: int, year: int, waypoint: Waypoint, interval_time: int = 1):
 
-        error = None
         frame = None
         my_response = None
 
@@ -96,7 +96,7 @@ class OneMonth(DataFrame):
                 try:
                     my_response = requests.get(self.url(month, year, waypoint))
                     my_response.raise_for_status()
-                    if not my_response.content or not my_response.text.strip() or bool(len(my_response.content)):
+                    if not (my_response.content and my_response.text.strip() and bool(len(my_response.content))):
                         raise EmptyRequestResponse
                     if 'predictions are not available' in my_response.content.decode():
                         raise DataNotAvailable
@@ -104,32 +104,31 @@ class OneMonth(DataFrame):
                 except Exception as e:
                     time.sleep(2)
         except Exception as e:
-            print(f'<!> {type(e).__name__} {waypoint.id}')
             raise
 
         try:
             frame = DataFrame(csv_source=StringIO(my_response.content.decode()))
+            frame.columns = frame.columns.str.strip()
+
             if frame.empty or frame.isna().all().all():
                 raise EmptyRequestResponse(f'<!> {waypoint.id} Dataframe empty or NaN')
             frame.Time = to_datetime(frame.Time, utc=True)
             frame['duplicated'] = frame.duplicated(subset='Time')
             frame['stamp'] = frame.Time.apply(dt.timestamp).astype(int)
             frame['diff'] = frame.stamp.diff()
-            frame['diff_sign'] = abs(frame['diff']) / frame['diff']
+            frame['diff_sign'] = sign(frame['diff'])
             frame['timestep_match'] = frame['diff'] == frame['diff'].iloc[1]
 
-            if frame.Time.is_unique:
-                raise DuplicateValues(f'<!> {waypoint.id} Duplicate timestamps')
+            if not frame.Time.is_unique:
+                raise DuplicateValues
             if not frame.stamp.is_monotonic_increasing:
-                raise NonMonotonic(f'<!> {waypoint.id} Data not monotonic')
+                raise NonMonotonic
             if waypoint.type == 'H' and not frame['timestep_match'][1:].all():
-                raise DataMissing(f'<!> {waypoint.id} Data missing')
+                raise DataMissing
         except Exception as e:
-            frame.write(folder.joinpath(f'{waypoint.id} {type(e).__name__}.csv'))
-            print(f'<!> {type(e).__name__} {waypoint.id}')
             raise
-
-        super().__init__(data=frame)
+        else:
+            super().__init__(data=frame)
 
     @staticmethod
     def url(month: int, year: int, waypoint: Waypoint, interval_time: int = 1 ):
@@ -154,22 +153,25 @@ class OneMonth(DataFrame):
         return header + begin_date_field + end_date_field + station_field + time_zone_field + footer
 
 
-class SixteenMonths:
+class SixteenMonths(DataFrame):
 
     def __init__(self, year: int, waypoint: Waypoint):
 
-        self.adj_frame = DataFrame
+        frame = DataFrame()
         try:
-            for m in range(11, 13):
-                month = OneMonth(m, year - 1, waypoint)
-                concat(self.adj_frame, month, axis=0)
+            for m in range(11,13):
+                one_month = OneMonth(m, year - 1, waypoint)
+                concat([frame, one_month], axis=0, ignore_index=True)
+            # frame = concat([frame] + [OneMonth(m, year - 1, waypoint) for m in range(11,13)], axis=0, ignore_index=True)
             for m in range(1, 13):
-                month = OneMonth(m, year, waypoint)
-                concat(self.adj_frame, month, axis=0)
-            for m in range(1, 3):
-                month = OneMonth(m, year + 1, waypoint)
-                concat(self.adj_frame, month, axis=0)
+                one_month = OneMonth(m, year, waypoint)
+                concat([frame, one_month], axis=0, ignore_index=True)
+            # frame = concat([frame] + [OneMonth(m, year, waypoint) for m in range(1, 13)], axis=0, ignore_index=True)
+            for m in range(1,3):
+                one_month = OneMonth(m, year + 1, waypoint)
+                concat([frame, one_month], axis=0, ignore_index=True)
+            # frame = concat([frame] + [OneMonth(m, year + 1, waypoint) for m in range(1,3)], axis=0, ignore_index=True)
         except Exception as e:
-            self.adj_frame.write(folder.joinpath(f'{waypoint.id} {type(e).__name__}.csv'))
-            print(f'<!> {type(e).__name__} {waypoint.id}')
             raise
+        else:
+            super().__init__(data=frame)
