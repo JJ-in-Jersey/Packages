@@ -14,7 +14,7 @@ from tt_dictionary.dictionary import Dictionary
 from tt_file_tools.file_tools import SoupFromXMLResponse, print_file_exists
 from tt_globals.globals import PresetGlobals
 from tt_gpx.gpx import Waypoint
-from tt_exceptions.exceptions import DataNotAvailable, EmptyRequestResponse, DuplicateValues, NonMonotonic, DataMissing
+from tt_exceptions.exceptions import DataNotAvailable, EmptyResponse, DuplicateValues, NonMonotonic, DataMissing
 
 
 class StationDict(Dictionary):
@@ -81,18 +81,25 @@ class StationDict(Dictionary):
             print_file_exists(self.write(PresetGlobals.stations_file))
 
 
+    def comment_waypoint(self, waypoint_id: str):
+        if waypoint_id in self:
+            print(f'Excluding {waypoint_id} from station dictionary')
+            self['#' + waypoint_id] = self.pop(waypoint_id)
+            self.write(PresetGlobals.stations_file)
+
+
 class OneMonth(DataFrame):
 
     def __init__(self, month: int, year: int, waypoint: Waypoint, interval_time: int = 1):
 
-        frame = None
         my_response = None
 
         if month < 1 or month > 12:
             raise ValueError
 
         try:
-            for _ in range(5):
+            attempts = 5
+            for attempt in range(attempts):
                 try:
                     my_response = requests.get(self.url(month, year, waypoint))
                     my_response.raise_for_status()
@@ -102,7 +109,9 @@ class OneMonth(DataFrame):
                         raise DataNotAvailable
                     break  # break try-5 loop because the request was successful
                 except Exception as e:
-                    time.sleep(2)
+                    if attempt == attempts - 1:
+                        raise
+                    sleep(2)
         except Exception as e:
             raise
 
@@ -111,7 +120,7 @@ class OneMonth(DataFrame):
             frame.columns = frame.columns.str.strip()
 
             if frame.empty or frame.isna().all().all():
-                raise EmptyRequestResponse(f'<!> {waypoint.id} Dataframe empty or NaN')
+                raise EmptyResponse(f'<!> {waypoint.id} Dataframe empty or NaN')
             frame.Time = to_datetime(frame.Time, utc=True)
             frame['duplicated'] = frame.duplicated(subset='Time')
             frame['stamp'] = frame.Time.apply(dt.timestamp).astype(int)
@@ -159,18 +168,18 @@ class SixteenMonths(DataFrame):
 
         frame = DataFrame()
         try:
-            for m in range(11,13):
-                one_month = OneMonth(m, year - 1, waypoint)
-                concat([frame, one_month], axis=0, ignore_index=True)
-            # frame = concat([frame] + [OneMonth(m, year - 1, waypoint) for m in range(11,13)], axis=0, ignore_index=True)
-            for m in range(1, 13):
-                one_month = OneMonth(m, year, waypoint)
-                concat([frame, one_month], axis=0, ignore_index=True)
-            # frame = concat([frame] + [OneMonth(m, year, waypoint) for m in range(1, 13)], axis=0, ignore_index=True)
-            for m in range(1,3):
-                one_month = OneMonth(m, year + 1, waypoint)
-                concat([frame, one_month], axis=0, ignore_index=True)
-            # frame = concat([frame] + [OneMonth(m, year + 1, waypoint) for m in range(1,3)], axis=0, ignore_index=True)
+            frame = concat([frame] + [OneMonth(m, year - 1, waypoint) for m in range(11,13)], axis=0, ignore_index=True)
+            frame = concat([frame] + [OneMonth(m, year, waypoint) for m in range(1, 13)], axis=0, ignore_index=True)
+            frame = concat([frame] + [OneMonth(m, year + 1, waypoint) for m in range(1,3)], axis=0, ignore_index=True)
+            # for m in range(11,13):
+            #     month = OneMonth(m, year -1, waypoint)
+            #     frame = concat([frame, month], axis=0, ignore_index=True)
+            # for m in range(1,13):
+            #     month = OneMonth(m, year, waypoint)
+            #     frame = concat([frame, month], axis=0, ignore_index=True)
+            # for m in range(1,3):
+            #     month = OneMonth(m, year + 1, waypoint)
+            #     frame = concat([frame, month], axis=0, ignore_index=True)
         except Exception as e:
             raise
         else:
