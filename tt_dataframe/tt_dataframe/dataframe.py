@@ -2,24 +2,23 @@ from pandas import DataFrame as PandasDataFrame, read_csv
 from pathlib import Path
 from io import StringIO
 
+# test comment
+
+
 class DataFrame(PandasDataFrame):
 
-    def __init__(self, data=None, index=None, columns=None, dtype=None, copy=None, csv_source: Path | StringIO = None):
-
+    def __init__(self, data = None, *, csv_source: Path | StringIO = None, **kwargs):
         if csv_source is not None:
-            # index_column_name = 'Unnamed: 0'
-            data = read_csv(csv_source, usecols=columns)
-            # if index_column_name in data.columns.to_list():
-            #     data.drop(index_column_name, axis=1, inplace=True)
-            super().__init__(data=data, index=index, dtype=dtype, copy=copy)
-        else:
-            super().__init__(data=data, columns=columns, index=index, dtype=dtype, copy=copy)
+            data = read_csv(csv_source, usecols=kwargs.pop('columns', None))
+        super().__init__(data, **kwargs)
 
     @property
     def _constructor(self):
         return DataFrame
 
     def write(self, csv_target: Path, **kwargs):
+        if 'index' not in kwargs:
+            kwargs['index'] = False
         self.to_csv(csv_target, **kwargs)
         return csv_target
 
