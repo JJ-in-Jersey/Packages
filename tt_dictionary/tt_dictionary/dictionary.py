@@ -1,6 +1,7 @@
 from pathlib import Path
 import json
 
+
 class Dictionary(dict):
     def __init__(self, json_source: Path = None, *args, **kwargs):
         self.source = json_source
