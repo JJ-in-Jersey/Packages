@@ -90,6 +90,7 @@ class BaseWaypoint:
         BaseWaypoint.ordinal_number += 1
 
 
+#  edges are edges in the route, segments are used for distance and elapsed time
 class EdgeNode(BaseWaypoint):
     def __init__(self, *args):
         super().__init__(*args)
@@ -136,6 +137,7 @@ class Edge:  # connection between waypoints with current data
         self.length = round(distance(start.coords, end.coords), 4)
 
 
+# segments are used for distance and elapsed time, edges are edges in the route
 class Segment:
 
     prefix = 'Segment'
