@@ -2,8 +2,6 @@ from pandas import DataFrame as PandasDataFrame, read_csv
 from pathlib import Path
 from io import StringIO
 
-# test comment
-
 
 class DataFrame(PandasDataFrame):
 
