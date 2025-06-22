@@ -1,4 +1,5 @@
 import numpy as np
+from numpy import ndarray as array
 from pandas import Series
 from sympy.geometry import Point3D, Line, Segment, Plane
 from sympy import symbols
@@ -134,17 +135,16 @@ class Interpolator:
 
 
 class CubicSplineFrame(DataFrame):
-    def __init__(self, x_series: Series, y_series: Series, step: int | float):
+    def __init__(self, x: Series | array | list, y: Series | array | list, spline_x: Series | array | list):
 
-        if not x_series.is_unique:
+        if not x.is_unique:
             raise DuplicateValues(f'<!> Duplicate x values')
-        if not x_series.is_monotonic_increasing:
+        if not x.is_monotonic_increasing:
             raise NonMonotonic(f'<!> x values not monotonic')
-        if len(x_series) != len(y_series):
+        if len(x) != len(y):
             raise LengthMismatch(f'<!> x series and y series have different lengths')
 
-        cs = CubicSpline(x_series, y_series)
-        x_values_array = np.array([x for x in range(x_series.iat[0], x_series.iat[-1], step)])
-        y_values_array = cs(x_values_array)
-        df = DataFrame({x_series.name: x_values_array, y_series.name: y_values_array})
+        cs = CubicSpline(x, y)
+        spline_y = cs(spline_x)
+        df = DataFrame({x.name: spline_x, y.name: spline_y})
         super().__init__(df)
