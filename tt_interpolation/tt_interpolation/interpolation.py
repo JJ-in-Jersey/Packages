@@ -145,6 +145,4 @@ class CubicSplineFrame(DataFrame):
             raise LengthMismatch(f'<!> x series and y series have different lengths')
 
         cs = CubicSpline(x, y)
-        spline_y = cs(spline_x)
-        df = DataFrame({x.name: spline_x, y.name: spline_y})
-        super().__init__(df)
+        super().__init__(DataFrame({x.name: spline_x, y.name: cs(spline_x)}))
