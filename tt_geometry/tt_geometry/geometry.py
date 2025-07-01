@@ -8,7 +8,7 @@ from tt_exceptions.exceptions import DateMismatch, LengthMismatch
 class Arc:
 
     arguments = {'start_time', 'start_duration', 'min_time', 'min_duration', 'end_time', 'end_duration'}
-    midnight_tolerance = 1.25  # in degrees, represents 5 minutes
+    midnight_tolerance = 1.25  # in degrees, = 5 minutes
 
     @property
     def arc_dict(self):
@@ -44,7 +44,7 @@ class Arc:
             raise DateMismatch(f'     {self.__class__} start and end days are different')
 
         if self.total_angle % 360 <= 0:
-            raise LengthMismatch(f'     {self.__class__} Ignoring arc length pf {arc_length} degrees, {arc_length/0.25} minutes')
+            raise LengthMismatch(f'     {self.__class__} Ignoring arc length pf {self.total_angle} degrees, {self.total_angle/0.25} minutes')
 
 
 class StartArc(Arc):
