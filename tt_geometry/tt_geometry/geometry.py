@@ -37,12 +37,12 @@ class Arc:
         if abs(self.end_angle) % 360 <= self.midnight_tolerance:
             self.end_duration_display = False
 
-        self.arc_angle = abs(self.end_angle - self.start_angle) % 360
+        self.total_angle = abs(self.end_angle - self.start_angle) % 360
 
         if self.start_time.date() != self.end_time.date():
             raise DateMismatch(f'     {self.__class__} start and end days are different')
 
-        if self.arc_angle % 360 <= 0:
+        if self.total_angle % 360 <= 0:
             raise LengthMismatch(f'     {self.__class__} Ignoring arc length pf {arc_length} degrees, {arc_length/0.25} minutes')
 
 
