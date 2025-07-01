@@ -8,6 +8,7 @@ from tt_exceptions.exceptions import DateMismatch, LengthMismatch
 class Arc:
 
     arguments = {'start_time', 'start_duration', 'min_time', 'min_duration', 'end_time', 'end_duration'}
+    midnight_tolerance = 1.25  # in degrees, represents 5 minutes
 
     @property
     def arc_dict(self):
