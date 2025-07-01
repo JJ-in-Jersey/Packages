@@ -2,7 +2,7 @@ from datetime import timedelta as td
 from tt_date_time_tools.date_time_tools import time_to_degrees
 from copy import deepcopy
 
-from tt_exceptions.exceptions import DateMismatch, LengthMismatch
+from tt_exceptions.exceptions import DateMismatch
 
 
 class Arc:
@@ -43,8 +43,8 @@ class Arc:
         if self.start_time.date() != self.end_time.date():
             raise DateMismatch(f'     {self.__class__} start and end days are different')
 
-        if self.total_angle % 360 <= 0:
-            raise LengthMismatch(f'     {self.__class__} Ignoring arc length pf {self.total_angle} degrees, {self.total_angle/0.25} minutes')
+        # if self.total_angle % 360 <= 0:
+        #     raise LengthMismatch(f'     {self.__class__} Ignoring arc length pf {self.total_angle} degrees, {self.total_angle/0.25} minutes')
 
 
 class StartArc(Arc):
