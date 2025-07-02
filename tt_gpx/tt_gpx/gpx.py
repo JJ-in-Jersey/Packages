@@ -242,6 +242,6 @@ class GpxFile:
 
         with open(filepath, 'r') as f:
             gpxfile = f.read()
-        self.tree = Soup(gpxfile, 'lxml', preserve_whitespace_tags=['name', 'type', 'sym', 'text'], features='xml')
+        self.tree = Soup(gpxfile, preserve_whitespace_tags=['name', 'type', 'sym', 'text'], features='xml')
 
         GpxFile.write_clean_gpx(filepath, self.tree)
