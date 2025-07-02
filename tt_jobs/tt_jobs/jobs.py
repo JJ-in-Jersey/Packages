@@ -23,12 +23,12 @@ class ElapsedTimeFrame(DataFrame):
     #  Elapsed times are reported in number of timesteps
     @staticmethod
     def elapsed_time(distances, length):
-        cumsum = 0
+        csum = 0
         index = 0
-        while cumsum < length:
-            cumsum += distances[index]
+        while csum < length and index < len(distances):
+            csum += distances[index]
             index += 1
-        return index
+        return index - 1
 
     def __init__(self, start_path: Path, end_path: Path, length: float, speed: int, name: str):
 
@@ -47,12 +47,10 @@ class ElapsedTimeFrame(DataFrame):
 
         dist = self.distance(end_frame.Velocity_Major.to_numpy()[1:], start_frame.Velocity_Major.to_numpy()[:-1], speed, pg.timestep / 3600)
         dist = dist * sign(speed)  # make sure distances are positive in the direction of the current
-        dist_limit = len(dist) -1 - where(cumsum(dist[::-1]) > length)[0][0]  # don't run off the end of the array
-        timesteps = [self.elapsed_time(dist[i:], length) for i in range(dist_limit)]
+        timesteps = [self.elapsed_time(dist[i:], length) for i in range(len(dist))]
         timesteps.insert(0,0)  # initial time 0 has no displacement
 
         frame = DataFrame(data={'stamp': start_frame.stamp, 'Time': to_datetime(start_frame.Time, utc=True)})
-        frame = frame.loc[:dist_limit]
         frame[name] = timesteps
         super().__init__(data=frame)
 
