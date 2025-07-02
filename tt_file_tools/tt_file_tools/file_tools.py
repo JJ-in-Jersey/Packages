@@ -28,12 +28,12 @@ class SoupFromXMLFile:
     def __init__(self, filepath):
         with open(filepath, 'r') as f:
             content = f.read()
-        self.tree = Soup(f, feature='xml')
+        self.tree = Soup(f, 'lxml')
 
 
 class SoupFromXMLResponse:
     def __init__(self, response):
-        self.tree = Soup(response, feature='xml')
+        self.tree = Soup(response, 'lxml')
 
 
 def print_file_exists(filepath: Path):
