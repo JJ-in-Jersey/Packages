@@ -30,7 +30,7 @@ class StationDict(Dictionary):
                     print(f'Requesting list of stations')
                     my_response = requests.get(my_request)
                     my_response.raise_for_status()
-                    stations_tree = SoupFromXMLResponse(StringIO(my_response.content.decode())).tree
+                    stations_tree = SoupFromXMLResponse(StringIO(my_response.content.decode())).soup
                     row_array = [{'id': station_tag.find_next('id').text,
                                   'name': station_tag.find_next('name').text,
                                   'lat': float(station_tag.find_next('lat').text),
@@ -51,7 +51,7 @@ class StationDict(Dictionary):
                             try:
                                 my_response = requests.get(my_request)
                                 my_response.raise_for_status()
-                                bins_tree = SoupFromXMLResponse(StringIO(my_response.content.decode())).tree
+                                bins_tree = SoupFromXMLResponse(StringIO(my_response.content.decode())).soup
                                 bin_count = int(bins_tree.find("nbr_of_bins").text)
                                 if bin_count and bins_tree.find('Bin').find('depth') is not None:
                                     bin_dict = {int(tag.num.text): float(tag.depth.text) for tag in bins_tree.find_all('Bin')}

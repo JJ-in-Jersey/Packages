@@ -26,14 +26,14 @@ def wait_for_new_file(folder, event_function):
 
 class SoupFromXMLFile:
     def __init__(self, filepath):
-        with open(filepath, 'r') as f:
-            content = f.read()
-        self.tree = Soup(f, 'lxml')
+        with open(filepath, 'r', encoding='utf-8') as file:
+            self.soup = Soup(file, 'xml')
+
 
 
 class SoupFromXMLResponse:
     def __init__(self, response):
-        self.tree = Soup(response, 'lxml')
+        self.soup = Soup(response, 'lxml')
 
 
 def print_file_exists(filepath: Path):

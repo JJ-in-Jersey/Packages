@@ -26,7 +26,7 @@ class BaseWaypoint:
     ordinal_number = 0
 
     def write_gpx(self):
-        soup = SoupFromXMLFile(pg.templates_folder.joinpath('waypoint_template.gpx')).tree
+        soup = SoupFromXMLFile(pg.templates_folder.joinpath('waypoint_template.gpx')).soup
         soup.find('name').string = self.name
         soup.find('wpt')['lat'] = self.lat
         soup.find('wpt')['lon'] = self.lon
