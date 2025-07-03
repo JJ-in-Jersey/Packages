@@ -33,7 +33,7 @@ class SoupFromXMLFile:
 
 class SoupFromXMLResponse:
     def __init__(self, response):
-        self.soup = Soup(response, 'lxml')
+        self.soup = Soup(response, 'xml')
 
 
 def print_file_exists(filepath: Path):
