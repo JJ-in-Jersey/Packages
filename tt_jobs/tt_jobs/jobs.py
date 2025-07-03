@@ -54,7 +54,10 @@ class ElapsedTimeFrame(DataFrame):
         while csum < length and index < len(distances):
             csum += distances[index]
             index += 1
-        return index - 1
+        if index > len(distances):
+            return None
+        else:
+            return index - 1
 
     def __init__(self, start_path: Path, end_path: Path, length: float, speed: int, name: str):
 
@@ -73,7 +76,7 @@ class ElapsedTimeFrame(DataFrame):
 
         dist = self.distance(end_frame.Velocity_Major.to_numpy()[1:], start_frame.Velocity_Major.to_numpy()[:-1], speed, pg.timestep / 3600)
         dist = dist * sign(speed)  # make sure distances are positive in the direction of the current
-        timesteps = [self.elapsed_time(dist[i:], length) for i in range(len(dist))]
+        timesteps = [timestep for timestep in [self.elapsed_time(dist[i:], length) for i in range(len(dist))] if timestep is not None]
         timesteps.insert(0,0)  # initial time 0 has no displacement
 
         frame = DataFrame(data={'stamp': start_frame.stamp, 'Time': to_datetime(start_frame.Time, utc=True)})
