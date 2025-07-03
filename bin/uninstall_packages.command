@@ -4,5 +4,5 @@ python %HOME/PycharmProjects/Packages/bin/cleanup.py
 
 pip3 cache purge
 
-pip freeze > /tmp/freeze
-pip uninstall -r /tmp/freeze -y
+pip3 freeze > /tmp/freeze
+pip3 uninstall -r /tmp/freeze -y

@@ -2,24 +2,25 @@
 
 python %HOME/PycharmProjects/Packages/bin/cleanup.py
 
-pip3 cache purge
+pip33 cache purge
 
 cd $HOME/PycharmProjects/Packages
 
-pip install ./tt_interpolation
-pip install ./tt_os_abstraction
-pip install ./tt_navigation
-pip install ./tt_singleton
-pip install ./tt_semaphore
-pip install ./tt_exceptions
-pip install ./tt_dataframe
-pip install ./tt_dictionary
-pip install ./tt_date_time_tools
-pip install ./tt_file_tools
-pip install ./tt_geometry
-pip install ./tt_globals
-pip install ./tt_gpx
-pip install ./tt_job_manager
-pip install ./tt_noaa_data
+pip3 install ./tt_interpolation
+pip3 install ./tt_os_abstraction
+pip3 install ./tt_navigation
+pip3 install ./tt_singleton
+pip3 install ./tt_semaphore
+pip3 install ./tt_exceptions
+pip3 install ./tt_dataframe
+pip3 install ./tt_dictionary
+pip3 install ./tt_date_time_tools
+pip3 install ./tt_file_tools
+pip3 install ./tt_geometry
+pip3 install ./tt_globals
+pip3 install ./tt_gpx
+pip3 install ./tt_job_manager
+pip3 install ./tt_noaa_data
+pip3 install ./tt_jobs
 
 python %HOME/PycharmProjects/Packages/bin/cleanup.py
