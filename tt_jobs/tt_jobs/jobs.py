@@ -3,6 +3,7 @@ from pandas import to_datetime, Series
 from pathlib import Path
 from datetime import datetime
 from scipy.signal import savgol_filter
+from sympy import Point
 
 from tt_dataframe.dataframe import DataFrame
 from tt_gpx.gpx import Route, Waypoint, Segment
@@ -11,6 +12,31 @@ from tt_globals.globals import PresetGlobals as pg
 from tt_file_tools.file_tools import print_file_exists
 from tt_date_time_tools.date_time_tools import hours_mins
 from tt_geometry.geometry import Arc, StartArc, EndArc
+from tt_interpolation.interpolation import Interpolator as VInt
+
+
+class InterpolatedPoint:
+
+    def __init__(self, interpolation_pt_data, lats, lons, vels):
+        num_points = range(len(vels))
+        surface_points = tuple([Point(lats[i], lons[i], vels[i]) for i in num_points])
+        interpolator = VInt(surface_points)
+        interpolator.set_interpolation_point(Point(interpolation_pt_data[1], interpolation_pt_data[2], 0))
+        interpolated_velocity = round(float(interpolator.get_interpolated_point().z.evalf()), 2)
+        self.velocity = interpolated_velocity
+
+
+class InterpolatePointJob(Job):
+
+    def execute(self): return super().execute()
+
+    def execute_callback(self, result): return super().execute_callback(result)
+    def error_callback(self, result): return super().error_callback(result)
+
+    def __init__(self, interpolated_pt: Waypoint, lats: list, lons: list, velos: list, timestamp: int, index: int):
+        interpolated_pt_data = tuple([interpolated_pt.name, interpolated_pt.lat, interpolated_pt.lon])
+        arguments = tuple([interpolated_pt_data, lats, lons, velos])
+        super().__init__(str(index) + ' ' + str(timestamp), timestamp, InterpolatedPoint, arguments)
 
 
 class ElapsedTimeFrame(DataFrame):
