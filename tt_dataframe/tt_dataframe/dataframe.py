@@ -5,7 +5,7 @@ from io import StringIO
 
 class DataFrame(PandasDataFrame):
 
-    def __init__(self, data = None, *, csv_source: Path | StringIO = None, **kwargs):
+    def __init__(self, data=None, *, csv_source: Path | StringIO = None, **kwargs):
         if csv_source is not None:
             data = read_csv(csv_source, usecols=kwargs.pop('columns', None))
         super().__init__(data, **kwargs)

@@ -1,6 +1,7 @@
 from tt_os_abstraction.os_abstraction import env
 from os import makedirs
 
+
 class PresetGlobals:
 
     project_base_folder = env('user_profile').joinpath('Fair Currents')

@@ -4,7 +4,6 @@ import os
 from os.path import join, getctime
 from bs4 import BeautifulSoup as Soup
 from pathlib import Path
-import json
 
 
 def newest_file(folder):

@@ -1,6 +1,4 @@
-from datetime import timedelta as td
 from tt_date_time_tools.date_time_tools import time_to_degrees
-from copy import deepcopy
 
 
 class Arc:
@@ -14,6 +12,10 @@ class Arc:
 
 
     def __init__(self, **kwargs):
+
+        self.start_time = None
+        self.end_time = None
+        self.min_time = None
 
         if set(kwargs.keys()) != self.arguments:
             raise ValueError(f"Expected keys: {self.arguments}")
@@ -44,7 +46,7 @@ class StartArc(Arc):
     def __init__(self, **kwargs):
 
         ets = kwargs['end_time']
-        kwargs['start_time'] = kwargs['start_time'].replace(hour = 0, minute=0, year=ets.year, month=ets.month, day=ets.day)
+        kwargs['start_time'] = kwargs['start_time'].replace(hour=0, minute=0, year=ets.year, month=ets.month, day=ets.day)
         if kwargs['min_time'].date() != ets.date():
             kwargs['min_time'] = kwargs['start_time']
 
@@ -56,7 +58,7 @@ class EndArc(Arc):
     def __init__(self, **kwargs):
 
         sts = kwargs['start_time']
-        kwargs['end_time'] = kwargs['end_time'].replace(hour = 0, minute=0, year=sts.year, month=sts.month, day=sts.day)
+        kwargs['end_time'] = kwargs['end_time'].replace(hour=0, minute=0, year=sts.year, month=sts.month, day=sts.day)
         if kwargs['min_time'].date() != sts.date():
             kwargs['min_time'] = kwargs['end_time']
 

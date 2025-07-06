@@ -5,9 +5,8 @@ from numpy import sign
 from time import sleep
 import requests
 from io import StringIO
-from pathlib import Path
-from os import listdir
-from os.path import isfile, basename
+
+from os.path import basename
 
 from tt_dataframe.dataframe import DataFrame
 from tt_dictionary.dictionary import Dictionary
@@ -90,7 +89,7 @@ class StationDict(Dictionary):
 
 class OneMonth(DataFrame):
 
-    def __init__(self, month: int, year: int, waypoint: Waypoint, interval_time: int = 1):
+    def __init__(self, month: int, year: int, waypoint: Waypoint):
 
         my_response = None
 
@@ -104,16 +103,16 @@ class OneMonth(DataFrame):
                     my_response = requests.get(self.url(month, year, waypoint))
                     my_response.raise_for_status()
                     if not (my_response.content and my_response.text.strip() and bool(len(my_response.content))):
-                        raise EmptyRequestResponse
+                        raise EmptyResponse
                     if 'predictions are not available' in my_response.content.decode():
                         raise DataNotAvailable
                     break  # break try-5 loop because the request was successful
                 except Exception as e:
                     if attempt == attempts - 1:
-                        raise
+                        raise e
                     sleep(2)
         except Exception as e:
-            raise
+            raise e
 
         try:
             frame = DataFrame(csv_source=StringIO(my_response.content.decode()))
@@ -135,12 +134,12 @@ class OneMonth(DataFrame):
             if waypoint.type == 'H' and not frame['timestep_match'][1:].all():
                 raise DataMissing
         except Exception as e:
-            raise
+            raise e
         else:
             super().__init__(data=frame)
 
     @staticmethod
-    def url(month: int, year: int, waypoint: Waypoint, interval_time: int = 1 ):
+    def url(month: int, year: int, waypoint: Waypoint, interval_time: int = 1):
 
         if month < 1 or month > 12:
             raise ValueError
@@ -168,9 +167,9 @@ class SixteenMonths(DataFrame):
 
         frame = DataFrame()
         try:
-            frame = concat([frame] + [OneMonth(m, year - 1, waypoint) for m in range(11,13)], axis=0, ignore_index=True)
+            frame = concat([frame] + [OneMonth(m, year - 1, waypoint) for m in range(11, 13)], axis=0, ignore_index=True)
             frame = concat([frame] + [OneMonth(m, year, waypoint) for m in range(1, 13)], axis=0, ignore_index=True)
-            frame = concat([frame] + [OneMonth(m, year + 1, waypoint) for m in range(1,3)], axis=0, ignore_index=True)
+            frame = concat([frame] + [OneMonth(m, year + 1, waypoint) for m in range(1, 3)], axis=0, ignore_index=True)
             # for m in range(11,13):
             #     month = OneMonth(m, year -1, waypoint)
             #     frame = concat([frame, month], axis=0, ignore_index=True)
@@ -181,6 +180,6 @@ class SixteenMonths(DataFrame):
             #     month = OneMonth(m, year + 1, waypoint)
             #     frame = concat([frame, month], axis=0, ignore_index=True)
         except Exception as e:
-            raise
+            raise e
         else:
             super().__init__(data=frame)

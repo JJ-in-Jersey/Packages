@@ -1,5 +1,4 @@
 import numpy as np
-from numpy import ndarray as array
 from pandas import Series
 from sympy.geometry import Point3D, Line, Segment, Plane
 from sympy import symbols
@@ -135,7 +134,7 @@ class Interpolator:
 
 
 class CubicSplineFrame(DataFrame):
-    def __init__(self, x: Series | array | list, y: Series | array | list, spline_x: Series | array | list):
+    def __init__(self, x: Series | np.ndarray | list, y: Series | np.ndarray | list, spline_x: Series | np.ndarray | list):
 
         if not x.is_unique:
             raise DuplicateValues(f'<!> Duplicate x values')

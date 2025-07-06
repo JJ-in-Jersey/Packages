@@ -41,6 +41,9 @@ class Heading:
             return 3
         elif self.lon_sign < 0 < self.lat_sign:
             return 4
+        else:
+            raise NotImplementedError
+
 
     def __init__(self, start_coords, end_coords):
         self.lat_sign = np.sign(end_coords[0] - start_coords[0])
