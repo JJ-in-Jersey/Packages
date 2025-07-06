@@ -2,7 +2,7 @@
 
 python %HOME/PycharmProjects/Packages/bin/cleanup.py
 
-pip33 cache purge
+pip3 cache purge
 
 cd $HOME/PycharmProjects/Packages
 
