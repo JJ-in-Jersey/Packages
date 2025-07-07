@@ -2,6 +2,8 @@
 python %userprofile%/PycharmProjects/Packages/bin/cleanup.py
 
 pip cache purge
+pip install setuptools
+
 cd %userprofile%/PycharmProjects/Packages
 
 pip install ./tt_interpolation

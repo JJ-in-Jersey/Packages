@@ -3,6 +3,7 @@
 python %HOME/PycharmProjects/Packages/bin/cleanup.py
 
 pip3 cache purge
+pip3 install setuptools
 
 cd $HOME/PycharmProjects/Packages
 
