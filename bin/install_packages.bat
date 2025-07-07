@@ -4,6 +4,7 @@ python %userprofile%/PycharmProjects/Packages/bin/cleanup.py
 pip cache purge
 pip install setuptools
 pip install pandas-stubs
+pip install scipy-stubs
 
 cd %userprofile%/PycharmProjects/Packages
 
