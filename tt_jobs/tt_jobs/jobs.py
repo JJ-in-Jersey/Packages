@@ -1,5 +1,5 @@
-from numpy import sign, ndarray, round
-from pandas import to_datetime, Series
+import pandas as pd
+import numpy as np
 from pathlib import Path
 from datetime import datetime
 from scipy.signal import savgol_filter
@@ -21,7 +21,7 @@ class InterpolatedPoint:
         surface_points = tuple([Point(lats[i], lons[i], vels[i]) for i in num_points])
         interpolator = VInt(surface_points)
         interpolator.set_interpolation_point(Point(interpolation_pt_data[1], interpolation_pt_data[2], 0))
-        interpolated_velocity = round(float(interpolator.get_interpolated_point().z.evalf()), 2)
+        interpolated_velocity = np.round(float(interpolator.get_interpolated_point().z.evalf()), 2)
         self.velocity = interpolated_velocity
 
 
@@ -74,11 +74,11 @@ class ElapsedTimeFrame(DataFrame):
             raise ValueError
 
         dist = self.distance(end_frame.Velocity_Major.to_numpy()[1:], start_frame.Velocity_Major.to_numpy()[:-1], speed, pg.timestep / 3600)
-        dist = dist * sign(speed)  # make sure distances are positive in the direction of the current
+        dist = dist * np.sign(speed)  # make sure distances are positive in the direction of the current
         timesteps = [timestep for timestep in [self.elapsed_time(dist[i:], length) for i in range(len(dist))] if timestep is not None]
         timesteps.insert(0, 0)  # initial time 0 has no displacement
 
-        frame = DataFrame(data={'stamp': start_frame.stamp, 'Time': to_datetime(start_frame.Time, utc=True)})
+        frame = DataFrame(data={'stamp': start_frame.stamp, 'Time': pd.to_datetime(start_frame.Time, utc=True)})
         frame[name] = timesteps
         super().__init__(data=frame)
 
@@ -114,7 +114,7 @@ class ElapsedTimeJob(Job):  # super -> job name, result key, function/object, ar
 class TimeStepsFrame(DataFrame):
 
     @staticmethod
-    def total_transit_timesteps(init_row: int, ets_values: ndarray, array_indices: list):
+    def total_transit_timesteps(init_row: int, ets_values: np.ndarray, array_indices: list):
         max_row = len(ets_values) - 1
         transit_time = 0
         for idx in array_indices:
@@ -128,14 +128,14 @@ class TimeStepsFrame(DataFrame):
 
         if time_steps_path.exists():
             super().__init__(data=DataFrame(csv_source=time_steps_path))
-            self.Time = to_datetime(self.Time, utc=True)
+            self.Time = pd.to_datetime(self.Time, utc=True)
         else:
             indices = [elapsed_timesteps_frame.columns.get_loc(c) for c in elapsed_timesteps_frame.columns.to_list() if Segment.prefix in c]
             values = elapsed_timesteps_frame.values
             transit_timesteps_arr = [self.total_transit_timesteps(row, values, indices) for row in range(len(elapsed_timesteps_frame))]
 
             elapsed_timesteps_frame.drop(elapsed_timesteps_frame.columns[indices], axis=1, inplace=True)
-            elapsed_timesteps_frame['t_time'] = Series(transit_timesteps_arr)
+            elapsed_timesteps_frame['t_time'] = pd.Series(transit_timesteps_arr)
             elapsed_timesteps_frame.write(time_steps_path)
 
             super().__init__(data=elapsed_timesteps_frame)
@@ -163,10 +163,10 @@ class SavGolFrame(DataFrame):
 
         if savgol_path.exists():
             super().__init__(data=DataFrame(csv_source=savgol_path))
-            self.Time = to_datetime(self.Time, utc=True)
+            self.Time = pd.to_datetime(self.Time, utc=True)
         else:
             # timesteps_frame['midline'] = savgol_filter(timesteps_frame.t_time, self.savgol_size, self.savgol_order).round().astype('int')
-            timesteps_frame['midline'] = round(savgol_filter(timesteps_frame.t_time, self.savgol_size, self.savgol_order)).astype('int')
+            timesteps_frame['midline'] = np.round(savgol_filter(timesteps_frame.t_time, self.savgol_size, self.savgol_order)).astype('int')
 
             timesteps_frame = timesteps_frame[timesteps_frame.t_time.ne(timesteps_frame.midline)].copy()  # remove values that equal the midline
             timesteps_frame.loc[timesteps_frame.t_time.lt(timesteps_frame.midline), 'GL'] = True  # less than midline = false
@@ -199,14 +199,14 @@ class MinimaFrame(DataFrame):
         if minima_path.exists():
             super().__init__(data=DataFrame(csv_source=minima_path))
             for col in [c for c in self.columns if 'time' in c]:
-                self[col] = self[col].apply(to_datetime)
+                self[col] = self[col].apply(pd.to_datetime)
         else:
             # create a list of minima frames (TF = True, below midline) and larger than the noise threshold
             blocks = [df.reset_index(drop=True).drop(labels=['GL', 'block', 'midline'], axis=1) for index, df in savgol_frame.groupby('block') if df['GL'].any() and len(df) > MinimaFrame.noise_threshold]
 
             frame = DataFrame(columns=['start_time', 'min_time', 'end_time', 'start_duration', 'min_duration', 'end_duration'])
             for i, df in enumerate(blocks):
-                median_stamp = df[df.t_time == df.min().t_time]['stamp'].median().astype(int)
+                median_stamp = int(df[df.t_time == df.min().t_time]['stamp'].median())
                 frame.at[i, 'start_utc'] = df.iloc[0].Time
                 frame.at[i, 'min_utc'] = df.iloc[abs(df.stamp - median_stamp).idxmin()].Time
                 frame.at[i, 'end_utc'] = df.iloc[-1].Time
@@ -215,9 +215,9 @@ class MinimaFrame(DataFrame):
                 frame.at[i, 'end_duration'] = hours_mins(df.iloc[-1].t_time * pg.timestep)
 
             # all eastern timezone rounded to 15 minutes, for now!
-            frame.start_time = to_datetime(frame.start_utc, utc=True).dt.tz_convert('US/Eastern').round('15min')
-            frame.min_time = to_datetime(frame.min_utc, utc=True).dt.tz_convert('US/Eastern').round('15min')
-            frame.end_time = to_datetime(frame.end_utc, utc=True).dt.tz_convert('US/Eastern').round('15min')
+            frame.start_time = pd.to_datetime(frame.start_utc, utc=True).dt.tz_convert('US/Eastern').round('15min')
+            frame.min_time = pd.to_datetime(frame.min_utc, utc=True).dt.tz_convert('US/Eastern').round('15min')
+            frame.end_time = pd.to_datetime(frame.end_utc, utc=True).dt.tz_convert('US/Eastern').round('15min')
 
             frame.drop(['start_utc', 'min_utc', 'end_utc'], axis=1, inplace=True)
             frame.write(minima_path)
@@ -244,7 +244,7 @@ class ArcsFrame(DataFrame):
         if arc_path.exists():
             super().__init__(DataFrame(csv_source=arc_path))
             for col in [c for c in self.columns if 'time' in c]:
-                self[col] = self[col].apply(to_datetime)
+                self[col] = self[col].apply(pd.to_datetime)
         else:
             arcs = []
             for i, row in minima_frame.iterrows():
@@ -288,8 +288,8 @@ class ArcsJob(Job):  # super -> job name, result key, function/object, arguments
         result_key = speed
         year = minima_frame.loc[0]['start_time'].year
         first_day_string = str(Route.template_dict['first_day'].substitute({'year': year}))
-        last_day_string = str(Route.template_dict['last_day'].substitute({'year+2': year}))
-        first_day = to_datetime(first_day_string).date()
-        last_day = to_datetime(last_day_string).date()
+        last_day_string = str(Route.template_dict['last_day'].substitute({'year': year+2}))
+        first_day = pd.to_datetime(first_day_string).date()
+        last_day = pd.to_datetime(last_day_string).date()
         arguments = tuple([minima_frame, route.filepath('arcs', speed), speed, first_day, last_day])
         super().__init__(job_name, result_key, ArcsFrame, arguments)
