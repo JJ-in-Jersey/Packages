@@ -25,6 +25,7 @@ elif platform.system() == 'Windows':
                     'user_data': Path(environ['USERPROFILE']).joinpath('AppData/Local/Google/Chrome/User Data')
                     }
 
+
 def env(var_name):
     return platform_lookup[var_name]
 
