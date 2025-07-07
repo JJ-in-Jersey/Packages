@@ -25,3 +25,5 @@ pip3 install ./tt_noaa_data
 pip3 install ./tt_jobs
 
 python %HOME/PycharmProjects/Packages/bin/cleanup.py
+
+pip3 list

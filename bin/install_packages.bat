@@ -22,8 +22,8 @@ pip install ./tt_gpx
 pip install ./tt_job_manager
 pip install ./tt_noaa_data
 pip install ./tt_jobs
-REM pip install ./tt_chrome_driver
 
 python %userprofile%/PycharmProjects/Packages/bin/cleanup.py
+pip list
 
 pause
