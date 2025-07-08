@@ -204,7 +204,7 @@ class MinimaFrame(DataFrame):
             # create a list of minima frames (TF = True, below midline) and larger than the noise threshold
             blocks = [df.reset_index(drop=True).drop(labels=['GL', 'block', 'midline'], axis=1) for index, df in savgol_frame.groupby('block') if df['GL'].any() and len(df) > MinimaFrame.noise_threshold]
 
-            frame = DataFrame(columns=['start_time', 'min_time', 'end_time', 'start_duration', 'min_duration', 'end_duration'])
+            frame = DataFrame(columns=['start_datetime', 'min_datetime', 'end_datetime', 'start_duration', 'min_duration', 'end_duration'])
             for i, df in enumerate(blocks):
                 median_stamp = int(df[df.t_time == df.min().t_time]['stamp'].median())
                 frame.at[i, 'start_utc'] = df.iloc[0].Time
@@ -215,9 +215,9 @@ class MinimaFrame(DataFrame):
                 frame.at[i, 'end_duration'] = hours_mins(df.iloc[-1].t_time * pg.timestep)
 
             # all eastern timezone rounded to 15 minutes, for now!
-            frame.start_time = pd.to_datetime(frame.start_utc, utc=True).dt.tz_convert('US/Eastern').round('15min')
-            frame.min_time = pd.to_datetime(frame.min_utc, utc=True).dt.tz_convert('US/Eastern').round('15min')
-            frame.end_time = pd.to_datetime(frame.end_utc, utc=True).dt.tz_convert('US/Eastern').round('15min')
+            frame.start_datetime = pd.to_datetime(frame.start_utc, utc=True).dt.tz_convert('US/Eastern').round('15min')
+            frame.min_datetime = pd.to_datetime(frame.min_utc, utc=True).dt.tz_convert('US/Eastern').round('15min')
+            frame.end_datetime = pd.to_datetime(frame.end_utc, utc=True).dt.tz_convert('US/Eastern').round('15min')
 
             frame.drop(['start_utc', 'min_utc', 'end_utc'], axis=1, inplace=True)
             frame.write(minima_path)
@@ -251,7 +251,7 @@ class ArcsFrame(DataFrame):
                 row_dict = row.to_dict()
                 try:
                     arc = Arc(**row_dict)
-                    if arc.start_time.date() == arc.end_time.date():
+                    if arc.start_datetime.date() == arc.end_datetime.date():
                         if arc.total_angle != 0.0:
                             arcs.append(arc)
                     else:
@@ -265,8 +265,11 @@ class ArcsFrame(DataFrame):
                     print(f'{err}')
 
             frame = DataFrame([arc.arc_dict for arc in arcs])
-            frame.insert(0, 'date', frame.start_time.apply(lambda timestamp: timestamp.date()))
-            frame = frame.sort_values(by=['date', 'start_time']).reset_index(drop=True)
+            frame.insert(0, 'date', frame.start_datetime.apply(lambda timestamp: timestamp.date()))
+            frame.insert(0, 'start_time', frame.start_datetime.apply(lambda timestamp: timestamp.time()))
+            frame.insert(0, 'min_time', frame.min_datetime.apply(lambda timestamp: timestamp.time()))
+            frame.insert(0, 'end_time', frame.end_datetime.apply(lambda timestamp: timestamp.time()))
+            frame = frame.sort_values(by=['date', 'start_datetime']).reset_index(drop=True)
             frame.insert(0, 'idx', frame.groupby('date').cumcount() + 1)
             frame.insert(1, 'speed', speed)
 
@@ -286,7 +289,7 @@ class ArcsJob(Job):  # super -> job name, result key, function/object, arguments
     def __init__(self, minima_frame: DataFrame, route: Route, speed: int):
         job_name = 'arcs' + ' ' + str(speed)
         result_key = speed
-        year = minima_frame.loc[0]['start_time'].year
+        year = minima_frame.loc[0]['start_datetime'].year
         first_day_string = str(Route.template_dict['first_day'].substitute({'year': year}))
         last_day_string = str(Route.template_dict['last_day'].substitute({'year': year+2}))
         first_day = pd.to_datetime(first_day_string).date()
