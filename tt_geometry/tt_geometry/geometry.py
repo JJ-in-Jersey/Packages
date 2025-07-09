@@ -4,7 +4,6 @@ from tt_date_time_tools.date_time_tools import time_to_degrees
 class Arc:
 
     arguments = {'start_datetime', 'start_duration', 'min_datetime', 'min_duration', 'end_datetime', 'end_duration'}
-    midnight_tolerance = 1.25  # in degrees, = 5 minutes
 
     @property
     def arc_dict(self):
@@ -27,16 +26,8 @@ class Arc:
         self.end_duration_display = True
 
         self.start_angle = time_to_degrees(self.start_datetime)
-        if self.start_angle <= self.midnight_tolerance:
-            self.start_duration_display = False
-
         self.min_angle = time_to_degrees(self.min_datetime)
-        if self.min_angle <= self.midnight_tolerance:
-            self.min_duration_display = False
-
         self.end_angle = time_to_degrees(self.end_datetime)
-        if self.end_angle <= self.midnight_tolerance:
-            self.end_duration_display = False
 
         self.total_angle = min(abs(self.end_angle - self.start_angle), 360 - abs(self.end_angle - self.start_angle))
 
