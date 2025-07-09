@@ -215,9 +215,9 @@ class MinimaFrame(DataFrame):
                 frame.at[i, 'end_duration'] = hours_mins(df.iloc[-1].t_time * pg.timestep)
 
             # all eastern timezone rounded to 15 minutes, for now!
-            frame.start_datetime = pd.to_datetime(frame.start_utc, utc=True).dt.tz_convert('US/Eastern').round('15min')
-            frame.min_datetime = pd.to_datetime(frame.min_utc, utc=True).dt.tz_convert('US/Eastern').round('15min')
-            frame.end_datetime = pd.to_datetime(frame.end_utc, utc=True).dt.tz_convert('US/Eastern').round('15min')
+            frame.start_datetime = pd.to_datetime(frame.start_utc, utc=True).dt.tz_convert('US/Eastern').round(freq='15min')
+            frame.min_datetime = pd.to_datetime(frame.min_utc, utc=True).dt.tz_convert('US/Eastern').round(freq='15min')
+            frame.end_datetime = pd.to_datetime(frame.end_utc, utc=True).dt.tz_convert('US/Eastern').round(freq='15min')
 
             frame.drop(['start_utc', 'min_utc', 'end_utc'], axis=1, inplace=True)
             frame.write(minima_path)
