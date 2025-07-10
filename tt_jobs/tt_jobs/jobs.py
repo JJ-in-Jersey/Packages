@@ -273,6 +273,12 @@ class ArcsFrame(DataFrame):
             frame.insert(0, 'idx', frame.groupby('date').cumcount() + 1)
             frame.insert(1, 'speed', speed)
 
+            eligible_dates = frame.groupby('date').filter(lambda x: len(x) >= 3)['date'].unique()
+            start_mask = (frame['date'].isin(eligible_dates)) & (frame['start_angle'] == 0)
+            end_mask = (frame['date'].isin(eligible_dates)) & (frame['end_angle'] == 0)
+            frame.loc[start_mask, 'start_duration_display'] = False
+            frame.loc[end_mask, 'end_duration_display'] = False
+
             frame = frame[(frame['date'] >= first_day) & (frame['date'] <= last_day)]
             frame.reset_index(drop=True, inplace=True)
 
