@@ -214,10 +214,10 @@ class MinimaFrame(DataFrame):
                 frame.at[i, 'min_duration'] = hours_mins(df.iloc[abs(df.stamp - median_stamp).idxmin()].t_time * pg.timestep)
                 frame.at[i, 'end_duration'] = hours_mins(df.iloc[-1].t_time * pg.timestep)
 
-            # all eastern timezone rounded to 15 minutes, for now!
-            frame.start_datetime = pd.to_datetime(frame.start_utc, utc=True).dt.tz_convert('US/Eastern').round(freq='15min')
-            frame.min_datetime = pd.to_datetime(frame.min_utc, utc=True).dt.tz_convert('US/Eastern').round(freq='15min')
-            frame.end_datetime = pd.to_datetime(frame.end_utc, utc=True).dt.tz_convert('US/Eastern').round(freq='15min')
+            # all eastern timezone rounded to 15 minutes
+            frame.start_datetime = pd.to_datetime(frame.start_utc, utc=True).dt.tz_convert('US/Eastern').round('15min')  # type: ignore
+            frame.min_datetime = pd.to_datetime(frame.min_utc, utc=True).dt.tz_convert('US/Eastern').round('15min')  # type: ignore
+            frame.end_datetime = pd.to_datetime(frame.end_utc, utc=True).dt.tz_convert('US/Eastern').round('15min')  # type: ignore
 
             frame.drop(['start_utc', 'min_utc', 'end_utc'], axis=1, inplace=True)
             frame.write(minima_path)
@@ -278,6 +278,10 @@ class ArcsFrame(DataFrame):
             end_mask = (frame['date'].isin(eligible_dates)) & (frame['end_angle'] == 0)
             frame.loc[start_mask, 'start_duration_display'] = False
             frame.loc[end_mask, 'end_duration_display'] = False
+
+            min_mask = ((frame['start_angle'] == 0) & (frame['min_angle'] == 0)) | (
+                        (frame['end_angle'] == 0) & (frame['min_angle'] == 0))
+            frame.loc[min_mask, 'min_duration_display'] = False
 
             frame = frame[(frame['date'] >= first_day) & (frame['date'] <= last_day)]
             frame.reset_index(drop=True, inplace=True)
