@@ -9,6 +9,7 @@ from string import Template
 
 from tt_navigation.navigation import distance, directions, Heading
 from tt_file_tools.file_tools import SoupFromXMLFile
+# noinspection PyPep8Naming
 from tt_globals.globals import PresetGlobals as pg
 
 
@@ -244,4 +245,4 @@ class GpxFile:
             gpxfile = f.read()
         self.tree = Soup(gpxfile, preserve_whitespace_tags=['name', 'type', 'sym', 'text'], features='xml')
 
-        GpxFile.write_clean_gpx(filepath, self.tree)
+        # GpxFile.write_clean_gpx(filepath, self.tree)
