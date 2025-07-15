@@ -85,6 +85,8 @@ class BaseWaypoint:
         self.velocity_csv_path = self.folder.joinpath(self.velocity_csv_name)
         makedirs(self.folder, exist_ok=True)
 
+        self.folder.joinpath(self.type + ' ' +self.name.replace(',','').replace('"','') + '.info').touch()
+
         self.prev_edge = None
         self.next_edge = None
 
