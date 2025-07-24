@@ -52,7 +52,13 @@ class FileSampleIsEmpty(Exception):
         super().__init__(message)
 
 
-class IndexGreaterThanThree(Exception):
+class GoogleAuthenticationFailure(Exception):
+    def __init__(self, message: str = None):
+        self.message = message
+        super().__init__(self.message)
+
+
+class GoogleServiceBuildFailure(Exception):
     def __init__(self, message: str = None):
         self.message = message
         super().__init__(self.message)
