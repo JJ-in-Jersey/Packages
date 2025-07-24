@@ -71,5 +71,6 @@ class Dictionary(dict):
             for field in fields[:-1]:
                 if isinstance(curr_dict, Dictionary) and field in curr_dict:
                     curr_dict = curr_dict[field]
-            print(f'removed {key} from {field}')
-            curr_dict.pop(key)
+            print(f'removing {key} from {field}')
+            if curr_dict.get(key):
+                curr_dict.pop(key)
