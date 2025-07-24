@@ -6,6 +6,9 @@ pip3 cache purge
 pip3 install setuptools
 pip3 install pandas-stubs
 pip3 install scipy-stubs
+pip3 install google-api-python-client
+pip3 install google-auth-httplib2
+pip3 install google-auth-oauthlib
 
 cd $HOME/PycharmProjects/Packages
 
