@@ -45,7 +45,7 @@ class Dictionary(dict):
         reverse_map = defaultdict(list)
         for key, value in self.items():
             reverse_map[value].append(key)
-        return dict(reverse_map)
+        return Dictionary(reverse_map)
 
 
     def recursive_get_key(self, target_key: str, dict_path: list[str] = None):
@@ -68,9 +68,11 @@ class Dictionary(dict):
         for occurance in occurances:
             fields = [x.strip() for x in occurance[0].split('>')]
             curr_dict = self
+            field = None
             for field in fields[:-1]:
                 if isinstance(curr_dict, Dictionary) and field in curr_dict:
                     curr_dict = curr_dict[field]
-            print(f'removing {key} from {field}')
-            if curr_dict.get(key):
-                curr_dict.pop(key)
+            if field:
+                print(f'removing {key} from {field}')
+                if curr_dict.get(key):
+                    curr_dict.pop(key)
