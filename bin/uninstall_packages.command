@@ -1,6 +1,6 @@
 #!/bin/sh
 
-python $HOME/PycharmProjects/Packages/bin/cleanup.py
+python3 $HOME/PycharmProjects/Packages/bin/cleanup.py
 
 pip3 cache purge
 
