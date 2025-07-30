@@ -53,7 +53,7 @@ class Dictionary(dict):
             dict_path = []
 
         if target_key in self:
-            return (dict_path + [target_key], self[target_key])
+            return dict_path + [target_key], self[target_key]
 
         for key, value in self.items():
             if isinstance(value, Dictionary):
@@ -121,6 +121,7 @@ class Dictionary(dict):
 
         removed_items = []
         keys_to_remove = []
+        nested_removed = []
 
         for key, value in list(self.items()):  # Use list() to avoid modification during iteration
             if isinstance(value, Dictionary):
@@ -134,9 +135,10 @@ class Dictionary(dict):
                     keys_to_remove.append(key)
                     removed_items.append((current_path + [key], value))
                     if not remove_all:
-                        break  # Stop after first match if remove_all is False
+                        break  # Stop after the first match if remove_all is False
 
-        for key in keys_to_remove: del self[key]
+        for key in keys_to_remove:
+            del self[key]
 
         return removed_items
 
