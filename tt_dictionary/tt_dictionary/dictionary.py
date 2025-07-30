@@ -48,31 +48,121 @@ class Dictionary(dict):
         return Dictionary(reverse_map)
 
 
-    def recursive_get_key(self, target_key: str, dict_path: list[str] = None):
-        # find the first instance of a dict/value pair a Dictionary that may contain Dictionaries
-        instances = []
+    def recursive_get_key(self, target_key, dict_path=None):
         if dict_path is None:
             dict_path = []
 
+        if target_key in self:
+            return (dict_path + [target_key], self[target_key])
+
         for key, value in self.items():
-            item_dict_path = " > ".join(dict_path + [key])
-            if key == target_key:
-                instances.append(tuple([item_dict_path, key, value]))
-            elif isinstance(value, Dictionary):
-                instances.extend(value.recursive_get_key(target_key, dict_path + [key]))
-        return instances
+            if isinstance(value, Dictionary):
+                result = value.recursive_get_key(target_key, dict_path + [key])
+                if result is not None:
+                    return result
+
+        return None
 
 
-    def remove_key(self, key: str):
-        occurances = self.recursive_get_key(key)
-        for occurance in occurances:
-            fields = [x.strip() for x in occurance[0].split('>')]
-            curr_dict = self
-            field = None
-            for field in fields[:-1]:
-                if isinstance(curr_dict, Dictionary) and field in curr_dict:
-                    curr_dict = curr_dict[field]
-            if field:
-                print(f'removing {key} from {field}')
-                if curr_dict.get(key):
-                    curr_dict.pop(key)
+    def recursive_get_keys(self, target_key, dict_path=None):
+        if dict_path is None:
+            dict_path = []
+
+        results = []
+
+        if target_key in self:
+            results.append((dict_path + [target_key], self[target_key]))
+
+        for key, value in self.items():
+            if isinstance(value, Dictionary):
+                nested_results = value.recursive_get_keys(target_key, dict_path + [key])
+                results.extend(nested_results)
+
+        return results
+
+    def get_by_path(self, path):
+        current = self
+        for key in path:
+            current = current[key]
+        return current
+
+    def set_by_path(self, path, value):
+        current = self
+        for key in path[:-1]:
+            if key not in current:
+                raise KeyError(f"Key '{key}' not found in path {path}")
+            elif not isinstance(current[key], Dictionary):
+                raise ValueError(f"Cannot traverse through non-dict value at key '{key}'")
+            current = current[key]
+
+        current[path[-1]] = value
+
+    def remove_by_path(self, path):
+        current = self
+        for key in path[:-1]:
+            if key not in current:
+                raise KeyError(f"Key '{key}' not found in path {path}")
+            elif not isinstance(current[key], Dictionary):
+                raise ValueError(f"Cannot traverse through non-dict value at key '{key}'")
+            current = current[key]
+
+        if path[-1] not in current:
+            raise KeyError(f"Key '{path[-1]}' not found in path {path}")
+
+        return current.pop(path[-1])
+
+    def remove_by_value(self, target_value, remove_all=False, current_path=None):
+        """
+        Returns:
+            list: List of tuples (path_list, removed_value) for each removed key
+        """
+        if current_path is None:
+            current_path = []
+
+        removed_items = []
+        keys_to_remove = []
+
+        for key, value in list(self.items()):  # Use list() to avoid modification during iteration
+            if isinstance(value, Dictionary):
+                nested_removed = value.remove_by_value(target_value, remove_all, current_path + [key])
+            removed_items.extend(nested_removed)
+
+            if nested_removed and not remove_all:
+                break
+            else:
+                if value == target_value:
+                    keys_to_remove.append(key)
+                    removed_items.append((current_path + [key], value))
+                    if not remove_all:
+                        break  # Stop after first match if remove_all is False
+
+        for key in keys_to_remove: del self[key]
+
+        return removed_items
+
+
+    def get_by_value(self, target_value, get_all=False, current_path=None):
+
+        if current_path is None:
+            current_path = []
+
+        found_items = []
+
+        for key, value in self.items():
+            if isinstance(value, Dictionary):
+                nested_found = value.get_by_value(target_value, get_all, current_path + [key])
+
+                if get_all:
+                    found_items.extend(nested_found)
+                else:
+                    if nested_found is not None:
+                        return nested_found
+            else:
+                if value == target_value:
+                    result = (current_path + [key], value)
+                    if get_all:
+                        found_items.append(result)
+                    else:
+                        return result
+
+        return found_items if get_all else None
