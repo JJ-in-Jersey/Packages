@@ -111,37 +111,6 @@ class Dictionary(dict):
 
         return current.pop(path[-1])
 
-    def remove_by_value(self, target_value, remove_all=False, current_path=None):
-        """
-        Returns:
-            list: List of tuples (path_list, removed_value) for each removed key
-        """
-        if current_path is None:
-            current_path = []
-
-        removed_items = []
-        keys_to_remove = []
-        nested_removed = []
-
-        for key, value in list(self.items()):  # Use list() to avoid modification during iteration
-            if isinstance(value, Dictionary):
-                nested_removed = value.remove_by_value(target_value, remove_all, current_path + [key])
-            removed_items.extend(nested_removed)
-
-            if nested_removed and not remove_all:
-                break
-            else:
-                if value == target_value:
-                    keys_to_remove.append(key)
-                    removed_items.append((current_path + [key], value))
-                    if not remove_all:
-                        break  # Stop after the first match if remove_all is False
-
-        for key in keys_to_remove:
-            del self[key]
-
-        return removed_items
-
 
     def get_by_value(self, target_value, get_all=False, current_path=None):
 
@@ -168,3 +137,89 @@ class Dictionary(dict):
                         return result
 
         return found_items if get_all else None
+
+
+    def remove_by_value(self, target_value, remove_all=False, _path="", _removed_items=None):
+        """
+        Remove key-value pairs based on the value.
+
+        Args:
+            target_value: The value to search for and remove
+            all_occurrences (bool): If True, removes all occurrences.
+                                   If False, removes only the first occurrence.
+            _path (str): Internal parameter for tracking current path
+            _removed_items (list): Internal parameter for collecting removed items
+
+        Returns:
+            list: List of tuples (key, value) that were removed
+        """
+        if _removed_items is None:
+            _removed_items = []
+
+        keys_to_remove = []
+
+        for key, value in self.items():
+            current_path = f"{_path}/{key}" if _path else key
+
+            if isinstance(value, dict):
+                # Recursively search nested dictionaries
+                # The nested dict will handle its own deletions
+                value.remove_by_value(target_value, remove_all, current_path, _removed_items)
+            elif value == target_value:
+                # Found a matching value at this level
+                keys_to_remove.append(key)
+                _removed_items.append((current_path, value))
+                print(f"Removing: {current_path} = {value}")
+
+                # If only removing first occurrence, stop after finding one
+                if not remove_all and _removed_items:
+                    break
+
+        # Remove the found items from this level
+        for key in keys_to_remove:
+            del self[key]
+
+        return _removed_items
+
+
+    def remove_by_key(self, target_key, remove_all=False, _path="", _removed_items=None):
+        """
+        Remove key-value pairs based on the key.
+
+        Args:
+            target_key: The key to search for and remove
+            remove_all (bool): If True, removes all occurrences.
+                              If False, removes only the first occurrence.
+            _path (str): Internal parameter for tracking current path
+            _removed_items (list): Internal parameter for collecting removed items
+
+        Returns:
+            list: List of tuples (key, value) that were removed
+        """
+        if _removed_items is None:
+            _removed_items = []
+
+        keys_to_remove = []
+
+        for key, value in self.items():
+            current_path = f"{_path}/{key}" if _path else key
+
+            if key == target_key:
+                # Found a matching key at this level
+                keys_to_remove.append(key)
+                _removed_items.append((current_path, value))
+                print(f"Removing: {current_path} = {value}")
+
+                # If only removing first occurrence, stop after finding one
+                if not remove_all and _removed_items:
+                    break
+            elif isinstance(value, dict):
+                # Recursively search nested dictionaries
+                # The nested dict will handle its own deletions
+                value.remove_by_key(target_key, remove_all, current_path, _removed_items)
+
+        # Remove the found items from this level
+        for key in keys_to_remove:
+            del self[key]
+
+        return _removed_items
