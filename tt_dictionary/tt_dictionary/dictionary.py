@@ -1,4 +1,3 @@
-from typing import Self
 from collections import defaultdict
 from pathlib import Path
 import json
@@ -32,16 +31,15 @@ class Dictionary(dict):
                     raise ValueError(f'JSON file must contain a dictionary, got {type(data).__name__}')
                 self.update(data)
                 # After loading, set path and parent
-                self._set_path_and_parent()
+                self._set_path()
             except json.JSONDecodeError as e:
                 print(e)
 
-    def _set_path_and_parent(self, _path: str = "", _parent: Self = None):
+    def _set_path(self, _path: str = ""):
         self['_path'] = _path
-        self['_parent'] = _parent
         for key, value in self.items():
-            if key != '_parent' and isinstance(value, Dictionary):
-                value._set_path_and_parent(f"{_path}/{key}" if _path else key, self)
+            if isinstance(value, Dictionary):
+                value._set_path(f"{_path}/{key}" if _path else key)
 
 
     def write(self, pathname: Path):
@@ -154,7 +152,7 @@ class Dictionary(dict):
         return stats
 
 
-    def find_keys(self, target_key, _found_keys=None):
+    def find_keys(self, target_key, target_value=None, _found_keys=None):
         """
         retrieve key/value pairs that match the target_key
         :param target_key: key to be found
@@ -167,9 +165,13 @@ class Dictionary(dict):
 
         for key, value in self.items():
             if key == target_key:
-                _found_keys.append((f'{self['_path']}/{key}' if self['_path'] else {key}, value))
-            if key != '_parent' and isinstance(value, Dictionary):
-                value.find_keys(target_key, _found_keys)
+                if target_value is not None:
+                    if value == target_value:
+                        _found_keys.append((f'{self['_path']}/{key}' if self['_path'] else {key}, value))
+                else:
+                    _found_keys.append((f'{self['_path']}/{key}' if self['_path'] else {key}, value))
+            if isinstance(value, Dictionary):
+                value.find_keys(target_key, target_value, _found_keys)
         return _found_keys
 
 
