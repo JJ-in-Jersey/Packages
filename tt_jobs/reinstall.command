@@ -6,6 +6,6 @@ pip3 cache purge
 
 cd $HOME/PycharmProjects/Packages
 
-pip3 install ./tt_jobs
+pip3 install ./tt_job_manager
 
 python3 $HOME/PycharmProjects/Packages/bin/cleanup.py
