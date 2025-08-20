@@ -70,14 +70,14 @@ class StationDict(Dictionary):
     def absolute_path_string(folder_name):
         return str(PresetGlobals.waypoints_folder.joinpath(folder_name).absolute())
 
+
     def add_waypoint(self, route_waypoint: Waypoint):
-        if route_waypoint.id not in self:
-            row = {'id': route_waypoint.id, 'name': route_waypoint.name,
-                   'lat': route_waypoint.lat, 'lon': route_waypoint.lon,
-                   'type': route_waypoint.type, 'folder_name': basename(route_waypoint.folder),
-                   'folder': StationDict.absolute_path_string(basename(route_waypoint.folder))}
-            self[row['id']] = row
-            print_file_exists(self.write(PresetGlobals.stations_file))
+        row = {'id': route_waypoint.id, 'name': route_waypoint.name,
+               'lat': route_waypoint.lat, 'lon': route_waypoint.lon,
+               'type': route_waypoint.type, 'folder_name': basename(route_waypoint.folder),
+               'folder': StationDict.absolute_path_string(basename(route_waypoint.folder))}
+        self[row['id']] = row
+        print_file_exists(self.write(PresetGlobals.stations_file))
 
 
     def comment_waypoint(self, waypoint_id: str):
