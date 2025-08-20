@@ -11,15 +11,20 @@ class Dictionary(dict):
         return self.__class__
 
 
+    @property
+    def path(self):
+        return self._path
+
+
     @staticmethod
     def _convert_to_this(json_dict: dict):
         return Dictionary(json_dict)
 
 
-    def __init__(self, *args, json_source: Path = None, dict_path: str = None, **kwargs):
+    def __init__(self, *args, json_source: Path = None, parent_path: str = '', **kwargs):
         super().__init__(*args, **kwargs)
 
-        self._path = dict_path
+        self._path = parent_path
 
         if json_source is not None and json_source.exists():
             self.clear()
@@ -35,8 +40,8 @@ class Dictionary(dict):
             except json.JSONDecodeError as e:
                 print(e)
 
-    def _set_path(self, _path: str = ""):
-        self['_path'] = _path
+    def _set_path(self, _path: str = ''):
+        self._path = _path
         for key, value in self.items():
             if isinstance(value, Dictionary):
                 value._set_path(f"{_path}/{key}" if _path else key)
@@ -79,7 +84,7 @@ class Dictionary(dict):
         for key, value in self.items():
             if key == target_key:
                 # Found a matching key at this level
-                current_path = f"{self['_path']}/{key}" if self['_path'] else key
+                current_path = f"{self.path}/{key}" if self.path else key
                 keys_to_remove.append(key)
                 _removed_keys.append((current_path, key))
                 print(f"Removing: {current_path}")
@@ -167,9 +172,9 @@ class Dictionary(dict):
             if key == target_key:
                 if target_value is not None:
                     if value == target_value:
-                        _found_keys.append((f'{self['_path']}/{key}' if self['_path'] else {key}, value))
+                        _found_keys.append((f'{self.path}/{key}' if self.path else {key}, value))
                 else:
-                    _found_keys.append((f'{self['_path']}/{key}' if self['_path'] else {key}, value))
+                    _found_keys.append((f'{self.path}/{key}' if self.path else {key}, value))
             if isinstance(value, Dictionary):
                 value.find_keys(target_key, target_value, _found_keys)
         return _found_keys
