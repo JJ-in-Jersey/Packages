@@ -12,7 +12,7 @@ class DataFrame(PandasDataFrame):
 
     @property
     def _constructor(self):
-        return self.__class__
+        return DataFrame
 
     def write(self, csv_target: Path, **kwargs):
         if 'index' not in kwargs:
