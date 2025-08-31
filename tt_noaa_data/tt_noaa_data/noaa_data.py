@@ -100,12 +100,20 @@ class OneMonth(DataFrame):
             attempts = 5
             for attempt in range(attempts):
                 my_response = requests.get(self.url(month, year, waypoint))
-                my_response.raise_for_status()
-                if not (my_response.content and my_response.text.strip() and bool(len(my_response.content))):
-                    raise EmptyResponse
-                if 'predictions are not available' in my_response.content.decode():
-                    raise DataNotAvailable
-                break  # break try-5 loop because the request was successful
+                # print(my_response.status_code)
+                if my_response.ok:
+                    empty_response = (my_response.content and my_response.text.strip() and bool(len(my_response.content)))
+                    predictions = not 'predictions are not available' in my_response.content.decode()
+                if my_response.ok and not empty_response and predictions:
+                    break  # break for loop because of success
+                elif attempt < attempts:
+                        sleep(1)
+                else:
+                    my_response.raise_for_status()
+                    if empty_response:
+                        raise EmptyResponse
+                    elif not my_response.content:
+                        raise DataNotAvailable
 
             frame = DataFrame(csv_source=StringIO(my_response.content.decode()))
             frame.columns = frame.columns.str.strip()
