@@ -128,8 +128,8 @@ class Edge:  # connection between waypoints with current data
 
         if start.id == end.id:
             raise IndexError
-        if not isinstance(start, EdgeNode) or not isinstance(end, EdgeNode):
-            raise TypeError
+        # if not isinstance(start, EdgeNode) or not isinstance(end, EdgeNode):
+        #     raise TypeError
 
         start.next_edge = self
         end.prev_edge = self
@@ -209,6 +209,8 @@ class Route:
                 self.waypoints.append(Empty(tag))
             elif tag.sym.text == Waypoint.code_symbols['P']:
                 self.waypoints.append(Pseudo(tag))
+            else:
+                raise TypeError('Unknown waypoint type')
 
         self.heading = Heading(self.waypoints[0].coords, self.waypoints[-1].coords).angle
         self.direction = directions(self.heading)[0]
