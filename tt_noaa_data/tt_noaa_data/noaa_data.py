@@ -99,22 +99,22 @@ class OneMonth(DataFrame):
         try:
             attempts = 5
             for attempt in range(attempts):
-                try:
-                    my_response = requests.get(self.url(month, year, waypoint))
+                my_response = requests.get(self.url(month, year, waypoint))
+                # print(my_response.status_code)
+                if my_response.ok:
+                    empty_response = (my_response.content and my_response.text.strip() and bool(len(my_response.content)))
+                    predictions = not 'predictions are not available' in my_response.content.decode()
+                if my_response.ok and not empty_response and predictions:
+                    break  # break for loop because of success
+                elif attempt < attempts:
+                        sleep(1)
+                else:
                     my_response.raise_for_status()
-                    if not (my_response.content and my_response.text.strip() and bool(len(my_response.content))):
+                    if empty_response:
                         raise EmptyResponse
-                    if 'predictions are not available' in my_response.content.decode():
+                    elif not my_response.content:
                         raise DataNotAvailable
-                    break  # break try-5 loop because the request was successful
-                except Exception as e:
-                    if attempt == attempts - 1:
-                        raise e
-                    sleep(2)
-        except Exception as e:
-            raise e
 
-        try:
             frame = DataFrame(csv_source=StringIO(my_response.content.decode()))
             frame.columns = frame.columns.str.strip()
 
@@ -135,8 +135,8 @@ class OneMonth(DataFrame):
                 raise DataMissing
         except Exception as e:
             raise e
-        else:
-            super().__init__(data=frame)
+
+        super().__init__(data=frame)
 
     @staticmethod
     def url(month: int, year: int, waypoint: Waypoint, interval_time: int = 1):

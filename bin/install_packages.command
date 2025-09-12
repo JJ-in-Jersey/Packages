@@ -1,6 +1,6 @@
 #!/bin/sh
 
-python %HOME/PycharmProjects/Packages/bin/cleanup.py
+python3 %HOME/PycharmProjects/Packages/bin/cleanup.py
 
 pip3 cache purge
 pip3 install setuptools
@@ -29,6 +29,6 @@ pip3 install ./tt_job_manager
 pip3 install ./tt_noaa_data
 pip3 install ./tt_jobs
 
-python %HOME/PycharmProjects/Packages/bin/cleanup.py
+python3 %HOME/PycharmProjects/Packages/bin/cleanup.py
 
 pip3 list
