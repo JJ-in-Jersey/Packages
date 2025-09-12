@@ -1,7 +1,9 @@
+from tt_dictionary.dictionary import Dictionary
+
 from time import sleep
 from glob import glob
 import os
-from os.path import join, getctime
+from os.path import join, getctime, abspath
 from bs4 import BeautifulSoup as Soup
 from pathlib import Path
 
@@ -27,7 +29,6 @@ class SoupFromXMLFile:
     def __init__(self, filepath):
         with open(filepath, 'r', encoding='utf-8') as file:
             self.soup = Soup(file, 'xml')
-
 
 
 class SoupFromXMLResponse:
@@ -58,3 +59,25 @@ def list_all_files(folder_path):
             full_path = join(root, file)
             file_list.append(full_path)
     return file_list
+
+
+class FileTree(Dictionary):
+    """
+    create a Dictionary representing a folder-file hierarchy from a Windows or Mac drive
+    :param start: path to folder hierarchy; none uses entire drive (root)
+    """
+    root_path = abspath('/')
+
+    def __init__(self, start: Path = None, *args):
+        super().__init__(*args)
+
+        self.start = start if start is not None else FileTree.root_path
+        initial_depth = len(start.parts)
+
+        print("🚀 building file tree dictionary")
+        for current_folder_name, folder_names, file_names in os.walk(self.start):
+            current_folder = Path(current_folder_name)
+            depth = len(current_folder.parts)
+            indent = " " * (depth - initial_depth)
+            self[current_folder] = Dictionary({'name': current_folder, 'folders': folder_names, 'files': file_names})
+            print(f"{indent}📁 {current_folder.name}: {len(folder_names)} folders, {len(file_names)} files)")
