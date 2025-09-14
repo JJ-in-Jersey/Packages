@@ -71,13 +71,35 @@ class FileTree(Dictionary):
     def __init__(self, start: Path = None, *args):
         super().__init__(*args)
 
-        self.start = start if start is not None else FileTree.root_path
-        initial_depth = len(start.parts)
+        start = FileTree.root_path if start is None else start
 
         print("🚀 building file tree dictionary")
         for current_folder_name, folder_names, file_names in os.walk(self.start):
             current_folder = Path(current_folder_name)
-            depth = len(current_folder.parts)
-            indent = " " * (depth - initial_depth)
-            self[current_folder] = Dictionary({'name': current_folder, 'folders': folder_names, 'files': file_names})
+            indent = " " * (len(current_folder.parts) - len(start.parts))
+            self[current_folder.name] = Dictionary({'path': current_folder})
+            for file_name in file_names:
+                file_path = current_folder.joinpath(file_name)
+                self[current_folder.name][file_name] = Dictionary({'name': file_path, 'file_size': os.path.getsize(file_path), 'type': file_path.suffix})
+            print(f"{indent}📁 {current_folder.name}: {len(folder_names)} folders, {len(file_names)} files)")
+
+
+class GoogleDriveTree(Dictionary):
+    """
+    create a Dictionary representing a folder-file hierarchy from the Google Drive API
+    :param start: path to folder hierarchy; none uses entire drive (root)
+    """
+    root_path = abspath('/')
+
+    def __init__(self, service, start_path: str = None, *args):
+        super().__init__(*args)
+
+        print("🚀 building file tree dictionary")
+        for current_folder_name, folder_names, file_names in os.walk(self.start):
+            current_folder = Path(current_folder_name)
+            indent = " " * (len(current_folder.parts) - len(start.parts))
+            self[current_folder.name] = Dictionary({'path': current_folder})
+            for file_name in file_names:
+                file_path = current_folder.joinpath(file_name)
+                self[current_folder.name][file_name] = Dictionary({'name': file_path, 'file_size': os.path.getsize(file_path), 'type': file_path.suffix})
             print(f"{indent}📁 {current_folder.name}: {len(folder_names)} folders, {len(file_names)} files)")
