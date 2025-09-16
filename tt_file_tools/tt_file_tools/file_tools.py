@@ -101,7 +101,6 @@ class GoogleDriveTree(Dictionary):
     :param start: path to folder hierarchy; none uses entire drive (root)
     """
 
-
     def __init__(self, start_path: str = '/', *args):
         super().__init__(*args)
 
