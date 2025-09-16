@@ -23,6 +23,7 @@ pip install ./tt_date_time_tools
 pip install ./tt_file_tools
 pip install ./tt_geometry
 pip install ./tt_globals
+pip install ./tt_google_drive
 pip install ./tt_gpx
 pip install ./tt_job_manager
 pip install ./tt_noaa_data

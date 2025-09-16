@@ -24,6 +24,7 @@ pip3 install ./tt_date_time_tools
 pip3 install ./tt_file_tools
 pip3 install ./tt_geometry
 pip3 install ./tt_globals
+pip3 install ./tt_google_drive
 pip3 install ./tt_gpx
 pip3 install ./tt_job_manager
 pip3 install ./tt_noaa_data
