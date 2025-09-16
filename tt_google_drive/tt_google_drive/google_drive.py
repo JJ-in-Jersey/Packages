@@ -79,20 +79,23 @@ class GoogleDrive:
             return None
 
 
-    def walk_drive(self, folder_id: str = 'root', _depth: int = 0):
+    def walk_drive(self, folder_id: str = 'root', _depth: int = 0, _drive_path: str = '' ):
         """
         A generator that mimics os.walk for Google Drive. Yields a tuple ((folder, id), [(subfolder, id)...], [(file, id)...])
         for each directory in the tree.
         :param folder_id: id of the folder to walk
         :param _depth: depth of folder being processed, internal only
+        :param _drive_path: path to folder being walked, internal only
         """
         try:
             # Get the name of the current folder
             if folder_id == 'root':
-                folder_name = ('root', 'root')
+                folder_name = 'root'
             else:
                 folder_metadata = self.service.files().get(fileId=folder_id, fields='name').execute()
-                folder_name = (folder_metadata.get('name'), folder_id)
+                folder_name = folder_metadata.get('name')
+
+            _drive_path = f'{_drive_path}/{folder_name}'
 
             all_items = []
             next_page_token = None
@@ -110,6 +113,7 @@ class GoogleDrive:
                 if not next_page_token:
                     break
 
+
             # Separate directories and files
             dirs = [(item['name'], item['id']) for item in all_items if
                     item['mimeType'] == 'application/vnd.google-apps.folder']
@@ -118,12 +122,12 @@ class GoogleDrive:
 
             # Yield the current directory and its contents
             # noinspection PyRedundantParentheses
-            yield (_depth, folder_name, dirs, files)
+            yield (_depth, _drive_path, folder_id, dirs, files)
 
             # Recursively walk subdirectories
             _depth += 1
             for d in dirs:
-                yield from self.walk_drive(d[1], _depth)
+                yield from self.walk_drive(d[1], _depth, _drive_path)
 
         except HttpError as error:
             print(f"An HTTP error occurred: {error}")
