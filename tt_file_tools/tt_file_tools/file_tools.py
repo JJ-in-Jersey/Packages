@@ -89,6 +89,23 @@ class FileTree(Dictionary):
                 value.find_keys(target_key, target_value, _found_keys)
         return _found_keys
 
+    def delete_key(self, key_path: str):
+        """
+        Delete key from dictionary
+        :param key_path: path to key
+        """
+        parts = key_path.split('/')
+
+        # march down the dictionary hierarchy to the parent dictionary
+        _dict = self
+        hierarchy = f'self'
+        for part in parts[:-1]:
+            _dict = _dict[part]
+            hierarchy += f'[{part}]'
+
+        print(f'deleting {hierarchy}')
+        del _dict[parts[-1]]
+
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -115,10 +132,10 @@ class OSFileTree(FileTree):
                 for i in range(len(path_parts)-1):
                     base = base[path_parts[i]]
 
-                base[name] = FileTree({'path': path, 'type': 'folder'})
+                base[name] = OSFileTree({'path': path, 'type': 'folder'})
 
                 for file in files:
-                    base[name][file] = FileTree({'path': path, 'name': file, 'size': os.path.getsize(Path(path).joinpath(file)), 'type': Path(file).suffix})
+                    base[name][file] = OSFileTree({'path': path, 'name': file, 'size': os.path.getsize(Path(path).joinpath(file)), 'type': Path(file).suffix})
 
                 print(f"{indent}📁 {name}: {len(dirs)} folders, {len(files)} files")
 
@@ -148,10 +165,10 @@ class GoogleDriveTree(FileTree):
                 for i in range(len(path_parts)-1):
                     base = base[path_parts[i]]
 
-                base[name] = FileTree({'id': google_drive_id, 'type': 'folder'})
+                base[name] = GoogleDriveTree({'id': google_drive_id, 'type': 'folder'})
 
                 for file in files:
-                    base[name][file[0]] = FileTree({'name': file[0], 'id': file[1], 'size': file[2], 'type': 'file'})
+                    base[name][file[0]] = GoogleDriveTree({'name': file[0], 'id': file[1], 'size': file[2], 'type': 'file'})
 
                 print(f"{indent}📁 {name}: {len(dirs)} folders, {len(files)} files")
 
