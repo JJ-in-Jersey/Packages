@@ -62,65 +62,96 @@ def list_all_files(folder_path):
             file_list.append(full_path)
     return file_list
 
-
 class FileTree(Dictionary):
+
+
+    def find_keys(self, target_key, target_value=None, _found_keys=None, _path=None):
+        """
+        retrieve key/value pairs that match the target_key
+        :param target_key: key to be found
+        :param target_value: value of found key
+        :param _found_keys: list of found items, passed to next recursion
+        :param _path: string of dictionary names
+        :return _found_keys: list of found item tuples (key, value)
+        """
+        if _found_keys is None:
+            _found_keys = []
+
+        for key, value in self.items():
+            if key == target_key:
+                if target_value is not None:
+                    if value == target_value:
+                        _found_keys.append((f'{_path}/{key}' if _path else {key}, value))
+                else:
+                    _found_keys.append((f'{_path}/{key}' if _path else {key}, value))
+            if isinstance(value, FileTree):
+                _path = f'[{_path}][{key}]'
+                value.find_keys(target_key, target_value, _found_keys)
+        return _found_keys
+
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+class OSFileTree(FileTree):
     """
     create a Dictionary representing a folder-file hierarchy from a Windows or Mac drive
     :param start: path to folder hierarchy; none uses entire drive (root)
     """
-    root_path = abspath('/')
+    # root_path = abspath('/')
 
-    def __init__(self, start: Path = None, *args):
-        super().__init__(*args)
+    def __init__(self, *args, start_path: Path = abspath('/'), **kwargs):
+        super().__init__(*args, **kwargs)
 
-        start = FileTree.root_path if start is None else start
+        if not 'json_source' in kwargs:
 
-        current_dict = self
-        dict_path = ''
+            print("🚀 building file tree dictionary")
+            for path, dirs, files in os.walk(start_path):
+                name = Path(path).name
+                path_parts = Path(path).relative_to(start_path.parent).parts
+                indent = " " * (len(path_parts)-1)
 
-        print("🚀 building file tree dictionary")
-        for current_folder_path, folder_names, file_names in os.walk(self.start):
-            current_folder_path = Path(current_folder_path)
-            dict_path = dict_path + '/' + current_folder_path.name
-            print(dict_path)
-            indent = " " * (len(current_folder_path.parts) - len(start.parts))
-            current_dict[current_folder_path.name] = Dictionary({'path': current_folder_path})
-            for folder in folder_names:
-                folder_path = current_folder_path.joinpath(folder)
-                current_dict[current_folder_path.name][folder] = Dictionary({'name': folder_path})
-            for file in file_names:
-                file_path = current_folder_path.joinpath(file)
-                current_dict[current_folder_path.name][file] = Dictionary({'name': file_path, 'file_size': os.path.getsize(file_path), 'type': file_path.suffix})
-            current_dict = current_dict[current_folder_path.name]
-            print(f"{indent}📁 {current_folder_path.name}: {len(folder_names)} folders, {len(file_names)} files)")
+                base = self
+                for i in range(len(path_parts)-1):
+                    base = base[path_parts[i]]
+
+                base[name] = FileTree({'path': path, 'type': 'folder'})
+
+                for file in files:
+                    base[name][file] = FileTree({'path': path, 'name': file, 'size': os.path.getsize(Path(path).joinpath(file)), 'type': Path(file).suffix})
+
+                print(f"{indent}📁 {name}: {len(dirs)} folders, {len(files)} files")
 
 
-class GoogleDriveTree(Dictionary):
+class GoogleDriveTree(FileTree):
     """
     create a Dictionary representing a folder-file hierarchy from the Google Drive API
     :param start: path to folder hierarchy; none uses entire drive (root)
     """
 
-    def __init__(self, start_path: str = '/', *args):
-        super().__init__(*args)
+    def __init__(self, *args, start_path: str = '/', **kwargs):
+        super().__init__(*args, **kwargs)
 
         drive = GoogleDrive()
 
-        print("🚀 building drive tree dictionary")
+        if not 'json_source' in kwargs:
 
-        id = drive.get_path_id(start_path)
-        for depth, path, id, dirs, files in drive.walk_drive(id):
-            indent = " " * depth
-            path_parts = [f.strip() for f in path.split('/') if f.strip()]
-            name = path_parts[-1]
+            print("🚀 building drive tree dictionary")
 
-            base = self
-            for i in range(len(path_parts)-1):
-                base = base[path_parts[i]]
+            google_drive_id = drive.get_path_id(start_path)
+            for depth, path, google_drive_id, dirs, files in drive.walk_drive(google_drive_id):
+                indent = " " * depth
+                path_parts = [f.strip() for f in path.split('/') if f.strip()]
+                name = path_parts[-1]
 
-            base[name] = Dictionary({'id': id, 'type': 'folder'})
+                base = self
+                for i in range(len(path_parts)-1):
+                    base = base[path_parts[i]]
 
-            for file in files:
-                base[name][file[0]] = Dictionary({'name': file[0], 'id': file[1], 'type': 'file'})
+                base[name] = FileTree({'id': google_drive_id, 'type': 'folder'})
 
-            print(f"{indent}📁 {name}: {len(dirs)} folders, {len(files)} files")
+                for file in files:
+                    base[name][file[0]] = FileTree({'name': file[0], 'id': file[1], 'size': file[2], 'type': 'file'})
+
+                print(f"{indent}📁 {name}: {len(dirs)} folders, {len(files)} files")
+
