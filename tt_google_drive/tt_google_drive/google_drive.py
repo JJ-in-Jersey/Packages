@@ -79,12 +79,11 @@ class GoogleDrive:
             return None
 
 
-    def walk_drive(self, folder_id: str = 'root', _depth: int = 0, _drive_path: str = '' ):
+    def walk_drive(self, folder_id: str = 'root', _drive_path: str = '' ):
         """
         A generator that mimics os.walk for Google Drive. Yields a tuple ((folder, id), [(subfolder, id)...], [(file, id)...])
         for each directory in the tree.
         :param folder_id: id of the folder to walk
-        :param _depth: depth of folder being processed, internal only
         :param _drive_path: path to folder being walked, internal only
         """
         try:
@@ -122,12 +121,11 @@ class GoogleDrive:
 
             # Yield the current directory and its contents
             # noinspection PyRedundantParentheses
-            yield (_depth, _drive_path, folder_id, dirs, files)
+            yield (_drive_path, folder_id, dirs, files)
 
             # Recursively walk subdirectories
-            _depth += 1
             for d in dirs:
-                yield from self.walk_drive(d[1], _depth, _drive_path)
+                yield from self.walk_drive(d[1], _drive_path)
 
         except HttpError as error:
             print(f"An HTTP error occurred: {error}")

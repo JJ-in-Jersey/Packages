@@ -139,10 +139,10 @@ class GoogleDriveTree(FileTree):
             print("🚀 building drive tree dictionary")
 
             google_drive_id = drive.get_path_id(start_path)
-            for depth, path, google_drive_id, dirs, files in drive.walk_drive(google_drive_id):
-                indent = " " * depth
+            for path, google_drive_id, dirs, files in drive.walk_drive(google_drive_id):
                 path_parts = [f.strip() for f in path.split('/') if f.strip()]
                 name = path_parts[-1]
+                indent = " " * (len(path_parts)-1)
 
                 base = self
                 for i in range(len(path_parts)-1):
