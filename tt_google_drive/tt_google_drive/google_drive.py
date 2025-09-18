@@ -103,7 +103,7 @@ class GoogleDrive:
                 # List contents of the current folder with pagination
                 results = self.service.files().list(
                     q=f"'{folder_id}' in parents and trashed = false",
-                    fields="nextPageToken, files(id, name, mimeType)",
+                    fields="nextPageToken, files(id, name, mimeType, size)",
                     pageSize=1000,
                     pageToken=next_page_token
                 ).execute()
@@ -117,7 +117,7 @@ class GoogleDrive:
             # Separate directories and files
             dirs = [(item['name'], item['id']) for item in all_items if
                     item['mimeType'] == 'application/vnd.google-apps.folder']
-            files = [(item['name'], item['id']) for item in all_items if
+            files = [(item['name'], item['id'], item['size']) for item in all_items if
                      item['mimeType'] != 'application/vnd.google-apps.folder']
 
             # Yield the current directory and its contents
