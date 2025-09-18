@@ -132,6 +132,19 @@ class GoogleDrive:
             return
 
 
+    def get_name(self, file_id: str ):
+        """
+        returns item name for a given file_id
+        :param file_id: file_id of the item
+        """
+        try:
+            folder_metadata = self.service.files().get(fileId=file_id, fields='name').execute()
+            return folder_metadata.get('name')
+        except HttpError as error:
+            print(f"An HTTP error occurred: {error}")
+            return None
+
+
     def get_path_id(self, folder_path: str = None):
         """
         returns the id of the folder at the end of a '/' delimited string
@@ -179,12 +192,12 @@ class GoogleDrive:
             return None
 
 
-    def delete_file(self, file_id: str, file_name: str = 'NAME NOT PROVIDED'):
+    def delete_file(self, file_id: str):
         """
         Deletes a file from Google Drive.
         :param file_id: The ID of the file to delete.
-        :param file_name: The name of the file to delete.
         """
+        file_name = self.get_name(file_id)
         print(f'deleting File ({file_name}: {file_id})')
         try:
             self.service.files().delete(fileId=file_id).execute()
