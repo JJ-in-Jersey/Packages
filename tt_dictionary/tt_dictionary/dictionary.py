@@ -11,9 +11,9 @@ class Dictionary(dict):
         return self.__class__
 
 
-    @staticmethod
-    def _convert_to_this(json_dict: dict):
-        return Dictionary(json_dict)
+    @classmethod
+    def _convert_to_this(cls, json_dict: dict):
+        return cls(json_dict)
 
 
     def write(self, pathname: Path):
@@ -31,7 +31,7 @@ class Dictionary(dict):
             try:
                 print(f'reading json file "{json_source}" into dictionary')
                 with open(json_source, 'r', encoding='utf-8') as f:
-                    data = json.load(f, object_hook=self._convert_to_this)
+                    data = json.load(f, object_hook=self.__class__._convert_to_this)
                 if not isinstance(data, dict):
                     raise ValueError(f'JSON file must contain a dictionary, got {type(data).__name__}')
                 self.update(data)
