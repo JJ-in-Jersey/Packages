@@ -110,6 +110,7 @@ class FileTree(Dictionary):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+
 class OSFileTree(FileTree):
     """
     create a Dictionary representing a folder-file hierarchy from a Windows or Mac drive
@@ -117,15 +118,15 @@ class OSFileTree(FileTree):
     """
     # root_path = abspath('/')
 
-    def __init__(self, *args, start_path: Path = abspath('/'), **kwargs):
+    def __init__(self, *args, start_path: Path = None, **kwargs):
         super().__init__(*args, **kwargs)
 
-        if not 'json_source' in kwargs:
+        if start_path:
 
             print("🚀 building file tree dictionary")
             for path, dirs, files in os.walk(start_path):
                 name = Path(path).name
-                path_parts = Path(path).relative_to(start_path.parent).parts
+                path_parts = Path(path).relative_to(Path(start_path).parent).parts
                 indent = " " * (len(path_parts)-1)
 
                 base = self
@@ -135,7 +136,7 @@ class OSFileTree(FileTree):
                 base[name] = OSFileTree({'path': path, 'type': 'folder'})
 
                 for file in files:
-                    base[name][file] = OSFileTree({'path': path, 'name': file, 'size': os.path.getsize(Path(path).joinpath(file)), 'type': Path(file).suffix})
+                    base[name][file] = OSFileTree({'path': str(Path(path)), 'name': file, 'size': os.path.getsize(Path(path)), 'type': Path(file).suffix})
 
                 print(f"{indent}📁 {name}: {len(dirs)} folders, {len(files)} files")
 
@@ -146,17 +147,21 @@ class GoogleDriveTree(FileTree):
     :param start: path to folder hierarchy; none uses entire drive (root)
     """
 
-    def __init__(self, *args, start_path: str = '/', **kwargs):
+    drive = None
+
+    def __init__(self, *args, start_path: str = None, **kwargs):
+
+        if not GoogleDriveTree.drive:
+            GoogleDriveTree.drive = GoogleDrive()
+
         super().__init__(*args, **kwargs)
 
-        drive = GoogleDrive()
-
-        if not 'json_source' in kwargs:
+        if start_path:
 
             print("🚀 building drive tree dictionary")
 
-            google_drive_id = drive.get_path_id(start_path)
-            for path, google_drive_id, dirs, files in drive.walk_drive(google_drive_id):
+            google_drive_id = GoogleDriveTree.drive.get_path_id(start_path)
+            for path, google_drive_id, dirs, files in GoogleDriveTree.drive.walk_drive(google_drive_id):
                 path_parts = [f.strip() for f in path.split('/') if f.strip()]
                 name = path_parts[-1]
                 indent = " " * (len(path_parts)-1)
@@ -165,10 +170,10 @@ class GoogleDriveTree(FileTree):
                 for i in range(len(path_parts)-1):
                     base = base[path_parts[i]]
 
-                base[name] = GoogleDriveTree({'id': google_drive_id, 'type': 'folder'})
+                base[name] = GoogleDriveTree({'id': google_drive_id, 'type': 'folder', 'path': path})
 
                 for file in files:
-                    base[name][file[0]] = GoogleDriveTree({'name': file[0], 'id': file[1], 'size': file[2], 'type': 'file'})
+                    base[name][file[0]] = GoogleDriveTree({'name': file[0], 'id': file[1], 'size': file[2], 'type': 'file', 'path': path})
 
                 print(f"{indent}📁 {name}: {len(dirs)} folders, {len(files)} files")
 
