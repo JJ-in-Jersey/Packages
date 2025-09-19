@@ -121,22 +121,24 @@ class OSFileTree(FileTree):
     def __init__(self, *args, start_path: Path = None, **kwargs):
         super().__init__(*args, **kwargs)
 
-        if start_path:
+        if start_path and Path(start_path).exists():
+            start_path = Path(start_path)
 
             print("🚀 building file tree dictionary")
             for path, dirs, files in os.walk(start_path):
-                name = Path(path).name
-                path_parts = Path(path).relative_to(Path(start_path).parent).parts
+                path = Path(path)
+                name = path.name
+                path_parts = path.relative_to(start_path.parent).parts
                 indent = " " * (len(path_parts)-1)
 
                 base = self
                 for i in range(len(path_parts)-1):
                     base = base[path_parts[i]]
 
-                base[name] = OSFileTree({'path': path, 'type': 'folder'})
+                base[name] = OSFileTree({'path': str(path), 'type': 'folder'})
 
                 for file in files:
-                    base[name][file] = OSFileTree({'path': str(Path(path)), 'name': file, 'size': os.path.getsize(Path(path)), 'type': Path(file).suffix})
+                    base[name][file] = OSFileTree({'path': str(path), 'name': file, 'size': os.path.getsize(path), 'type': Path(file).suffix})
 
                 print(f"{indent}📁 {name}: {len(dirs)} folders, {len(files)} files")
 
