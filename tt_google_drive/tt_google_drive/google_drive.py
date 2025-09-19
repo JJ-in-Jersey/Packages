@@ -1,5 +1,7 @@
 import os
 from pathlib import Path
+
+from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -234,4 +236,10 @@ class GoogleDrive:
 
 
     def __init__(self):
-        self.service = self.get_drive_service(self.get_drive_credentials())
+        try:
+            cred = self.get_drive_credentials()
+            self.service = self.get_drive_service(cred)
+
+        except RefreshError:
+            raise GoogleAuthenticationFailure
+
