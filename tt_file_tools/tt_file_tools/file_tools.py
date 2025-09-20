@@ -65,7 +65,7 @@ def list_all_files(folder_path):
 class FileTree(Dictionary):
 
 
-    def find_keys(self, target_key, target_value=None, _found_keys=None, _path=None):
+    def find_keys(self, target_key, target_value=None, _found_keys=None):
         """
         retrieve key/value pairs that match the target_key
         :param target_key: key to be found
@@ -79,13 +79,11 @@ class FileTree(Dictionary):
 
         for key, value in self.items():
             if key == target_key:
-                if target_value is not None:
-                    if value == target_value:
-                        _found_keys.append((f'{_path}/{key}' if _path else {key}, value))
-                else:
-                    _found_keys.append((f'{_path}/{key}' if _path else {key}, value))
+                if target_value is None:
+                    _found_keys.append({'path': self['path'], 'size': self['size'] if 'size' in self else 'NA', 'type': self['type']})
+                elif value == target_value:
+                    _found_keys.append({'path': self['path'], 'size': self['size'] if 'size' in self else 'NA', 'type': self['type']})
             if isinstance(value, FileTree):
-                _path = f'[{_path}][{key}]'
                 value.find_keys(target_key, target_value, _found_keys)
         return _found_keys
 
@@ -124,6 +122,7 @@ class OSFileTree(FileTree):
         if start_path and Path(start_path).exists():
             start_path = Path(start_path)
 
+            print(f'Attributes collected: path, name, size, type')
             print("🚀 building file tree dictionary")
             for path, dirs, files in os.walk(start_path):
                 path = Path(path)
@@ -138,7 +137,7 @@ class OSFileTree(FileTree):
                 base[name] = OSFileTree({'path': str(path), 'type': 'folder'})
 
                 for file in files:
-                    base[name][file] = OSFileTree({'path': str(path), 'name': file, 'size': os.path.getsize(path), 'type': Path(file).suffix})
+                    base[name][file] = OSFileTree({'path': str(path/file), 'size': os.path.getsize(path), 'type': Path(file).suffix})
 
                 print(f"{indent}📁 {name}: {len(dirs)} folders, {len(files)} files")
 
@@ -160,6 +159,7 @@ class GoogleDriveTree(FileTree):
 
         if start_path:
 
+            print(f'Attributes collected: path, id, name, size, type')
             print("🚀 building drive tree dictionary")
 
             google_drive_id = GoogleDriveTree.drive.get_path_id(start_path)
@@ -172,10 +172,11 @@ class GoogleDriveTree(FileTree):
                 for i in range(len(path_parts)-1):
                     base = base[path_parts[i]]
 
-                base[name] = GoogleDriveTree({'id': google_drive_id, 'type': 'folder', 'path': path})
+                base[name] = GoogleDriveTree({'path': path, 'id': google_drive_id, 'type': 'folder'})
 
                 for file in files:
-                    base[name][file[0]] = GoogleDriveTree({'name': file[0], 'id': file[1], 'size': file[2], 'type': 'file', 'path': path})
+                    path = path + '/' + file[0]
+                    base[name][file[0]] = GoogleDriveTree({'path': path, 'id': file[1], 'size': file[2], 'type': 'file'})
 
                 print(f"{indent}📁 {name}: {len(dirs)} folders, {len(files)} files")
 
