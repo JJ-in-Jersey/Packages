@@ -3,7 +3,7 @@ from tt_dictionary.dictionary import Dictionary
 from time import sleep
 from glob import glob
 import os
-from os.path import join, getctime, abspath
+from os.path import join, getctime
 from bs4 import BeautifulSoup as Soup
 from pathlib import Path
 
@@ -71,7 +71,6 @@ class FileTree(Dictionary):
         :param target_key: key to be found
         :param target_value: value of found key
         :param _found_keys: list of found items, passed to next recursion
-        :param _path: string of dictionary names
         :return _found_keys: list of found item tuples (key, value)
         """
         if _found_keys is None:
@@ -122,8 +121,7 @@ class OSFileTree(FileTree):
         if start_path and Path(start_path).exists():
             start_path = Path(start_path)
 
-            print(f'Attributes collected: path, name, size, type')
-            print("🚀 building file tree dictionary")
+            print(f'🚀 building file tree starting from {start_path}')
             for path, dirs, files in os.walk(start_path):
                 path = Path(path)
                 name = path.name
@@ -131,15 +129,19 @@ class OSFileTree(FileTree):
                 indent = " " * (len(path_parts)-1)
 
                 base = self
+                base_path = 'self'
                 for i in range(len(path_parts)-1):
+                    base_path = base_path + f'[{path_parts[i]}]'
                     base = base[path_parts[i]]
+                base_path = base_path + f'[{name}]'
 
                 base[name] = OSFileTree({'path': str(path), 'type': 'folder'})
 
                 for file in files:
-                    base[name][file] = OSFileTree({'path': str(path/file), 'size': os.path.getsize(path), 'type': Path(file).suffix})
+                    file_path = path / file
+                    base[name][file] = OSFileTree({'path': str(file_path), 'size': os.path.getsize(file_path), 'type': file_path.suffix})
 
-                print(f"{indent}📁 {name}: {len(dirs)} folders, {len(files)} files")
+                print(f"{indent}📁 {base_path}: {len(dirs)} folders, {len(files)} files")
 
 
 class GoogleDriveTree(FileTree):
