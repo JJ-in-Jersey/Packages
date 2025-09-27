@@ -6,4 +6,6 @@ pip freeze > %TMP%\pip_freeze
 pip uninstall -y -r %TMP%\pip_freeze
 pip list
 
+python %userprofile%/PycharmProjects/Packages/bin/cleanup.py
+
 pause
