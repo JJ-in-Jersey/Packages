@@ -18,11 +18,10 @@ from tt_exceptions.exceptions import DataNotAvailable, EmptyResponse, DuplicateV
 
 class StationDict(Dictionary):
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-        if PresetGlobals.stations_file.exists():
-            super().__init__(json_source=PresetGlobals.stations_file)
-        else:
+        if not PresetGlobals.stations_file.exists():
             my_request = "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations.xml?type=currentpredictions&units=english"
             for _ in range(5):
                 try:
@@ -60,7 +59,6 @@ class StationDict(Dictionary):
                             except requests.exceptions.RequestException:
                                 sleep(2)
                     print_file_exists(self.write(PresetGlobals.stations_file))
-                    super().__init__(json_source=PresetGlobals.stations_file)
                     break
                 except requests.exceptions.RequestException:
                     sleep(1)
