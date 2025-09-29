@@ -8,7 +8,7 @@ from sympy import Point
 from tt_dataframe.dataframe import DataFrame
 from tt_gpx.gpx import Route, Waypoint, Segment
 from tt_job_manager.job_manager import Job
-from tt_globals.globals import PresetGlobals as pg
+from tt_globals.globals import PresetGlobals
 from tt_date_time_tools.date_time_tools import hours_mins
 from tt_geometry.geometry import Arc, StartArc, EndArc
 from tt_interpolation.interpolation import Interpolator as VInt
@@ -73,7 +73,7 @@ class ElapsedTimeFrame(DataFrame):
         if not start_frame.Time.equals(end_frame.Time):
             raise ValueError
 
-        dist = self.distance(end_frame.Velocity_Major.to_numpy()[1:], start_frame.Velocity_Major.to_numpy()[:-1], speed, pg.timestep / 3600)
+        dist = self.distance(end_frame.Velocity_Major.to_numpy()[1:], start_frame.Velocity_Major.to_numpy()[:-1], speed, PresetGlobals.timestep / 3600)
         dist = dist * np.sign(speed)  # make sure distances are positive in the direction of the current
         timesteps = [timestep for timestep in [self.elapsed_time(dist[i:], length) for i in range(len(dist))] if timestep is not None]
         timesteps.insert(0, 0)  # initial time 0 has no displacement
@@ -156,7 +156,7 @@ class TimeStepsJob(Job):
 
 class SavGolFrame(DataFrame):
 
-    savgol_size = 1100
+    savgol_size = 500
     savgol_order = 1
 
     def __init__(self, timesteps_frame: DataFrame, savgol_path: Path):
@@ -210,9 +210,9 @@ class MinimaFrame(DataFrame):
                 frame.at[i, 'start_utc'] = df.iloc[0].Time
                 frame.at[i, 'min_utc'] = df.iloc[abs(df.stamp - median_stamp).idxmin()].Time
                 frame.at[i, 'end_utc'] = df.iloc[-1].Time
-                frame.at[i, 'start_duration'] = hours_mins(df.iloc[0].t_time * pg.timestep)
-                frame.at[i, 'min_duration'] = hours_mins(df.iloc[abs(df.stamp - median_stamp).idxmin()].t_time * pg.timestep)
-                frame.at[i, 'end_duration'] = hours_mins(df.iloc[-1].t_time * pg.timestep)
+                frame.at[i, 'start_duration'] = hours_mins(df.iloc[0].t_time * PresetGlobals.timestep)
+                frame.at[i, 'min_duration'] = hours_mins(df.iloc[abs(df.stamp - median_stamp).idxmin()].t_time * PresetGlobals.timestep)
+                frame.at[i, 'end_duration'] = hours_mins(df.iloc[-1].t_time * PresetGlobals.timestep)
 
             # round to 15 minutes, then convert to eastern time
             frame.start_datetime = pd.to_datetime(frame.start_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
@@ -287,6 +287,10 @@ class ArcsFrame(DataFrame):
             frame.reset_index(drop=True, inplace=True)
 
             frame.write(arc_path)
+
+            arc_check = {date:'check' for date in frame.date}
+            print(f'# days in {len(arc_check)}')
+
             super().__init__(frame)
 
 
