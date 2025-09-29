@@ -98,17 +98,15 @@ class OneMonth(DataFrame):
             attempts = 5
             for attempt in range(attempts):
                 my_response = requests.get(self.url(month, year, waypoint))
-                # print(my_response.status_code)
-                if my_response.ok:
-                    empty_response = (my_response.content and my_response.text.strip() and bool(len(my_response.content)))
-                    predictions = not 'predictions are not available' in my_response.content.decode()
-                if my_response.ok and not empty_response and predictions:
-                    break  # break for loop because of success
+                response_not_empty = (my_response.content and my_response.text.strip() and bool(len(my_response.content)))
+                predictions_available = not 'predictions are not available' in my_response.content.decode()
+                if my_response.ok and response_not_empty and predictions_available:
+                        break  # break for loop because of success
                 elif attempt < attempts:
                         sleep(1)
                 else:
                     my_response.raise_for_status()
-                    if empty_response:
+                    if not response_not_empty:
                         raise EmptyResponse
                     elif not my_response.content:
                         raise DataNotAvailable
