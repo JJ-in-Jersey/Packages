@@ -135,13 +135,13 @@ class OSFileTree(FileTree):
                     base = base[path_parts[i]]
                 base_path = base_path + f'[{name}]'
 
-                base[name] = OSFileTree({'path': str(path), 'type': 'folder'})
+                base[name] = OSFileTree({'name': name, 'type': 'folder', 'size': len(files), 'path': str(path)})
 
                 for file in files:
                     file_path = path / file
-                    base[name][file] = OSFileTree({'path': str(file_path), 'size': os.path.getsize(file_path), 'type': file_path.suffix})
+                    base[name][file] = OSFileTree({'name': file, 'size': os.path.getsize(file_path), 'type': file_path.suffix, 'path': str(file_path)})
 
-                print(f"{indent}📁 {base_path}: {len(dirs)} folders, {len(files)} files")
+                print(f"{indent}📁 {base_path}: {len(dirs)} folders, {base[name]['size']} files")
 
 
 class GoogleDriveTree(FileTree):
