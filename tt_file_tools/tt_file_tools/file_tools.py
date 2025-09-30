@@ -79,9 +79,9 @@ class FileTree(Dictionary):
         for key, value in self.items():
             if key == target_key:
                 if target_value is None:
-                    _found_keys.append({'path': self['path'], 'size': self['size'] if 'size' in self else 'NA', 'type': self['type']})
+                    _found_keys.append(self)
                 elif value == target_value:
-                    _found_keys.append({'path': self['path'], 'size': self['size'] if 'size' in self else 'NA', 'type': self['type']})
+                    _found_keys.append(self)
             if isinstance(value, FileTree):
                 value.find_keys(target_key, target_value, _found_keys)
         return _found_keys
