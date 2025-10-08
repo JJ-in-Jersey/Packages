@@ -91,7 +91,7 @@ class FileTree(Dictionary):
         Delete key from dictionary
         :param key_path: path to key
         """
-        parts = key_path.split('/')
+        parts = [s for s in key_path.split('/') if s]
 
         # march down the dictionary hierarchy to the parent dictionary
         _dict = self
@@ -100,7 +100,7 @@ class FileTree(Dictionary):
             _dict = _dict[part]
             hierarchy += f'[{part}]'
 
-        print(f'deleting {hierarchy}')
+        print(f'deleting key {parts[-1]} from dictionary {hierarchy}')
         del _dict[parts[-1]]
 
 
@@ -178,7 +178,7 @@ class GoogleDriveTree(FileTree):
 
                 for file in files:
                     path = path + '/' + file[0]
-                    base[name][file[0]] = GoogleDriveTree({'path': path, 'id': file[1], 'size': file[2], 'type': 'file'})
+                    base[name][file[0]] = GoogleDriveTree({'path': path, 'id': file[1], 'size': file[2], 'type': Path(path).suffix})
 
                 print(f"{indent}📁 {name}: {len(dirs)} folders, {len(files)} files")
 

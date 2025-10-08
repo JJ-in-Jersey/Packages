@@ -30,6 +30,28 @@ def directions(compass_heading: int):
     return dir_names
 
 
+def dir_abbrevs(compass_heading: int):
+    dir_names = None
+    if compass_heading > 337.5 or compass_heading < 22.5:
+        dir_names = tuple(['N', 'S'])
+    elif 67.5 > compass_heading > 22.5:
+        dir_names = tuple(['NE', 'SW'])
+    elif 112.5 > compass_heading > 67.5:
+        dir_names = tuple(['east', 'west'])
+    elif 157.5 > compass_heading > 112.5:
+        dir_names = tuple(['SE', 'NW'])
+    elif 202.5 > compass_heading > 157.5:
+        dir_names = tuple(['S', 'N'])
+    elif 247.5 > compass_heading > 202.5:
+        dir_names = tuple(['SW', 'NE'])
+    elif 292.5 > compass_heading > 247.5:
+        dir_names = tuple(['W', 'E'])
+    elif 337.5 > compass_heading > 292.5:
+        dir_names = tuple(['NW', 'SE'])
+
+    return dir_names
+
+
 class Heading:
 
     def quadrant(self):

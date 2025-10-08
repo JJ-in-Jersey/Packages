@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup as Soup
 from num2words import num2words
 from string import Template
 
-from tt_navigation.navigation import distance, directions, Heading
+from tt_navigation.navigation import distance, directions, Heading, dir_abbrevs
 from tt_file_tools.file_tools import SoupFromXMLFile
 # noinspection PyPep8Naming
 from tt_globals.globals import PresetGlobals as pg
@@ -179,12 +179,6 @@ class Route:
         makedirs(self.folder, exist_ok=True)
 
 
-    def touch_heading(self):
-        if self.folder.exists():
-            self.folder.joinpath(str(self.heading) + '.heading').touch()
-        else:
-            raise FileExistsError(self.folder)
-
     def times_folder(self, speed: int):
         folder_path = self.folder.joinpath(num2words(speed))
         makedirs(folder_path, exist_ok=True)
@@ -213,7 +207,8 @@ class Route:
                 raise TypeError('Unknown waypoint type')
 
         self.heading = Heading(self.waypoints[0].coords, self.waypoints[-1].coords).angle
-        self.direction = directions(self.heading)[0]
+        self.directions = directions(self.heading)
+        self.dir_abbrevs = dir_abbrevs(self.heading)
 
         edge_nodes = [wp for wp in self.waypoints if isinstance(wp, EdgeNode)]
         self.edges = [Edge(wp, edge_nodes[i+1]) for i, wp in enumerate(edge_nodes[:-1])]
