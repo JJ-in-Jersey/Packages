@@ -81,8 +81,6 @@ class ElapsedTimeFrame(DataFrame):
 
         dist = ElapsedTimeFrame.distance(end_frame.Velocity_Major.to_numpy()[1:], start_frame.Velocity_Major.to_numpy()[:-1], speed, PresetGlobals.timestep / 3600)
         dist = dist * np.sign(speed)  # if the sign(dist) == sign(speed), dist+, else dist-
-        dist = np.round(dist, 4)
-        dist = np.insert(dist, 0, 0)
         av = ElapsedTimeFrame.average_velocity(end_frame.Velocity_Major.to_numpy()[1:], start_frame.Velocity_Major.to_numpy()[:-1])
         av = np.insert(av, 0, 0)
         opposing_current_flag = (av * speed) < 0
