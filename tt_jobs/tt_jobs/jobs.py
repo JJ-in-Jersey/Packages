@@ -45,6 +45,12 @@ class ElapsedTimeFrame(DataFrame):
         dist = ((water_vf + water_vi) / 2 + boat_speed) * ts_in_hr  # distance is nm
         return dist
 
+
+    @staticmethod
+    def average_velocity(water_vf, water_vi):
+        return (water_vf + water_vi) / 2
+
+
     #  Elapsed times are reported in number of timesteps
     @staticmethod
     def elapsed_time(distances, length):
@@ -73,13 +79,20 @@ class ElapsedTimeFrame(DataFrame):
         if not start_frame.Time.equals(end_frame.Time):
             raise ValueError
 
-        dist = self.distance(end_frame.Velocity_Major.to_numpy()[1:], start_frame.Velocity_Major.to_numpy()[:-1], speed, PresetGlobals.timestep / 3600)
-        dist = dist * np.sign(speed)  # make sure distances are positive in the direction of the current
+        dist = ElapsedTimeFrame.distance(end_frame.Velocity_Major.to_numpy()[1:], start_frame.Velocity_Major.to_numpy()[:-1], speed, PresetGlobals.timestep / 3600)
+        dist = dist * np.sign(speed)  # if the sign(dist) == sign(speed), dist+, else dist-
+        dist = np.round(dist, 4)
+        dist = np.insert(dist, 0, 0)
+        av = ElapsedTimeFrame.average_velocity(end_frame.Velocity_Major.to_numpy()[1:], start_frame.Velocity_Major.to_numpy()[:-1])
+        av = np.insert(av, 0, 0)
+        opposing_current_flag = (av * speed) < 0
+
         timesteps = [timestep for timestep in [self.elapsed_time(dist[i:], length) for i in range(len(dist))] if timestep is not None]
         timesteps.insert(0, 0)  # initial time 0 has no displacement
 
         frame = DataFrame(data={'stamp': start_frame.stamp, 'Time': pd.to_datetime(start_frame.Time, utc=True)})
         frame[name] = timesteps
+        frame[name + ' opp_curr'] = opposing_current_flag
         super().__init__(data=frame)
 
 
