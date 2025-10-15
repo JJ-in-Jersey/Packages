@@ -6,6 +6,7 @@ from scipy.signal import savgol_filter
 from sympy import Point
 
 from tt_dataframe.dataframe import DataFrame
+from tt_dictionary.dictionary import Dictionary
 from tt_gpx.gpx import Route, Waypoint, Segment
 from tt_job_manager.job_manager import Job
 from tt_globals.globals import PresetGlobals
@@ -39,6 +40,9 @@ class InterpolatePointJob(Job):
 
 
 class ElapsedTimeFrame(DataFrame):
+    # Create a dataframe of elapsed time, in timesteps, to get from the begining to the end of the segment at the starting time
+
+    opposing_current_suffix = 'opp_curr'
 
     @staticmethod
     def distance(water_vf, water_vi, boat_speed, ts_in_hr):
@@ -90,7 +94,7 @@ class ElapsedTimeFrame(DataFrame):
 
         frame = DataFrame(data={'stamp': start_frame.stamp, 'Time': pd.to_datetime(start_frame.Time, utc=True)})
         frame[name] = timesteps
-        frame[name + ' opp_curr'] = opposing_current_flag
+        frame[name + ' ' + ElapsedTimeFrame.opposing_current_suffix] = opposing_current_flag
         super().__init__(data=frame)
 
 
@@ -135,13 +139,27 @@ class TimeStepsFrame(DataFrame):
             transit_time += ets_values[row, idx]
         return transit_time
 
+    @staticmethod
+    def _consolidate_et_columns(et_frame: DataFrame):
+        frame = et_frame[[c for c in et_frame.columns.tolist() if Segment.prefix not in c]]
+        column_list = [c for c in et_frame.columns.tolist() if Segment.prefix in c and ElapsedTimeFrame.opposing_current_suffix not in c]
+        column_dict = Dictionary({c: [c, c + ' ' + ElapsedTimeFrame.opposing_current_suffix] for c in column_list})
+        new_df_data = {}
+        for new_col_name, (col1, col2) in column_dict.items():
+            new_df_data[new_col_name] = [t for t in zip(et_frame[col1], et_frame[col2])]
+        frame = pd.concat([frame, DataFrame(new_df_data)], axis=1)
+        return frame
+
+
     def __init__(self, elapsed_timesteps_frame: DataFrame, time_steps_path: Path):
 
         if time_steps_path.exists():
             super().__init__(data=DataFrame(csv_source=time_steps_path))
             self.Time = pd.to_datetime(self.Time, utc=True)
         else:
-            indices = [elapsed_timesteps_frame.columns.get_loc(c) for c in elapsed_timesteps_frame.columns.to_list() if Segment.prefix in c]
+            et_frame = self._consolidate_et_columns(elapsed_timesteps_frame)
+
+            indices = [et_frame.columns.get_loc(c) for c in et_frame.columns.to_list() if Segment.prefix in c]
             values = elapsed_timesteps_frame.values
             transit_timesteps_arr = [self.total_transit_timesteps(row, values, indices) for row in range(len(elapsed_timesteps_frame))]
 
