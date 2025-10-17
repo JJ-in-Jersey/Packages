@@ -50,27 +50,6 @@ class DataFrame(PandasDataFrame):
         reconstructed_tuples = [tuple(d.values()) for d in struct_list]
         self[column_name] = reconstructed_tuples
 
-        # elements = []
-        # for i, ct in enumerate(col_types):
-        #     polars_type = pl.from_numpy_dtype(ct)
-        #     elements.append(split_expr.list.get(i).cast(polars_type))
-        #
-        # polars_frame = polars_frame.with_columns(pl.struct(elements).alias(column_name))
-        #
-        # self = polars_frame.to_pandas()
-        #
-        # self[column_name] = self[column_name].apply(lambda x: tuple(x.values()))
-
-        # # check number of tuple elements and number of tuple types
-        # if len(col_types) != temp_df.shape[1]:
-        #     raise ValueError(f"expected {len(col_types)} types, but found {temp_df.shape[1]}")
-        #
-        # # convert tuple column types
-        # processed_lists = [temp_df[i].astype(ct).to_numpy().tolist() for i, ct in enumerate(col_types)]
-        #
-        # # assign the new list of tuples directly back to the original column name
-        # self[column_name] = list(zip(*processed_lists))
-
 
     def write(self, csv_target: Path, **kwargs):
         if 'index' not in kwargs:
