@@ -6,7 +6,7 @@ from scipy.signal import savgol_filter
 from sympy import Point
 
 from tt_dataframe.dataframe import DataFrame
-from tt_dictionary.dictionary import Dictionary
+# from tt_dictionary.dictionary import Dictionary
 from tt_gpx.gpx import Route, Waypoint, Segment
 from tt_job_manager.job_manager import Job
 from tt_globals.globals import PresetGlobals
@@ -41,8 +41,7 @@ class InterpolatePointJob(Job):
 
 class ElapsedTimeFrame(DataFrame):
     # Create a dataframe of elapsed time, in timesteps, to get from the begining to the end of the segment at the starting time
-
-    opposing_current_suffix = 'opp_curr'
+    # departure_time, number of timesteps to end of segment
 
     @staticmethod
     def distance(water_vf, water_vi, boat_speed, ts_in_hr):
@@ -86,15 +85,12 @@ class ElapsedTimeFrame(DataFrame):
         dist = ElapsedTimeFrame.distance(end_frame.Velocity_Major.to_numpy()[1:], start_frame.Velocity_Major.to_numpy()[:-1], speed, PresetGlobals.timestep / 3600)
         dist = dist * np.sign(speed)  # if the sign(dist) == sign(speed), dist+, else dist-
         av = ElapsedTimeFrame.average_velocity(end_frame.Velocity_Major.to_numpy()[1:], start_frame.Velocity_Major.to_numpy()[:-1])
-        av = np.insert(av, 0, 0)
-        opposing_current_flag = (av * speed) < 0
-
+        fair_current_flag = (av * speed) > 0  # no opposing current flag, all average current directions match speed direction
+        fair_current_flag = fair_current_flag.tolist()
         timesteps = [timestep for timestep in [self.elapsed_time(dist[i:], length) for i in range(len(dist))] if timestep is not None]
-        timesteps.insert(0, 0)  # initial time 0 has no displacement
 
-        frame = DataFrame(data={'stamp': start_frame.stamp, 'Time': pd.to_datetime(start_frame.Time, utc=True)})
-        frame[name] = timesteps
-        frame[name + ' ' + ElapsedTimeFrame.opposing_current_suffix] = opposing_current_flag
+        frame = DataFrame(data={'stamp': start_frame.stamp[:-1], 'Time': pd.to_datetime(start_frame.Time[:-1], utc=True)})
+        frame[name] = list(zip(timesteps, fair_current_flag))
         super().__init__(data=frame)
 
 
@@ -139,35 +135,70 @@ class TimeStepsFrame(DataFrame):
             transit_time += ets_values[row, idx]
         return transit_time
 
-    @staticmethod
-    def _consolidate_et_columns(et_frame: DataFrame):
-        frame = et_frame[[c for c in et_frame.columns.tolist() if Segment.prefix not in c]]
-        column_list = [c for c in et_frame.columns.tolist() if Segment.prefix in c and ElapsedTimeFrame.opposing_current_suffix not in c]
-        column_dict = Dictionary({c: [c, c + ' ' + ElapsedTimeFrame.opposing_current_suffix] for c in column_list})
-        new_df_data = {}
-        for new_col_name, (col1, col2) in column_dict.items():
-            new_df_data[new_col_name] = [t for t in zip(et_frame[col1], et_frame[col2])]
-        frame = pd.concat([frame, DataFrame(new_df_data)], axis=1)
-        return frame
 
-
-    def __init__(self, elapsed_timesteps_frame: DataFrame, time_steps_path: Path):
+    def __init__(self, et_frame: DataFrame, time_steps_path: Path):
 
         if time_steps_path.exists():
+            print(f'Loading {time_steps_path}')
             super().__init__(data=DataFrame(csv_source=time_steps_path))
             self.Time = pd.to_datetime(self.Time, utc=True)
         else:
-            et_frame = self._consolidate_et_columns(elapsed_timesteps_frame)
 
-            indices = [et_frame.columns.get_loc(c) for c in et_frame.columns.to_list() if Segment.prefix in c]
-            values = elapsed_timesteps_frame.values
-            transit_timesteps_arr = [self.total_transit_timesteps(row, values, indices) for row in range(len(elapsed_timesteps_frame))]
+        #  Logic expressed in pandas
+        #
+        # tt = []
+        # for date_index in range(num_dates):
+        #     print(f'date index: {date_index}')
+        #     tts = col_index = 0
+        #     row = date_index
+        #     no_op_curr = True
+        #     while col_index < len(col_indices):
+        #         if row >= num_dates:
+        #             tts = np.nan
+        #             break
+        #         col = col_indices[col_index]
+        #         tts += et_frame.iloc[row, col][0]
+        #         no_op_curr = et_frame.iloc[row, col][1] and no_op_curr
+        #         row = int(tts)
+        #         col_index += 1
+        #     tt.append(tuple([tts, no_op_curr])
 
-            elapsed_timesteps_frame.drop(elapsed_timesteps_frame.columns[indices], axis=1, inplace=True)
-            elapsed_timesteps_frame['t_time'] = pd.Series(transit_timesteps_arr)
-            elapsed_timesteps_frame.write(time_steps_path)
+        #  Logic using numpy for speed
+            frame = DataFrame()
+            frame['stamp'] = et_frame['stamp']
+            frame['Time'] = et_frame['Time']
 
-            super().__init__(data=elapsed_timesteps_frame)
+            col_indices = [et_frame.columns.get_loc(c) for c in et_frame.columns.to_list() if Segment.prefix in c]
+
+            # create a NumPy array containing ONLY the segments data (the (value, boolean) tuples)
+            # use .to_numpy()) on the slice of columns to get a 2D array
+            segment_data_array = et_frame.iloc[:, col_indices].to_numpy()
+
+            num_dates = len(segment_data_array)
+            num_segments = len(col_indices)
+
+            timesteps = []
+            for date_index in range(num_dates):
+                print(f'date index: {date_index}')
+                tts = 0
+                col_idx = 0
+                row = date_index
+                while col_idx < num_segments:
+                    if row >= num_dates:
+                        tts = np.nan
+                        break
+                    segment = segment_data_array[row, col_idx]
+                    value = segment[0]
+                    tts += value
+                    row = int(tts)
+                    col_idx += 1
+                timesteps.append(tts)
+
+            frame['t_time'] = timesteps
+            frame['fair_current'] = et_frame['fair_current']
+            frame.write(time_steps_path)
+
+            super().__init__(data=frame)
 
 
 class TimeStepsJob(Job):
@@ -190,19 +221,19 @@ class SavGolFrame(DataFrame):
 
     def __init__(self, timesteps_frame: DataFrame, savgol_path: Path):
 
+        savgol_frame = timesteps_frame.copy()
+
         if savgol_path.exists():
             super().__init__(data=DataFrame(csv_source=savgol_path))
             self.Time = pd.to_datetime(self.Time, utc=True)
         else:
-            # timesteps_frame['midline'] = savgol_filter(timesteps_frame.t_time, self.savgol_size, self.savgol_order).round().astype('int')
-            timesteps_frame['midline'] = np.round(savgol_filter(timesteps_frame.t_time, self.savgol_size, self.savgol_order)).astype('int')
-
-            timesteps_frame = timesteps_frame[timesteps_frame.t_time.ne(timesteps_frame.midline)].copy()  # remove values that equal the midline
-            timesteps_frame.loc[timesteps_frame.t_time.lt(timesteps_frame.midline), 'GL'] = True  # less than midline = false
-            timesteps_frame.loc[timesteps_frame.t_time.gt(timesteps_frame.midline), 'GL'] = False  # greater than midline => true
-            timesteps_frame['block'] = (timesteps_frame['GL'] != timesteps_frame['GL'].shift(1)).cumsum()  # index the blocks of True and False
-            timesteps_frame.write(savgol_path)
-            super().__init__(data=timesteps_frame)
+            savgol_frame['midline'] = np.round(savgol_filter(savgol_frame.t_time, self.savgol_size, self.savgol_order)).astype('int')
+            savgol_frame = savgol_frame[savgol_frame.t_time.ne(savgol_frame.midline)].copy()  # remove values that equal the midline
+            savgol_frame.loc[savgol_frame.t_time.lt(savgol_frame.midline), 'GL'] = True  # less than midline = false
+            savgol_frame.loc[savgol_frame.t_time.gt(savgol_frame.midline), 'GL'] = False  # greater than midline => true
+            savgol_frame['sg_block'] = (savgol_frame['GL'] != savgol_frame['GL'].shift(1)).cumsum()  # index the blocks of True and False
+            savgol_frame.write(savgol_path)
+            super().__init__(data=savgol_frame)
 
 
 class SavGolJob(Job):
@@ -212,18 +243,49 @@ class SavGolJob(Job):
     def error_callback(self, result): return super().error_callback(result)
 
     def __init__(self, timesteps_frame: DataFrame, speed: int, route: Route):
-        job_name = 'savitzky-golay midlines' + ' ' + str(speed)
+        job_name = 'savitsky golay frame' + ' ' + str(speed)
         result_key = speed
         arguments = tuple([timesteps_frame, route.filepath('savgol', speed)])
         super().__init__(job_name, result_key, SavGolFrame, arguments)
 
 
-class MinimaFrame(DataFrame):
+class FairCurrentFrame(DataFrame):
+
+    def __init__(self, timesteps_frame: DataFrame, fc_path: Path):
+
+        fc_frame = timesteps_frame.copy()
+
+        if fc_path.exists():
+            super().__init__(data=DataFrame(csv_source=fc_path))
+            self.Time = pd.to_datetime(self.Time, utc=True)
+        else:
+            # fc_frame['midline'] = np.round(savgol_filter(fc_frame.t_time, self.savgol_size, self.savgol_order)).astype('int')
+            # fc_frame = fc_frame[fc_frame.t_time.ne(fc_frame.midline)].copy()  # remove values that equal the midline
+            # fc_frame.loc[fc_frame.t_time.lt(fc_frame.midline), 'GL'] = True  # less than midline = false
+            # fc_frame.loc[fc_frame.t_time.gt(fc_frame.midline), 'GL'] = False  # greater than midline => true
+            fc_frame['fc_block'] = (fc_frame['fair_current'] != fc_frame['fair_current'].shift(1)).cumsum()  # index the blocks of True and False
+            fc_frame.write(fc_path)
+            super().__init__(data=fc_frame)
+
+
+class FairCurrentJob(Job):
+
+    def execute(self): return super().execute()
+    def execute_callback(self, result): return super().execute_callback(result)
+    def error_callback(self, result): return super().error_callback(result)
+
+    def __init__(self, timesteps_frame: DataFrame, speed: int, route: Route):
+        job_name = 'fair currents frame' + ' ' + str(speed)
+        result_key = speed
+        arguments = tuple([timesteps_frame, route.filepath('fc', speed)])
+        super().__init__(job_name, result_key, FairCurrentFrame, arguments)
+
+
+class SavGolMinimaFrame(DataFrame):
 
     noise_threshold = 100
 
-    # def __init__(self, transit_timesteps_path: Path, savgol_path: Path):
-    def __init__(self, savgol_frame: DataFrame, minima_path: Path):
+    def __init__(self, sg_frame: DataFrame, minima_path: Path):
 
         if minima_path.exists():
             super().__init__(data=DataFrame(csv_source=minima_path))
@@ -231,7 +293,52 @@ class MinimaFrame(DataFrame):
                 self[col] = self[col].apply(pd.to_datetime)
         else:
             # create a list of minima frames (TF = True, below midline) and larger than the noise threshold
-            blocks = [df.reset_index(drop=True).drop(labels=['GL', 'block', 'midline'], axis=1) for index, df in savgol_frame.groupby('block') if df['GL'].any() and len(df) > MinimaFrame.noise_threshold]
+            blocks = [df.reset_index(drop=True).drop(labels=['GL', 'block', 'midline'], axis=1) for index, df in sg_frame.groupby('sg_block') if df['GL'].any() and len(df) > SavGolMinimaFrame.noise_threshold]
+
+            frame = DataFrame(columns=['start_datetime', 'min_datetime', 'end_datetime', 'start_duration', 'min_duration', 'end_duration'])
+            for i, df in enumerate(blocks):
+                # median_stamp = int(df[df.t_time == df.min().t_time]['stamp'].median())
+                frame.at[i, 'start_utc'] = df.iloc[0].Time
+                # frame.at[i, 'min_utc'] = df.iloc[abs(df.stamp - median_stamp).idxmin()].Time
+                frame.at[i, 'end_utc'] = df.iloc[-1].Time
+                frame.at[i, 'start_duration'] = hours_mins(df.iloc[0].t_time * PresetGlobals.timestep)
+                # frame.at[i, 'min_duration'] = hours_mins(df.iloc[abs(df.stamp - median_stamp).idxmin()].t_time * PresetGlobals.timestep)
+                frame.at[i, 'end_duration'] = hours_mins(df.iloc[-1].t_time * PresetGlobals.timestep)
+
+            # round to 15 minutes, then convert to eastern time
+            frame.start_datetime = pd.to_datetime(frame.start_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
+            # frame.min_datetime = pd.to_datetime(frame.min_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
+            frame.end_datetime = pd.to_datetime(frame.end_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
+
+            frame.drop(['start_utc', 'min_utc', 'end_utc'], axis=1, inplace=True)
+            frame.write(minima_path)
+            super().__init__(data=frame)
+
+
+class SavGolMinimaJob(Job):  # super -> job name, result key, function/object, arguments
+
+    def execute(self): return super().execute()
+    def execute_callback(self, result): return super().execute_callback(result)
+    def error_callback(self, result): return super().error_callback(result)
+
+    def __init__(self, savgol_frame: DataFrame, speed: int, route: Route):
+        job_name = 'savitsky golay minima' + ' ' + str(speed)
+        result_key = speed
+        arguments = tuple([savgol_frame, route.filepath('sm', speed)])
+        super().__init__(job_name, result_key, SavGolMinimaFrame, arguments)
+
+
+class FairCurrentMinimaFrame(DataFrame):
+
+    def __init__(self, fc_frame: DataFrame, minima_path: Path):
+
+        if minima_path.exists():
+            super().__init__(data=DataFrame(csv_source=minima_path))
+            for col in [c for c in self.columns if 'time' in c]:
+                self[col] = self[col].apply(pd.to_datetime)
+        else:
+            # create a list of minima frames (TF = True, below midline) and larger than the noise threshold
+            blocks = [df.reset_index(drop=True).drop(labels=['fair_current', 'fc_block'], axis=1) for index, df in fc_frame.groupby('fc_block')]
 
             frame = DataFrame(columns=['start_datetime', 'min_datetime', 'end_datetime', 'start_duration', 'min_duration', 'end_duration'])
             for i, df in enumerate(blocks):
@@ -253,17 +360,17 @@ class MinimaFrame(DataFrame):
             super().__init__(data=frame)
 
 
-class MinimaJob(Job):  # super -> job name, result key, function/object, arguments
+class FairCurrentMinimaJob(Job):  # super -> job name, result key, function/object, arguments
 
     def execute(self): return super().execute()
     def execute_callback(self, result): return super().execute_callback(result)
     def error_callback(self, result): return super().error_callback(result)
 
-    def __init__(self, savgol_frame: DataFrame, speed: int, route: Route):
-        job_name = 'minima' + ' ' + str(speed)
+    def __init__(self, fair_current_frame: DataFrame, speed: int, route: Route):
+        job_name = 'fair current minima' + ' ' + str(speed)
         result_key = speed
-        arguments = tuple([savgol_frame, route.filepath('minima', speed)])
-        super().__init__(job_name, result_key, MinimaFrame, arguments)
+        arguments = tuple([fair_current_frame, route.filepath('fm', speed)])
+        super().__init__(job_name, result_key, FairCurrentMinimaFrame, arguments)
 
 
 class ArcsFrame(DataFrame):
