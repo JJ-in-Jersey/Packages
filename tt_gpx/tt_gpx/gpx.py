@@ -5,13 +5,10 @@ from shutil import rmtree as delete_folder
 from pathlib import Path
 from bs4 import BeautifulSoup as Soup
 from num2words import num2words
-from string import Template
 
 from tt_navigation.navigation import distance, directions, Heading, dir_abbrevs
 from tt_file_tools.file_tools import SoupFromXMLFile
-# noinspection PyPep8Naming
-from tt_globals.globals import PresetGlobals as pg
-
+import tt_globals.globals as fc_globals
 
 class BaseWaypoint:
 
@@ -27,7 +24,7 @@ class BaseWaypoint:
     ordinal_number = 0
 
     def write_gpx(self):
-        soup = SoupFromXMLFile(pg.templates_folder.joinpath('waypoint_template.gpx')).soup
+        soup = SoupFromXMLFile(fc_globals.TEMPLATES_FOLDER.joinpath('waypoint_template.gpx')).soup
         soup.find('name').string = self.name
         soup.find('wpt')['lat'] = self.lat
         soup.find('wpt')['lon'] = self.lon
@@ -48,7 +45,7 @@ class BaseWaypoint:
         desc_tag.string = self.id
         soup.find('name').insert_after(desc_tag)
 
-        with open(pg.gpx_folder.joinpath(self.id + '.gpx'), 'w') as a_file:
+        with open(fc_globals.GPX_FOLDER.joinpath(self.id + '.gpx'), 'w') as a_file:
             a_file.write(str(soup))
 
 
@@ -78,7 +75,7 @@ class BaseWaypoint:
         if bool(station['folder']):
             self.folder = Path(station['folder'])
         else:
-            self.folder = pg.waypoints_folder.joinpath(self.name)
+            self.folder = fc_globals.WAYPOINTS_FOLDER.joinpath(self.name)
         self.raw_csv_path = self.folder.joinpath(self.raw_csv_name)
         self.adjusted_csv_path = self.folder.joinpath(self.adjusted_csv_name)
         self.spline_csv_path = self.folder.joinpath(self.spline_csv_name)
@@ -165,35 +162,22 @@ class Segment:
 
 class Route:
 
-    template_dict = {'elapsed timesteps': Template('elapsed_timesteps $speed.csv'),
-                     'transit timesteps': Template('transit_timesteps $speed.csv'),
-                     'savgol': Template('savgol $speed.csv'),
-                     'fc': Template('fair_current $speed.csv'),
-                     'sm': Template('savitsky_golay_minima $speed.csv'),
-                     'fm': Template('fair_current_minima $speed.csv'),
-                     'arcs': Template('arcs $speed.csv'),
-                     'transit times': Template('transit times $loc.csv'),
-                     'first_day': Template('$year/12/1'),
-                     'last_day': Template('$year/1/31')}
+    # def times_folder(self, speed: int):
+    #     Route.base_filepath = self.folder.joinpath(num2words(speed))
+    #     return Route.base_filepath
 
 
-    def make_folder(self):
-        makedirs(self.folder, exist_ok=True)
+    def filepath(self, name: str, speed: int):
+        new_folder_path = self.folder.joinpath(num2words(speed))
+        makedirs(new_folder_path, exist_ok=True)
+        return new_folder_path.joinpath(fc_globals.TEMPLATES[name].substitute({'speed': speed}))
 
-
-    def times_folder(self, speed: int):
-        folder_path = self.folder.joinpath(num2words(speed))
-        makedirs(folder_path, exist_ok=True)
-        return folder_path
-
-    def filepath(self, name: str, field):
-        return self.times_folder(field).joinpath(Route.template_dict[name].substitute({'speed': field}))
 
     def __init__(self, stations_dict: dict, tree: Soup):
 
         self.name = tree.find('name').string
         self.code = ''.join(word[0] for word in self.name.upper().split())
-        self.folder = pg.project_base_folder.joinpath(self.code)
+        self.folder = fc_globals.PROJECT_BASE_FOLDER.joinpath(self.code)
 
         self.waypoints = []
         for tag in tree.find_all('rtept'):

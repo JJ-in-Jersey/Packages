@@ -11,7 +11,7 @@ from os.path import basename
 from tt_dataframe.dataframe import DataFrame
 from tt_dictionary.dictionary import Dictionary
 from tt_file_tools.file_tools import SoupFromXMLResponse, print_file_exists
-from tt_globals.globals import PresetGlobals
+import tt_globals.globals as fc_globals
 from tt_gpx.gpx import Waypoint
 from tt_exceptions.exceptions import DataNotAvailable, EmptyResponse, DuplicateValues, NonMonotonic, DataMissing
 
@@ -21,7 +21,7 @@ class StationDict(Dictionary):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        if not PresetGlobals.stations_file.exists():
+        if not fc_globals.STATIONS_FILE.exists():
             my_request = "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations.xml?type=currentpredictions&units=english"
             for _ in range(5):
                 try:
@@ -58,7 +58,7 @@ class StationDict(Dictionary):
                                 break
                             except requests.exceptions.RequestException:
                                 sleep(2)
-                    print_file_exists(self.write(PresetGlobals.stations_file))
+                    print_file_exists(self.write(fc_globals.STATIONS_FILE))
                     break
                 except requests.exceptions.RequestException:
                     sleep(1)
@@ -66,7 +66,7 @@ class StationDict(Dictionary):
 
     @staticmethod
     def absolute_path_string(folder_name):
-        return str(PresetGlobals.waypoints_folder.joinpath(folder_name).absolute())
+        return str(fc_globals.WAYPOINTS_FOLDER.joinpath(folder_name).absolute())
 
 
     def add_waypoint(self, route_waypoint: Waypoint):
@@ -75,14 +75,14 @@ class StationDict(Dictionary):
                'type': route_waypoint.type, 'folder_name': basename(route_waypoint.folder),
                'folder': StationDict.absolute_path_string(basename(route_waypoint.folder))}
         self[row['id']] = row
-        print_file_exists(self.write(PresetGlobals.stations_file))
+        print_file_exists(self.write(fc_globals.STATIONS_FILE))
 
 
     def comment_waypoint(self, waypoint_id: str):
         if waypoint_id in self:
             print(f'Excluding {waypoint_id} from station dictionary')
             self['#' + waypoint_id] = self.pop(waypoint_id)
-            self.write(PresetGlobals.stations_file)
+            self.write(fc_globals.STATIONS_FILE)
 
 
 class OneMonth(DataFrame):
