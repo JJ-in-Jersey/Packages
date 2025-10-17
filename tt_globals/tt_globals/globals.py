@@ -1,32 +1,38 @@
 from tt_os_abstraction.os_abstraction import env
 from os import makedirs
+from string import Template
 
+PROJECT_BASE_FOLDER = env('user_profile').joinpath('Fair Currents')
+STATIONS_FOLDER = PROJECT_BASE_FOLDER.joinpath('stations')
+STATIONS_FILE = STATIONS_FOLDER.joinpath('stations.json')
+ROUTES_FOLDER = PROJECT_BASE_FOLDER.joinpath('routes')
+WAYPOINTS_FOLDER = STATIONS_FOLDER.joinpath('waypoints')
+GPX_FOLDER = STATIONS_FOLDER.joinpath('gpx')
+SOURCE_BASE_FOLDER = env('user_profile').joinpath('PycharmProjects').joinpath('Fair-Currents')
+TEMPLATES_FOLDER = SOURCE_BASE_FOLDER.joinpath('templates')
 
-class PresetGlobals:
+CHECKMARK = u'\N{check mark}'
 
-    project_base_folder = env('user_profile').joinpath('Fair Currents')
-    stations_folder = project_base_folder.joinpath('stations')
-    stations_file = stations_folder.joinpath('stations.json')
-    routes_folder = project_base_folder.joinpath('routes')
-    waypoints_folder = stations_folder.joinpath('waypoints')
-    gpx_folder = stations_folder.joinpath('gpx')
+TIMESTEP = 60  # 60 seconds, one minute
+SPEEDS = [-10 + v for v in range(0, 8)] + [3 + v for v in range(0, 8)]
+TIME_WINDOW_SCALE = 1.5
 
-    source_base_folder = env('user_profile').joinpath('PycharmProjects').joinpath('Fair-Currents')
-    templates_folder = source_base_folder.joinpath('templates')
+TEMPLATES= {
+    'ElapsedTimeFrame': Template('elapsed_timesteps $speed.csv'),
+    'TimeStepsFrame': Template('transit_timesteps $speed.csv'),
+    'SavGolFrame': Template('savitsky_golay $speed.csv'),
+    'FairCurrentFrame': Template('fair_current $speed.csv'),
+    'SavGolMinimaFrame': Template('savitsky_golay_minima $speed.csv'),
+    'FairCurrentMinimaFrame': Template('fair_current_minima $speed.csv'),
+    'ArcsFrame': Template('arcs $speed.csv'),
+    'transit_times': Template('transit_times $speed.csv'),
+    'first_day': Template('$year/12/1'),
+    'last_day': Template('$year/1/31')
+}
 
-    checkmark = u'\N{check mark}'
-
-    timestep = 60  # 60 seconds, one minute
-    speeds = [-10 + v for v in range(0, 8)] + [3 + v for v in range(0, 8)]
-    time_window_scale = 1.5
-
-    @staticmethod
-    def make_folders():
-        makedirs(PresetGlobals.project_base_folder, exist_ok=True)
-        makedirs(PresetGlobals.stations_folder, exist_ok=True)
-        makedirs(PresetGlobals.routes_folder, exist_ok=True)
-        makedirs(PresetGlobals.waypoints_folder, exist_ok=True)
-        makedirs(PresetGlobals.gpx_folder, exist_ok=True)
-
-    def __init__(self):
-        pass
+def make_project_folders():
+    makedirs(PROJECT_BASE_FOLDER, exist_ok=True)
+    makedirs(STATIONS_FOLDER, exist_ok=True)
+    makedirs(ROUTES_FOLDER.routes_folder, exist_ok=True)
+    makedirs(WAYPOINTS_FOLDER.waypoints_folder, exist_ok=True)
+    makedirs(GPX_FOLDER.gpx_folder, exist_ok=True)
