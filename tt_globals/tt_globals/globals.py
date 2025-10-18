@@ -15,7 +15,6 @@ CHECKMARK = u'\N{check mark}'
 
 TIMESTEP = 60  # 60 seconds, one minute
 SPEEDS = [-10 + v for v in range(0, 8)] + [3 + v for v in range(0, 8)]
-TIME_WINDOW_SCALE = 1.5
 
 TEMPLATES= {
     'ElapsedTimeFrame': Template('elapsed_timesteps $speed.csv'),
