@@ -6,10 +6,9 @@ from scipy.signal import savgol_filter
 from sympy import Point
 
 from tt_dataframe.dataframe import DataFrame
-# from tt_dictionary.dictionary import Dictionary
 from tt_gpx.gpx import Route, Waypoint, Segment
 from tt_job_manager.job_manager import Job
-from tt_globals.globals import PresetGlobals
+import tt_globals.globals as fc_globals
 from tt_date_time_tools.date_time_tools import hours_mins
 from tt_geometry.geometry import Arc, StartArc, EndArc
 from tt_interpolation.interpolation import Interpolator as VInt
@@ -82,7 +81,7 @@ class ElapsedTimeFrame(DataFrame):
         if not start_frame.Time.equals(end_frame.Time):
             raise ValueError
 
-        dist = ElapsedTimeFrame.distance(end_frame.Velocity_Major.to_numpy()[1:], start_frame.Velocity_Major.to_numpy()[:-1], speed, PresetGlobals.timestep / 3600)
+        dist = ElapsedTimeFrame.distance(end_frame.Velocity_Major.to_numpy()[1:], start_frame.Velocity_Major.to_numpy()[:-1], speed, fc_globals.TIMESTEP / 3600)
         dist = dist * np.sign(speed)  # if the sign(dist) == sign(speed), dist+, else dist-
         av = ElapsedTimeFrame.average_velocity(end_frame.Velocity_Major.to_numpy()[1:], start_frame.Velocity_Major.to_numpy()[:-1])
         fair_current_flag = (av * speed) > 0  # no opposing current flag, all average current directions match speed direction
@@ -124,28 +123,11 @@ class ElapsedTimeJob(Job):  # super -> job name, result key, function/object, ar
 
 class TimeStepsFrame(DataFrame):
 
-    @staticmethod
-    def total_transit_timesteps(init_row: int, ets_values: np.ndarray, array_indices: list):
-        max_row = len(ets_values) - 1
-        transit_time = 0
-        for idx in array_indices:
-            row = int(transit_time) + init_row
-            if row > max_row:
-                break
-            transit_time += ets_values[row, idx]
-        return transit_time
-
-
     def __init__(self, et_frame: DataFrame, time_steps_path: Path):
-
-        if time_steps_path.exists():
-            print(f'Loading {time_steps_path}')
-            super().__init__(data=DataFrame(csv_source=time_steps_path))
-            self.Time = pd.to_datetime(self.Time, utc=True)
-        else:
+        # calculation is equal to or faster than reading in the huge file so always recalculate
+        # disk file is for debugging
 
         #  Logic expressed in pandas
-        #
         # tt = []
         # for date_index in range(num_dates):
         #     print(f'date index: {date_index}')
@@ -179,7 +161,6 @@ class TimeStepsFrame(DataFrame):
 
             timesteps = []
             for date_index in range(num_dates):
-                print(f'date index: {date_index}')
                 tts = 0
                 col_idx = 0
                 row = date_index
@@ -208,9 +189,9 @@ class TimeStepsJob(Job):
     def error_callback(self, result): return super().error_callback(result)
 
     def __init__(self, elapsed_times_frame: DataFrame, speed: int, route: Route):
-        job_name = 'transit timesteps' + ' ' + str(speed)
+        job_name = TimeStepsFrame.__name__ + ' ' + str(speed)
         result_key = speed
-        arguments = tuple([elapsed_times_frame, route.filepath('transit timesteps', speed)])
+        arguments = tuple([elapsed_times_frame, route.filepath(TimeStepsFrame.__name__, speed)])
         super().__init__(job_name, result_key, TimeStepsFrame, arguments)
 
 
@@ -222,18 +203,13 @@ class SavGolFrame(DataFrame):
     def __init__(self, timesteps_frame: DataFrame, savgol_path: Path):
 
         savgol_frame = timesteps_frame.copy()
-
-        if savgol_path.exists():
-            super().__init__(data=DataFrame(csv_source=savgol_path))
-            self.Time = pd.to_datetime(self.Time, utc=True)
-        else:
-            savgol_frame['midline'] = np.round(savgol_filter(savgol_frame.t_time, self.savgol_size, self.savgol_order)).astype('int')
-            savgol_frame = savgol_frame[savgol_frame.t_time.ne(savgol_frame.midline)].copy()  # remove values that equal the midline
-            savgol_frame.loc[savgol_frame.t_time.lt(savgol_frame.midline), 'GL'] = True  # less than midline = false
-            savgol_frame.loc[savgol_frame.t_time.gt(savgol_frame.midline), 'GL'] = False  # greater than midline => true
-            savgol_frame['sg_block'] = (savgol_frame['GL'] != savgol_frame['GL'].shift(1)).cumsum()  # index the blocks of True and False
-            savgol_frame.write(savgol_path)
-            super().__init__(data=savgol_frame)
+        savgol_frame['midline'] = np.round(savgol_filter(savgol_frame.t_time, self.savgol_size, self.savgol_order)).astype('int')
+        savgol_frame = savgol_frame[savgol_frame.t_time.ne(savgol_frame.midline)].copy()  # remove values that equal the midline
+        savgol_frame.loc[savgol_frame.t_time.lt(savgol_frame.midline), 'GL'] = True  # less than midline = false
+        savgol_frame.loc[savgol_frame.t_time.gt(savgol_frame.midline), 'GL'] = False  # greater than midline => true
+        savgol_frame['sg_block'] = (savgol_frame['GL'] != savgol_frame['GL'].shift(1)).cumsum()  # index the blocks of True and False
+        savgol_frame.write(savgol_path)
+        super().__init__(data=savgol_frame)
 
 
 class SavGolJob(Job):
@@ -243,29 +219,21 @@ class SavGolJob(Job):
     def error_callback(self, result): return super().error_callback(result)
 
     def __init__(self, timesteps_frame: DataFrame, speed: int, route: Route):
-        job_name = 'savitsky golay frame' + ' ' + str(speed)
+        job_name = SavGolFrame.__name__ + ' ' + str(speed)
         result_key = speed
-        arguments = tuple([timesteps_frame, route.filepath('savgol', speed)])
+        arguments = tuple([timesteps_frame, route.filepath(SavGolFrame.__name__, speed)])
         super().__init__(job_name, result_key, SavGolFrame, arguments)
 
 
 class FairCurrentFrame(DataFrame):
 
     def __init__(self, timesteps_frame: DataFrame, fc_path: Path):
-
+        # calculation is equal to or faster than reading in a file so always recalculate
+        # disk file is for debugging
         fc_frame = timesteps_frame.copy()
-
-        if fc_path.exists():
-            super().__init__(data=DataFrame(csv_source=fc_path))
-            self.Time = pd.to_datetime(self.Time, utc=True)
-        else:
-            # fc_frame['midline'] = np.round(savgol_filter(fc_frame.t_time, self.savgol_size, self.savgol_order)).astype('int')
-            # fc_frame = fc_frame[fc_frame.t_time.ne(fc_frame.midline)].copy()  # remove values that equal the midline
-            # fc_frame.loc[fc_frame.t_time.lt(fc_frame.midline), 'GL'] = True  # less than midline = false
-            # fc_frame.loc[fc_frame.t_time.gt(fc_frame.midline), 'GL'] = False  # greater than midline => true
-            fc_frame['fc_block'] = (fc_frame['fair_current'] != fc_frame['fair_current'].shift(1)).cumsum()  # index the blocks of True and False
-            fc_frame.write(fc_path)
-            super().__init__(data=fc_frame)
+        fc_frame['fc_block'] = (fc_frame['fair_current'] != fc_frame['fair_current'].shift(1)).cumsum()  # index the blocks of True and False
+        fc_frame.write(fc_path)
+        super().__init__(data=fc_frame)
 
 
 class FairCurrentJob(Job):
@@ -275,9 +243,9 @@ class FairCurrentJob(Job):
     def error_callback(self, result): return super().error_callback(result)
 
     def __init__(self, timesteps_frame: DataFrame, speed: int, route: Route):
-        job_name = 'fair currents frame' + ' ' + str(speed)
+        job_name = FairCurrentFrame.__name__ + ' ' + str(speed)
         result_key = speed
-        arguments = tuple([timesteps_frame, route.filepath('fc', speed)])
+        arguments = tuple([timesteps_frame, route.filepath(FairCurrentFrame.__name__, speed)])
         super().__init__(job_name, result_key, FairCurrentFrame, arguments)
 
 
@@ -287,32 +255,25 @@ class SavGolMinimaFrame(DataFrame):
 
     def __init__(self, sg_frame: DataFrame, minima_path: Path):
 
-        if minima_path.exists():
-            super().__init__(data=DataFrame(csv_source=minima_path))
-            for col in [c for c in self.columns if 'time' in c]:
-                self[col] = self[col].apply(pd.to_datetime)
-        else:
-            # create a list of minima frames (TF = True, below midline) and larger than the noise threshold
-            blocks = [df.reset_index(drop=True).drop(labels=['GL', 'block', 'midline'], axis=1) for index, df in sg_frame.groupby('sg_block') if df['GL'].any() and len(df) > SavGolMinimaFrame.noise_threshold]
+        # create a list of minima frames (TF = True, below midline) and larger than the noise threshold
+        blocks = [df.reset_index(drop=True).drop(labels=['GL', 'sg_block', 'midline'], axis=1) for index, df in sg_frame.groupby('sg_block') if df['GL'].any() and len(df) > SavGolMinimaFrame.noise_threshold]
+        # blocks = [df.reset_index(drop=True) for index, df in sg_frame.groupby('sg_block') if df['GL'].any() and len(df) > SavGolMinimaFrame.noise_threshold]
 
-            frame = DataFrame(columns=['start_datetime', 'min_datetime', 'end_datetime', 'start_duration', 'min_duration', 'end_duration'])
-            for i, df in enumerate(blocks):
-                # median_stamp = int(df[df.t_time == df.min().t_time]['stamp'].median())
-                frame.at[i, 'start_utc'] = df.iloc[0].Time
-                # frame.at[i, 'min_utc'] = df.iloc[abs(df.stamp - median_stamp).idxmin()].Time
-                frame.at[i, 'end_utc'] = df.iloc[-1].Time
-                frame.at[i, 'start_duration'] = hours_mins(df.iloc[0].t_time * PresetGlobals.timestep)
-                # frame.at[i, 'min_duration'] = hours_mins(df.iloc[abs(df.stamp - median_stamp).idxmin()].t_time * PresetGlobals.timestep)
-                frame.at[i, 'end_duration'] = hours_mins(df.iloc[-1].t_time * PresetGlobals.timestep)
+        frame = DataFrame(columns=['start_datetime', 'end_datetime', 'start_duration', 'end_duration'])
+        for i, df in enumerate(blocks):
+            frame.at[i, 'start_utc'] = df.iloc[0].Time
+            frame.at[i, 'start_duration'] = hours_mins(df.iloc[0].t_time * fc_globals.TIMESTEP)
+            frame.at[i, 'end_utc'] = df.iloc[-1].Time
+            frame.at[i, 'end_duration'] = hours_mins(df.iloc[-1].t_time * fc_globals.TIMESTEP)
 
-            # round to 15 minutes, then convert to eastern time
-            frame.start_datetime = pd.to_datetime(frame.start_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
-            # frame.min_datetime = pd.to_datetime(frame.min_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
-            frame.end_datetime = pd.to_datetime(frame.end_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
+        # round to 15 minutes, then convert to eastern time
+        frame.start_datetime = pd.to_datetime(frame.start_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
+        frame.end_datetime = pd.to_datetime(frame.end_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
 
-            frame.drop(['start_utc', 'min_utc', 'end_utc'], axis=1, inplace=True)
-            frame.write(minima_path)
-            super().__init__(data=frame)
+        frame.drop(['start_utc', 'end_utc'], axis=1, inplace=True)
+        frame['type'] = 'sg'
+        frame.write(minima_path)
+        super().__init__(data=frame)
 
 
 class SavGolMinimaJob(Job):  # super -> job name, result key, function/object, arguments
@@ -322,9 +283,9 @@ class SavGolMinimaJob(Job):  # super -> job name, result key, function/object, a
     def error_callback(self, result): return super().error_callback(result)
 
     def __init__(self, savgol_frame: DataFrame, speed: int, route: Route):
-        job_name = 'savitsky golay minima' + ' ' + str(speed)
+        job_name = SavGolMinimaFrame.__name__ + ' ' + str(speed)
         result_key = speed
-        arguments = tuple([savgol_frame, route.filepath('sm', speed)])
+        arguments = tuple([savgol_frame, route.filepath(SavGolMinimaFrame.__name__, speed)])
         super().__init__(job_name, result_key, SavGolMinimaFrame, arguments)
 
 
@@ -332,32 +293,28 @@ class FairCurrentMinimaFrame(DataFrame):
 
     def __init__(self, fc_frame: DataFrame, minima_path: Path):
 
-        if minima_path.exists():
-            super().__init__(data=DataFrame(csv_source=minima_path))
-            for col in [c for c in self.columns if 'time' in c]:
-                self[col] = self[col].apply(pd.to_datetime)
-        else:
-            # create a list of minima frames (TF = True, below midline) and larger than the noise threshold
-            blocks = [df.reset_index(drop=True).drop(labels=['fair_current', 'fc_block'], axis=1) for index, df in fc_frame.groupby('fc_block')]
+        # create a list of dataframe blocks for only those with a no opposing current (fair_current == True)
+        blocks = [df.reset_index(drop=True).drop(labels=['fair_current', 'fc_block'], axis=1) for index, df in fc_frame.groupby('fc_block') if df['fair_current'].any()]
 
-            frame = DataFrame(columns=['start_datetime', 'min_datetime', 'end_datetime', 'start_duration', 'min_duration', 'end_duration'])
-            for i, df in enumerate(blocks):
-                median_stamp = int(df[df.t_time == df.min().t_time]['stamp'].median())
-                frame.at[i, 'start_utc'] = df.iloc[0].Time
-                frame.at[i, 'min_utc'] = df.iloc[abs(df.stamp - median_stamp).idxmin()].Time
-                frame.at[i, 'end_utc'] = df.iloc[-1].Time
-                frame.at[i, 'start_duration'] = hours_mins(df.iloc[0].t_time * PresetGlobals.timestep)
-                frame.at[i, 'min_duration'] = hours_mins(df.iloc[abs(df.stamp - median_stamp).idxmin()].t_time * PresetGlobals.timestep)
-                frame.at[i, 'end_duration'] = hours_mins(df.iloc[-1].t_time * PresetGlobals.timestep)
+        frame = DataFrame(columns=['start_datetime', 'min_datetime', 'end_datetime', 'start_duration', 'min_duration', 'end_duration'])
+        for i, df in enumerate(blocks):
+            median_stamp = int(df[df.t_time == df.min().t_time]['stamp'].median())
+            frame.at[i, 'start_utc'] = df.iloc[0].Time
+            frame.at[i, 'min_utc'] = df.iloc[abs(df.stamp - median_stamp).idxmin()].Time
+            frame.at[i, 'end_utc'] = df.iloc[-1].Time
+            frame.at[i, 'start_duration'] = hours_mins(df.iloc[0].t_time * fc_globals.TIMESTEP)
+            frame.at[i, 'min_duration'] = hours_mins(df.iloc[abs(df.stamp - median_stamp).idxmin()].t_time * fc_globals.TIMESTEP)
+            frame.at[i, 'end_duration'] = hours_mins(df.iloc[-1].t_time * fc_globals.TIMESTEP)
 
-            # round to 15 minutes, then convert to eastern time
-            frame.start_datetime = pd.to_datetime(frame.start_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
-            frame.min_datetime = pd.to_datetime(frame.min_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
-            frame.end_datetime = pd.to_datetime(frame.end_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
+        # round to 15 minutes, then convert to eastern time
+        frame.start_datetime = pd.to_datetime(frame.start_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
+        frame.min_datetime = pd.to_datetime(frame.min_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
+        frame.end_datetime = pd.to_datetime(frame.end_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
 
-            frame.drop(['start_utc', 'min_utc', 'end_utc'], axis=1, inplace=True)
-            frame.write(minima_path)
-            super().__init__(data=frame)
+        frame.drop(['start_utc', 'min_utc', 'end_utc'], axis=1, inplace=True)
+        frame['type'] = 'fc'
+        frame.write(minima_path)
+        super().__init__(data=frame)
 
 
 class FairCurrentMinimaJob(Job):  # super -> job name, result key, function/object, arguments
@@ -367,9 +324,9 @@ class FairCurrentMinimaJob(Job):  # super -> job name, result key, function/obje
     def error_callback(self, result): return super().error_callback(result)
 
     def __init__(self, fair_current_frame: DataFrame, speed: int, route: Route):
-        job_name = 'fair current minima' + ' ' + str(speed)
+        job_name = FairCurrentMinimaFrame.__name__ + ' ' + str(speed)
         result_key = speed
-        arguments = tuple([fair_current_frame, route.filepath('fm', speed)])
+        arguments = tuple([fair_current_frame, route.filepath(FairCurrentMinimaFrame.__name__, speed)])
         super().__init__(job_name, result_key, FairCurrentMinimaFrame, arguments)
 
 
@@ -440,8 +397,8 @@ class ArcsJob(Job):  # super -> job name, result key, function/object, arguments
         job_name = 'arcs' + ' ' + str(speed)
         result_key = speed
         year = minima_frame.loc[0]['start_datetime'].year
-        first_day_string = str(Route.template_dict['first_day'].substitute({'year': year}))
-        last_day_string = str(Route.template_dict['last_day'].substitute({'year': year+2}))
+        first_day_string = str(fc_globals.TEMPLATES['first_day'].substitute({'year': year}))
+        last_day_string = str(fc_globals.TEMPLATES['last_day'].substitute({'year': year+2}))
         first_day = pd.to_datetime(first_day_string).date()
         last_day = pd.to_datetime(last_day_string).date()
         arguments = tuple([minima_frame, route.filepath('arcs', speed), speed, first_day, last_day])
