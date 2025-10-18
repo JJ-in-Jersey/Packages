@@ -394,12 +394,12 @@ class ArcsJob(Job):  # super -> job name, result key, function/object, arguments
     def error_callback(self, result): return super().error_callback(result)
 
     def __init__(self, minima_frame: DataFrame, route: Route, speed: int):
-        job_name = 'arcs' + ' ' + str(speed)
+        job_name = ArcsFrame.__name__ + ' ' + str(speed)
         result_key = speed
         year = minima_frame.loc[0]['start_datetime'].year
         first_day_string = str(fc_globals.TEMPLATES['first_day'].substitute({'year': year}))
         last_day_string = str(fc_globals.TEMPLATES['last_day'].substitute({'year': year+2}))
         first_day = pd.to_datetime(first_day_string).date()
         last_day = pd.to_datetime(last_day_string).date()
-        arguments = tuple([minima_frame, route.filepath('arcs', speed), speed, first_day, last_day])
+        arguments = tuple([minima_frame, route.filepath(ArcsFrame.__name__, speed), speed, first_day, last_day])
         super().__init__(job_name, result_key, ArcsFrame, arguments)
