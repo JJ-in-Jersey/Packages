@@ -18,6 +18,7 @@ SPEEDS = [-10 + v for v in range(0, 8)] + [3 + v for v in range(0, 8)]
 
 TEMPLATES= {
     'ElapsedTimeFrame': Template('elapsed_timesteps $speed.csv'),
+    'ElapsedTimeFrame_fc': Template('elapsed_timesteps_fc $speed.csv'),
     'TimeStepsFrame': Template('transit_timesteps $speed.csv'),
     'SavGolFrame': Template('savitsky_golay $speed.csv'),
     'FairCurrentFrame': Template('fair_current $speed.csv'),
