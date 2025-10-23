@@ -56,15 +56,15 @@ class ElapsedTimeFrame(DataFrame):
     #  Elapsed times are reported in number of timesteps
     @staticmethod
     def elapsed_time(distances, length):
-        csum = 0
+        cum_sum = 0
         index = 0
-        while csum < length and index < len(distances):
-            csum += distances[index]
+        while cum_sum < length and index < len(distances):
+            cum_sum += distances[index]
             index += 1
         if index > len(distances):
             return None
         else:
-            return index - 1
+            return [index - 1, cum_sum - length]
 
     def __init__(self, start_path: Path, end_path: Path, length: float, speed: int, name: str):
 
@@ -86,10 +86,12 @@ class ElapsedTimeFrame(DataFrame):
         av = ElapsedTimeFrame.average_velocity(end_frame.Velocity_Major.to_numpy()[1:], start_frame.Velocity_Major.to_numpy()[:-1])
         fair_current_flag = (av * speed) > 0  # no opposing current flag, all average current directions match speed direction
         fair_current_flag = fair_current_flag.tolist()
-        timesteps = [timestep for timestep in [self.elapsed_time(dist[i:], length) for i in range(len(dist))] if timestep is not None]
+        timestep_and_error = [self.elapsed_time(dist[i:], length) for i in range(len(dist))]
 
         frame = DataFrame(data={'stamp': start_frame.stamp[:-1], 'Time': pd.to_datetime(start_frame.Time[:-1], utc=True)})
-        frame[name] = list(zip(timesteps, fair_current_flag))
+        frame[name + ' timesteps'] = [t[0] for t in timestep_and_error]
+        frame[name + ' error'] = [round(t[1], 4) for t in timestep_and_error]
+        frame[name + ' faircurrent'] = fair_current_flag
         super().__init__(data=frame)
 
 
@@ -123,63 +125,52 @@ class ElapsedTimeJob(Job):  # super -> job name, result key, function/object, ar
 
 class TimeStepsFrame(DataFrame):
 
+    _metadata = ['return_message']
+
     def __init__(self, et_frame: DataFrame, time_steps_path: Path):
-        # calculation is equal to or faster than reading in the huge file so always recalculate
-        # disk file is for debugging
 
-        #  Logic expressed in pandas
-        # tt = []
-        # for date_index in range(num_dates):
-        #     print(f'date index: {date_index}')
-        #     tts = col_index = 0
-        #     row = date_index
-        #     no_op_curr = True
-        #     while col_index < len(col_indices):
-        #         if row >= num_dates:
-        #             tts = np.nan
-        #             break
-        #         col = col_indices[col_index]
-        #         tts += et_frame.iloc[row, col][0]
-        #         no_op_curr = et_frame.iloc[row, col][1] and no_op_curr
-        #         row = int(tts)
-        #         col_index += 1
-        #     tt.append(tuple([tts, no_op_curr])
-
-        #  Logic using numpy for speed
+        if time_steps_path.exists():
+            self.return_message = f''
+            frame = DataFrame(csv_source=time_steps_path)
+        else:
             frame = DataFrame()
             frame['stamp'] = et_frame['stamp']
             frame['Time'] = et_frame['Time']
 
-            col_indices = [et_frame.columns.get_loc(c) for c in et_frame.columns.to_list() if Segment.prefix in c]
+            seg_cols = [c for c in et_frame.columns.to_list() if Segment.prefix in c]
+            timestep_cols = [c for c in seg_cols if 'timesteps' in c]
+            error_cols = [c for c in seg_cols if 'error' in c]
+            faircurrent_cols = [c for c in seg_cols if 'faircurrent' in c]
+            triple_column = list(zip(timestep_cols, error_cols, faircurrent_cols))
 
-            # create a NumPy array containing ONLY the segments data (the (value, boolean) tuples)
-            # use .to_numpy()) on the slice of columns to get a 2D array
-            segment_data_array = et_frame.iloc[:, col_indices].to_numpy()
+            # pandas logic
+            for c in seg_cols:
+                frame[c] = pd.NA
 
-            num_dates = len(segment_data_array)
-            num_segments = len(col_indices)
+            for stamp_index in range(len(frame)):
+                row_index = stamp_index
 
-            timesteps = []
-            for date_index in range(num_dates):
-                tts = 0
-                col_idx = 0
-                row = date_index
-                while col_idx < num_segments:
-                    if row >= num_dates:
-                        tts = np.nan
-                        break
-                    segment = segment_data_array[row, col_idx]
-                    value = segment[0]
-                    tts += value
-                    row = int(tts)
-                    col_idx += 1
-                timesteps.append(tts)
+                for ts_col, err_col, fc_col in triple_column:
+                    if pd.isna(row_index) or row_index < 0 or row_index >= len(et_frame):
+                        ts = err = fc = pd.NA
+                    else:
+                        ts = et_frame.at[int(row_index), ts_col]
+                        err = et_frame.at[int(row_index), err_col]
+                        fc = et_frame.at[int(row_index), fc_col]
+                    frame.at[stamp_index, ts_col] = ts
+                    frame.at[stamp_index, err_col] = err
+                    frame.at[stamp_index, fc_col] = fc
+                    row_index = int(ts) if pd.notna(ts) else pd.NA
 
-            frame['t_time'] = timesteps
-            frame['fair_current'] = et_frame['fair_current']
+            frame['t_time'] = frame[timestep_cols].sum(axis=1)
+            frame['error'] = frame[error_cols].sum(axis=1)
+            frame['faircurrent'] = frame[faircurrent_cols].all(axis=1)
+
             frame.write(time_steps_path)
 
-            super().__init__(data=frame)
+            # self.return_message = f'min: {frame["t_time"].min()},  max: {frame["t_time"].max()}, delta: {frame["t_time"].max() - frame["t_time"].min()}'
+
+        super().__init__(data=frame)
 
 
 class TimeStepsJob(Job):
@@ -206,7 +197,7 @@ class SavGolFrame(DataFrame):
         savgol_frame['midline'] = np.round(savgol_filter(savgol_frame.t_time, self.savgol_size, self.savgol_order)).astype('int')
         savgol_frame = savgol_frame[savgol_frame.t_time.ne(savgol_frame.midline)].copy()  # remove values that equal the midline
         savgol_frame.loc[savgol_frame.t_time.lt(savgol_frame.midline), 'GL'] = True  # less than midline = false
-        savgol_frame.loc[savgol_frame.t_time.gt(savgol_frame.midline), 'GL'] = False  # greater than midline => true
+        savgol_frame.loc[savgol_frame.t_time.ge(savgol_frame.midline), 'GL'] = False  # greater than midline => true
         savgol_frame['sg_block'] = (savgol_frame['GL'] != savgol_frame['GL'].shift(1)).cumsum()  # index the blocks of True and False
         savgol_frame.write(savgol_path)
         super().__init__(data=savgol_frame)
@@ -396,7 +387,7 @@ class ArcsJob(Job):  # super -> job name, result key, function/object, arguments
     def __init__(self, minima_frame: DataFrame, route: Route, speed: int):
         job_name = ArcsFrame.__name__ + ' ' + str(speed)
         result_key = speed
-        year = minima_frame.loc[0]['start_datetime'].year
+        year = pd.to_datetime(minima_frame.loc[0]['start_datetime']).year
         first_day_string = str(fc_globals.TEMPLATES['first_day'].substitute({'year': year}))
         last_day_string = str(fc_globals.TEMPLATES['last_day'].substitute({'year': year+2}))
         first_day = pd.to_datetime(first_day_string).date()
