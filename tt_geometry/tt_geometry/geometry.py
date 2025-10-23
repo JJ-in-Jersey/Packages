@@ -3,7 +3,7 @@ from tt_date_time_tools.date_time_tools import time_to_degrees
 
 class Arc:
 
-    arguments = {'start_datetime', 'start_duration', 'min_datetime', 'min_duration', 'end_datetime', 'end_duration'}
+    arguments = {'start_datetime', 'start_duration', 'min_datetime', 'min_duration', 'end_datetime', 'end_duration', 'type'}
 
     @property
     def arc_dict(self):
