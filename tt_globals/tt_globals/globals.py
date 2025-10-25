@@ -2,6 +2,7 @@ from tt_os_abstraction.os_abstraction import env
 from os import makedirs
 from string import Template
 
+# static globals
 PROJECT_BASE_FOLDER = env('user_profile').joinpath('Fair Currents')
 STATIONS_FOLDER = PROJECT_BASE_FOLDER.joinpath('stations')
 STATIONS_FILE = STATIONS_FOLDER.joinpath('stations.json')
@@ -10,9 +11,7 @@ WAYPOINTS_FOLDER = STATIONS_FOLDER.joinpath('waypoints')
 GPX_FOLDER = STATIONS_FOLDER.joinpath('gpx')
 SOURCE_BASE_FOLDER = env('user_profile').joinpath('PycharmProjects').joinpath('Fair-Currents')
 TEMPLATES_FOLDER = SOURCE_BASE_FOLDER.joinpath('templates')
-
 CHECKMARK = u'\N{check mark}'
-
 TIMESTEP = 60  # 60 seconds, one minute
 SPEEDS = [-10 + v for v in range(0, 8)] + [3 + v for v in range(0, 8)]
 
