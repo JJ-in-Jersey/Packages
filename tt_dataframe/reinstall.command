@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/zsh
 
 python3 $HOME/PycharmProjects/Packages/bin/cleanup.py
 
