@@ -370,7 +370,7 @@ class ArcsFrame(DataFrame):
             frame.loc[end_mask, 'end_duration_display'] = False
 
             min_mask = ((frame['start_angle'] == 0) & (frame['min_angle'] == 0)) | (
-                        (frame['end_angle'] == 0) & (frame['min_angle'] == 0))
+                        (frame['end_angle'] == 0) & (frame['min_angle'] == 0)) | (frame['type'] =='sg')
             frame.loc[min_mask, 'min_duration_display'] = False
             frame = frame[(frame['date'] >= first_day) & (frame['date'] <= last_day)]
             frame.reset_index(drop=True, inplace=True)
