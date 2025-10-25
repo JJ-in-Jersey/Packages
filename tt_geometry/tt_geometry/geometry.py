@@ -1,5 +1,5 @@
 from tt_date_time_tools.date_time_tools import time_to_degrees
-
+import pandas as pd
 
 class Arc:
 
@@ -20,7 +20,8 @@ class Arc:
             setattr(self, key, value)
 
         self.start_angle = time_to_degrees(self.start_datetime)
-        self.min_angle = time_to_degrees(self.min_datetime)
+        if not pd.isna(self.min_datetime):
+            self.min_angle = time_to_degrees(self.min_datetime)
         self.end_angle = time_to_degrees(self.end_datetime)
         self.total_angle = min(abs(self.end_angle - self.start_angle), 360 - abs(self.end_angle - self.start_angle))
 
@@ -30,7 +31,7 @@ class StartArc(Arc):
 
         ets = kwargs['end_datetime']
         kwargs['start_datetime'] = kwargs['start_datetime'].replace(hour=0, minute=0, year=ets.year, month=ets.month, day=ets.day)
-        if kwargs['min_datetime'].date() != ets.date():
+        if not pd.isna(kwargs['min_datetime']) and kwargs['min_datetime'].date() != ets.date():
             kwargs['min_datetime'] = kwargs['start_datetime']
         super().__init__(**kwargs)
 
@@ -40,6 +41,6 @@ class EndArc(Arc):
 
         sts = kwargs['start_datetime']
         kwargs['end_datetime'] = kwargs['end_datetime'].replace(hour=0, minute=0, year=sts.year, month=sts.month, day=sts.day)
-        if kwargs['min_datetime'].date() != sts.date():
+        if not pd.isna(kwargs['min_datetime']) and kwargs['min_datetime'].date() != sts.date():
             kwargs['min_datetime'] = kwargs['end_datetime']
         super().__init__(**kwargs)
