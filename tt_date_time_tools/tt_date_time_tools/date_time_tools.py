@@ -15,4 +15,4 @@ def time_to_degrees(time: str | Timestamp | None):
     elif isinstance(time, Timestamp):
         return (time.hour * 15 + time.minute * 0.25) % 360
     else:
-        raise TypeError
+        raise TypeError('invalid argument type for time_to_degrees')
