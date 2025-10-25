@@ -126,6 +126,10 @@ class TimeStepsFrame(DataFrame):
             frame['stamp'] = et_frame['stamp']
             frame['Time'] = et_frame['Time']
 
+            simple_frame = DataFrame()
+            simple_frame['stamp'] = et_frame['stamp']
+            simple_frame['Time'] = et_frame['Time']
+
             seg_cols = [c for c in et_frame.columns.to_list() if Segment.prefix in c]
             timestep_cols = [c for c in seg_cols if 'timesteps' in c]
             error_cols = [c for c in seg_cols if 'error' in c]
@@ -154,6 +158,11 @@ class TimeStepsFrame(DataFrame):
             frame['t_time'] = frame[timestep_cols].sum(axis=1)
             frame['error'] = frame[error_cols].sum(axis=1)
             frame['faircurrent'] = frame[faircurrent_cols].all(axis=1)
+
+            simple_frame['t_time'] = frame[timestep_cols].sum(axis=1)
+            simple_frame['error'] = frame[error_cols].sum(axis=1)
+            simple_frame['faircurrent'] = frame[faircurrent_cols].all(axis=1)
+
             frame.write(file_path)
             super().__init__(data=frame)
 
