@@ -1,30 +1,27 @@
 from tt_singleton.singleton import Singleton
 from tt_semaphore import simple_semaphore as semaphore
-from multiprocessing import Manager, Pool, cpu_count, Process
+from multiprocessing import Manager, Pool, cpu_count, Process, JoinableQueue
 from time import sleep
+
 # from tt_date_time_tools.date_time_tools import mins_secs
 # from time import sleep, perf_counter
 
 
 class JobManager(metaclass=Singleton):
 
-    manager = None
-    queue = None
-    results_key_dict = {}
+    @property
+    def queue(self):
+        return self._queue
 
-    @staticmethod
-    def submit_job(job):
-        JobManager.queue.put(job)
+    def submit_job(self, job):
+        self._queue.put(job)
         return job.result_key
 
-    @staticmethod
-    def get_result(key):
-        return JobManager.results_key_dict.pop(key)
+    def get_result(self, key):
+        return self._results_key_dict.pop(key)
 
-    @staticmethod
-    def wait():
-        JobManager.queue.join()
-        
+    def wait(self):
+        self._queue.join()
 
     @staticmethod
     def stop_queue():
@@ -32,12 +29,11 @@ class JobManager(metaclass=Singleton):
 
     def __init__(self, pool_size=cpu_count()):
         print(f'\nStarting multiprocess job manager')
-        JobManager.manager = Manager()
-        JobManager.queue = JobManager.manager.JoinableQueue()
-        JobManager.results_key_dict = JobManager.manager.dict()
-        self.qm = WaitForProcess(target=QueueManager, name='QueueManager', args=(JobManager.queue, JobManager.results_key_dict, pool_size,))
+        self._manager = Manager()
+        self._queue = JoinableQueue()
+        self._results_key_dict = self._manager.dict()
+        self.qm = WaitForProcess(target=QueueManager, name='QueueManager', args=(self._queue, self._results_key_dict, pool_size,))
         self.qm.start()
-
 
 class QueueManager:
 
@@ -64,7 +60,6 @@ class QueueManager:
                 sleep(1)
         print(f'-     queue manager\n', flush=True)
 
-
 class WaitForProcess(Process, metaclass=Singleton):
 
     def start(self, **kwargs):
@@ -76,7 +71,6 @@ class WaitForProcess(Process, metaclass=Singleton):
         while not semaphore.is_on(semaphore_file_name):
             sleep(0.1)
 
-
 class Job:
 
     def execute(self):
@@ -86,7 +80,6 @@ class Job:
         return tuple([self.result_key, self.execute_function(*self.execute_function_arguments)])
 
     def execute_callback(self, result):
-        # print(f'-     {self.job_name} {result[2]}', flush=True)
         print(f'-     {self.job_name}', flush=True)
 
     def error_callback(self, result):
