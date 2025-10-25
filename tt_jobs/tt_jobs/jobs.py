@@ -356,7 +356,7 @@ class ArcsFrame(DataFrame):
             frame = DataFrame([arc.arc_dict for arc in arcs])
             frame.insert(0, 'date', frame.start_datetime.apply(lambda timestamp: timestamp.date()))
             frame.insert(0, 'start_time', frame.start_datetime.apply(lambda timestamp: timestamp.time()))
-            frame.insert(0, 'min_time', frame.min_datetime.apply(lambda timestamp: timestamp.time()))
+            frame.insert(0, 'min_time', frame.min_datetime.apply(lambda timestamp: timestamp.time() if not pd.isna(timestamp) else timestamp))
             frame.insert(0, 'end_time', frame.end_datetime.apply(lambda timestamp: timestamp.time()))
             frame = frame.sort_values(by=['date', 'start_datetime']).reset_index(drop=True)
             frame.insert(0, 'idx', frame.groupby('date').cumcount() + 1)
@@ -375,7 +375,7 @@ class ArcsFrame(DataFrame):
             frame.reset_index(drop=True, inplace=True)
             frame.write(file_path)
 
-            super().__init__(frame)
+            super().__init__(data=frame)
 
 class ArcsJob(Job):  # super -> job name, result key, function/object, arguments
 
