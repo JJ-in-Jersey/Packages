@@ -13,11 +13,9 @@ POLARS_DTYPE_MAP = {
 
 class DataFrame(PandasDataFrame):
 
-
     @property
     def _constructor(self):
         return DataFrame
-
 
     def reconstruct_tuple_column(self, column_name, *col_types):
         """
@@ -30,7 +28,6 @@ class DataFrame(PandasDataFrame):
         index_name = self.index.name or 'index'
         pl_series = pl.Series(self[column_name].name, self[column_name])
         pl_df = pl.DataFrame({index_name: self.index.to_list(), column_name: pl_series})
-
         split_expr = pl_df[column_name].str.strip_chars('()').str.split(by=', ')
 
         elements = []
@@ -43,13 +40,11 @@ class DataFrame(PandasDataFrame):
             elements.append(expr.alias(f"col_{i}"))
 
         pl_df = pl_df.with_columns(pl.struct(elements).alias(f"{column_name}_STRUCT"))
-
         result_df = pl_df.select([index_name, f"{column_name}_STRUCT"]).to_pandas()
         result_df = result_df.set_index(index_name)
         struct_list = result_df[f"{column_name}_STRUCT"].to_list()
         reconstructed_tuples = [tuple(d.values()) for d in struct_list]
         self[column_name] = reconstructed_tuples
-
 
     def write(self, csv_target: Path, **kwargs):
         if 'index' not in kwargs:
@@ -57,9 +52,7 @@ class DataFrame(PandasDataFrame):
         self.to_csv(csv_target, **kwargs)
         return csv_target
 
-
     def __init__(self, data=None, *, csv_source: Path | StringIO = None, **kwargs):
         if csv_source is not None:
             data = read_csv(csv_source, usecols=kwargs.pop('columns', None))
         super().__init__(data, **kwargs)
-
