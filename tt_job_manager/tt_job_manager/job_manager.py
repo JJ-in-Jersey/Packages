@@ -77,16 +77,20 @@ class Job:
         # init_time = perf_counter()
         print(f'+     {self.job_name}', flush=True)
         # return tuple([self.result_key, self.execute_function(*self.execute_function_arguments), mins_secs(perf_counter()-init_time)])
-        return tuple([self.result_key, self.execute_function(*self.execute_function_arguments)])
+        return tuple([self.result_key, self.execute_function(*self.execute_function_arguments, **self.execute_function_keyword_arguments)])
 
     def execute_callback(self, result):
-        print(f'-     {self.job_name}', flush=True)
+        if 'message' in dir(result[1]) and result[1].message is not None:
+            print(f'-     {self.job_name}     {result[1].message}', flush=True)
+        else:
+            print(f'-     {self.job_name}', flush=True)
 
     def error_callback(self, result):
         print(f'!     {self.job_name} error: {result}', flush=True)
 
-    def __init__(self, job_name, result_key, function, arguments):
+    def __init__(self, job_name, result_key, function, arguments, keyword_arguments):
         self.job_name = job_name
         self.result_key = result_key
         self.execute_function = function
         self.execute_function_arguments = arguments
+        self.execute_function_keyword_arguments = keyword_arguments
