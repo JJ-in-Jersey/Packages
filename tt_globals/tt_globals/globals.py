@@ -25,6 +25,7 @@ TEMPLATES= {
     'ArcsFrame': Template('arcs $speed.csv'),
     'MinimaFrame': Template('minima_frame $speed.csv'),
     'fair currents': Template('fair currents $loc.csv'),
+    'savitsky golay': Template('savitsky golay $loc.csv'),
     'first_day': Template('$year/12/1'),
     'last_day': Template('$year/1/31')
 }
