@@ -5,6 +5,7 @@ from shutil import rmtree as delete_folder
 from pathlib import Path
 from bs4 import BeautifulSoup as Soup
 from num2words import num2words
+from typing import Union, Type, Any
 
 from tt_navigation.navigation import distance, directions, Heading, dir_abbrevs
 from tt_file_tools.file_tools import SoupFromXMLFile
@@ -162,52 +163,54 @@ class Segment:
 
 class Route:
 
-    # def times_folder(self, speed: int):
-    #     Route.base_filepath = self.folder.joinpath(num2words(speed))
-    #     return Route.base_filepath
+    name = code = folder = waypoints = heading = direction = dir_abbrevs = edges = segments = length = None
 
-
-    def filepath(self, name: str, speed: int):
-        new_folder_path = self.folder.joinpath(num2words(speed))
+    @classmethod
+    def filepath(cls, name: Union[str, Type[Any]], speed: int):
+        new_folder_path = Route.folder.joinpath(num2words(speed))
         makedirs(new_folder_path, exist_ok=True)
-        return new_folder_path.joinpath(fc_globals.TEMPLATES[name].substitute({'speed': speed}))
-
+        if isinstance(name, str):
+            return new_folder_path.joinpath(fc_globals.TEMPLATES[name].substitute({'speed': speed}))
+        elif isinstance(name, type):
+            return new_folder_path.joinpath(fc_globals.TEMPLATES[name.__name__].substitute({'speed': speed}))
+        else:
+            raise TypeError('argument must be str or type')
 
     def __init__(self, stations_dict: dict, tree: Soup):
 
-        self.name = tree.find('name').string
-        self.code = ''.join(word[0] for word in self.name.upper().split())
-        self.folder = fc_globals.PROJECT_BASE_FOLDER.joinpath(self.code)
+        Route.name = tree.find('name').string
+        Route.code = ''.join(word[0] for word in self.name.upper().split())
+        Route.folder = fc_globals.PROJECT_BASE_FOLDER.joinpath(self.code)
 
-        self.waypoints = []
+        Route.waypoints = []
         for tag in tree.find_all('rtept'):
             if tag.sym.text == Waypoint.code_symbols['H'] or tag.sym == Waypoint.code_symbols['S']:
-                self.waypoints.append(Waypoint(stations_dict[str(tag.desc.text).replace('\n', '').strip()]))
+                Route.waypoints.append(Waypoint(stations_dict[str(tag.desc.text).replace('\n', '').strip()]))
             elif tag.sym.text == Waypoint.code_symbols['L']:
-                self.waypoints.append(Location(tag))
+                Route.waypoints.append(Location(tag))
             elif tag.sym.text == Waypoint.code_symbols['E']:
-                self.waypoints.append(Empty(tag))
+                Route.waypoints.append(Empty(tag))
             elif tag.sym.text == Waypoint.code_symbols['P']:
-                self.waypoints.append(Pseudo(tag))
+                Route.waypoints.append(Pseudo(tag))
             else:
                 raise TypeError('Unknown waypoint type')
 
-        self.heading = Heading(self.waypoints[0].coords, self.waypoints[-1].coords).angle
-        self.directions = directions(self.heading)
-        self.dir_abbrevs = dir_abbrevs(self.heading)
+        Route.heading = Heading(Route.waypoints[0].coords, Route.waypoints[-1].coords).angle
+        Route.directions = directions(Route.heading)
+        Route.dir_abbrevs = dir_abbrevs(Route.heading)
 
-        edge_nodes = [wp for wp in self.waypoints if isinstance(wp, EdgeNode)]
-        self.edges = [Edge(wp, edge_nodes[i+1]) for i, wp in enumerate(edge_nodes[:-1])]
-        self.segments = []
+        edge_nodes = [wp for wp in Route.waypoints if isinstance(wp, EdgeNode)]
+        Route.edges = [Edge(wp, edge_nodes[i+1]) for i, wp in enumerate(edge_nodes[:-1])]
+        Route.segments = []
         node = edge_nodes[0]
         while node.next_edge is not None:
             seg = Segment(node)
-            self.segments.append(seg)
+            Route.segments.append(seg)
             node = seg.end
 
-        if round(sum([e.length for e in self.edges]), 4) != round(sum([e.length for e in self.segments]), 4):
+        if round(sum([e.length for e in Route.edges]), 4) != round(sum([e.length for e in Route.segments]), 4):
             raise ValueError
-        self.length = round(sum([e.length for e in self.segments]), 4)
+        Route.length = round(sum([e.length for e in Route.segments]), 4)
 
 
 class GpxFile:
