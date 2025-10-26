@@ -287,7 +287,7 @@ class FairCurrentMinimaFrame(DataFrame):
             super().__init__(csv_source=file_path)
         else:
             # create a list of dataframe blocks for only those with a no opposing current (fair_current == True)
-            blocks = [df.reset_index(drop=True).drop(labels=['faircurrent'], axis=1) for index, df in fc_frame.groupby('fc_block') if df['faircurrent'].all()]
+            blocks = [df.reset_index(drop=True).drop(labels=['faircurrent', 'fc_block'], axis=1) for index, df in fc_frame.groupby('fc_block') if df['faircurrent'].all()]
 
             if len(blocks) > 0:
                 frame = DataFrame(columns=['start_datetime', 'min_datetime', 'end_datetime', 'start_duration', 'min_duration', 'end_duration'])
