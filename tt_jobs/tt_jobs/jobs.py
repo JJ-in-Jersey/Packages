@@ -32,11 +32,13 @@ class InterpolatePointJob(Job):
     def __init__(self, interpolated_pt: Waypoint, lats: list, lons: list, velos: list, timestamp: int, index: int):
         interpolated_pt_data = tuple([interpolated_pt.name, interpolated_pt.lat, interpolated_pt.lon])
         arguments = [interpolated_pt_data, lats, lons, velos]
-        super().__init__(str(index) + ' ' + str(timestamp), timestamp, InterpolatedPoint, arguments)
+        super().__init__(str(index) + ' ' + str(timestamp), timestamp, InterpolatedPoint, arguments, {})
 
 class ElapsedTimeFrame(DataFrame):
     # Create a dataframe of elapsed time, in timesteps, to get from the begining to the end of the segment at the starting time
     # departure_time, number of timesteps to end of segment
+
+    _metadata = ['message']
 
     @staticmethod
     def distance(water_vf, water_vi, boat_speed, ts_in_hr):
@@ -60,33 +62,39 @@ class ElapsedTimeFrame(DataFrame):
         else:
             return [index - 1, cum_sum - length]
 
-    def __init__(self, start_path: Path, end_path: Path, length: float, speed: int, name: str):
+    @classmethod
+    def frame(cls, start_path: Path, end_path: Path, length: float, speed: int, name: str):
 
         if not start_path.exists() or not end_path.exists():
             raise FileExistsError
 
-        start_frame = DataFrame(csv_source=start_path)
-        end_frame = DataFrame(csv_source=end_path)
+        sf = DataFrame(csv_source=start_path)
+        ef = DataFrame(csv_source=end_path)
 
-        if not len(start_frame) == len(end_frame):
-            raise ValueError
-        if not start_frame.stamp.equals(end_frame.stamp):
-            raise ValueError
-        if not start_frame.Time.equals(end_frame.Time):
+        if not len(sf) == len(ef) or not sf.stamp.equals(ef.stamp) or not sf.Time.equals(ef.Time):
             raise ValueError
 
-        dist = ElapsedTimeFrame.distance(end_frame.Velocity_Major.to_numpy()[1:], start_frame.Velocity_Major.to_numpy()[:-1], speed, fc_globals.TIMESTEP / 3600)
+        dist = ElapsedTimeFrame.distance(ef.Velocity_Major.to_numpy()[1:], sf.Velocity_Major.to_numpy()[:-1], speed, fc_globals.TIMESTEP / 3600)
         dist = dist * np.sign(speed)  # if the sign(dist) == sign(speed), dist+, else dist-
-        av = ElapsedTimeFrame.average_velocity(end_frame.Velocity_Major.to_numpy()[1:], start_frame.Velocity_Major.to_numpy()[:-1])
+        av = ElapsedTimeFrame.average_velocity(ef.Velocity_Major.to_numpy()[1:], sf.Velocity_Major.to_numpy()[:-1])
         fair_current_flag = (av * speed) > 0  # no opposing current flag, all average current directions match speed direction
         fair_current_flag = fair_current_flag.tolist()
-        timestep_and_error = [self.elapsed_time(dist[i:], length) for i in range(len(dist))]
+        timestep_and_error = [ElapsedTimeFrame.elapsed_time(dist[i:], length) for i in range(len(dist))]
 
-        frame = DataFrame(data={'stamp': start_frame.stamp[:-1], 'Time': pd.to_datetime(start_frame.Time[:-1], utc=True)})
+        frame = DataFrame(data={'stamp': sf.stamp[:-1], 'Time': pd.to_datetime(sf.Time[:-1], utc=True)})
+        frame['date'] = frame['Time'].dt.date
         frame[name + ' timesteps'] = [t[0] for t in timestep_and_error]
         frame[name + ' error'] = [round(t[1], 4) for t in timestep_and_error]
         frame[name + ' faircurrent'] = fair_current_flag
-        super().__init__(data=frame)
+
+        return cls(frame, num_dates=frame.date.nunique())
+
+    def __init__(self, *args, **kwargs):
+        num_dates = kwargs.pop('num_dates', None)
+        super().__init__(*args, **kwargs)
+        if num_dates is None:
+            num_dates = self.date.nunique()
+        self.message = f'# of unique dates: {num_dates}'
 
 class ElapsedTimeJob(Job):  # super -> job name, result key, function/object, arguments
 
@@ -96,75 +104,88 @@ class ElapsedTimeJob(Job):  # super -> job name, result key, function/object, ar
 
     def __init__(self, seg: Segment, speed: int):
 
-        node = seg.start
-        node_path = node.folder.joinpath(Waypoint.velocity_csv_name)
-        while not node_path.exists():
-            node = node.next_edge.end
-            node_path = node.folder.joinpath(Waypoint.velocity_csv_name)
-        start_path = node_path
-
-        node = seg.end
-        node_path = node.folder.joinpath(Waypoint.velocity_csv_name)
-        while not node_path.exists():
-            node = node.prev_edge.start
-            node_path = node.folder.joinpath(Waypoint.velocity_csv_name)
-        end_path = node_path
-
+        filepath = Route.filepath(ElapsedTimeFrame, speed)
         job_name = f'{speed} {seg.name}'
         result_key = job_name
-        arguments = [start_path, end_path, seg.length, speed, seg.name]
-        super().__init__(job_name, result_key, ElapsedTimeFrame, arguments)
 
+        if filepath.exists():
+            super().__init__(job_name, result_key, ElapsedTimeFrame, [], {'csv_source': filepath})
+        else:
+            node = seg.start
+            node_path = node.folder.joinpath(Waypoint.velocity_csv_name)
+            while not node_path.exists():
+                node = node.next_edge.end
+                node_path = node.folder.joinpath(Waypoint.velocity_csv_name)
+            start_path = node_path
+
+            node = seg.end
+            node_path = node.folder.joinpath(Waypoint.velocity_csv_name)
+            while not node_path.exists():
+                node = node.prev_edge.start
+                node_path = node.folder.joinpath(Waypoint.velocity_csv_name)
+            end_path = node_path
+    
+            arguments = [start_path, end_path, seg.length, speed, seg.name]
+            super().__init__(job_name, result_key, ElapsedTimeFrame.frame, arguments, {})
+
+
+# noinspection PyTypeChecker
 class TimeStepsFrame(DataFrame):
 
-    def __init__(self, et_frame: DataFrame, file_path: Path):
+    _metadata = ['message']
 
-        if file_path.exists():
-            super().__init__(csv_source=file_path)
-        else:
-            frame = DataFrame()
-            frame['stamp'] = et_frame['stamp']
-            frame['Time'] = et_frame['Time']
+    @classmethod
+    def frame(cls, et_frame: DataFrame):
 
-            simple_frame = DataFrame()
-            simple_frame['stamp'] = et_frame['stamp']
-            simple_frame['Time'] = et_frame['Time']
+        frame = DataFrame()
+        frame['stamp'] = et_frame['stamp']
+        frame['Time'] = et_frame['Time']
+        frame['Time'] = pd.to_datetime(frame.Time, utc=True)
+        frame['date'] = frame['Time'].dt.date
 
-            seg_cols = [c for c in et_frame.columns.to_list() if Segment.prefix in c]
-            timestep_cols = [c for c in seg_cols if 'timesteps' in c]
-            error_cols = [c for c in seg_cols if 'error' in c]
-            faircurrent_cols = [c for c in seg_cols if 'faircurrent' in c]
-            triple_column = list(zip(timestep_cols, error_cols, faircurrent_cols))
+        # simple_frame = DataFrame()
+        # simple_frame['stamp'] = et_frame['stamp']
+        # simple_frame['Time'] = et_frame['Time']
 
-            # pandas logic
-            for c in seg_cols:
-                frame[c] = pd.NA
+        seg_cols = [c for c in et_frame.columns.to_list() if Segment.prefix in c]
+        timestep_cols = [c for c in seg_cols if 'timesteps' in c]
+        error_cols = [c for c in seg_cols if 'error' in c]
+        faircurrent_cols = [c for c in seg_cols if 'faircurrent' in c]
+        triple_column = list(zip(timestep_cols, error_cols, faircurrent_cols))
 
-            for stamp_index in range(len(frame)):
-                row_index = stamp_index
+        for c in seg_cols:
+            frame[c] = pd.NA
 
-                for ts_col, err_col, fc_col in triple_column:
-                    if pd.isna(row_index) or row_index < 0 or row_index >= len(et_frame):
-                        ts = err = fc = pd.NA
-                    else:
-                        ts = et_frame.at[int(row_index), ts_col]
-                        err = et_frame.at[int(row_index), err_col]
-                        fc = et_frame.at[int(row_index), fc_col]
-                    frame.at[stamp_index, ts_col] = ts
-                    frame.at[stamp_index, err_col] = err
-                    frame.at[stamp_index, fc_col] = fc
-                    row_index += int(ts) if pd.notna(ts) else pd.NA
+        for stamp_index in range(len(frame)):
+            row_index = stamp_index
+            for ts_col, err_col, fc_col in triple_column:
+                if pd.isna(row_index) or row_index < 0 or row_index >= len(et_frame):
+                    ts = err = fc = pd.NA
+                else:
+                    ts = et_frame.at[int(row_index), ts_col]
+                    err = et_frame.at[int(row_index), err_col]
+                    fc = et_frame.at[int(row_index), fc_col]
+                frame.at[stamp_index, ts_col] = ts
+                frame.at[stamp_index, err_col] = err
+                frame.at[stamp_index, fc_col] = fc
+                row_index += int(ts) if pd.notna(ts) else pd.NA
 
-            frame['t_time'] = frame[timestep_cols].sum(axis=1)
-            frame['error'] = frame[error_cols].sum(axis=1)
-            frame['faircurrent'] = frame[faircurrent_cols].all(axis=1)
+        frame['t_time'] = frame[timestep_cols].sum(axis=1)
+        frame['error'] = frame[error_cols].sum(axis=1)
+        frame['faircurrent'] = frame[faircurrent_cols].all(axis=1)
 
-            simple_frame['t_time'] = frame[timestep_cols].sum(axis=1)
-            simple_frame['error'] = frame[error_cols].sum(axis=1)
-            simple_frame['faircurrent'] = frame[faircurrent_cols].all(axis=1)
+        # simple_frame['t_time'] = frame[timestep_cols].sum(axis=1)
+        # simple_frame['error'] = frame[error_cols].sum(axis=1)
+        # simple_frame['faircurrent'] = frame[faircurrent_cols].all(axis=1)
 
-            frame.write(file_path)
-            super().__init__(data=frame)
+        return cls(frame, num_dates=frame.date.nunique())
+
+    def __init__(self, *args, **kwargs):
+        num_dates = kwargs.pop('num_dates', None)
+        super().__init__(*args, **kwargs)
+        if num_dates is None:
+            num_dates = self.date.nunique()
+        self.message = f'# of unique dates: {num_dates}'
 
 class TimeStepsJob(Job):
 
@@ -172,11 +193,17 @@ class TimeStepsJob(Job):
     def execute_callback(self, result): return super().execute_callback(result)
     def error_callback(self, result): return super().error_callback(result)
 
-    def __init__(self, elapsed_times_frame: DataFrame, speed: int, route: Route):
-        job_name = TimeStepsFrame.__name__ + ' ' + str(speed)
+    def __init__(self, elapsed_times_frame: DataFrame, speed: int):
+
+        filepath = Route.filepath(TimeStepsFrame, speed)
+        job_name = f'{TimeStepsFrame.__name__}  {speed}'
         result_key = speed
-        arguments = [elapsed_times_frame, route.filepath(TimeStepsFrame.__name__, speed)]
-        super().__init__(job_name, result_key, TimeStepsFrame, arguments)
+
+        if filepath.exists():
+            super().__init__(job_name, result_key, ElapsedTimeFrame, [], {'csv_source': filepath})
+        else:
+            super().__init__(job_name, result_key, TimeStepsFrame.frame, [elapsed_times_frame], {})
+
 
 class SavGolFrame(DataFrame):
 
@@ -207,7 +234,7 @@ class SavGolJob(Job):
         job_name = SavGolFrame.__name__ + ' ' + str(speed)
         result_key = speed
         arguments = [timesteps_frame, route.filepath(SavGolFrame.__name__, speed)]
-        super().__init__(job_name, result_key, SavGolFrame, arguments)
+        super().__init__(job_name, result_key, SavGolFrame, arguments, [])
 
 class FairCurrentFrame(DataFrame):
 
@@ -231,7 +258,7 @@ class FairCurrentJob(Job):
         job_name = FairCurrentFrame.__name__ + ' ' + str(speed)
         result_key = speed
         arguments = [timesteps_frame, route.filepath(FairCurrentFrame.__name__, speed)]
-        super().__init__(job_name, result_key, FairCurrentFrame, arguments)
+        super().__init__(job_name, result_key, FairCurrentFrame, arguments, [])
 
 class SavGolMinimaFrame(DataFrame):
 
@@ -277,7 +304,7 @@ class SavGolMinimaJob(Job):  # super -> job name, result key, function/object, a
         job_name = SavGolMinimaFrame.__name__ + ' ' + str(speed)
         result_key = speed
         arguments = [savgol_frame, route.filepath(SavGolMinimaFrame.__name__, speed)]
-        super().__init__(job_name, result_key, SavGolMinimaFrame, arguments)
+        super().__init__(job_name, result_key, SavGolMinimaFrame, arguments, [])
 
 class FairCurrentMinimaFrame(DataFrame):
 
@@ -287,7 +314,7 @@ class FairCurrentMinimaFrame(DataFrame):
             super().__init__(csv_source=file_path)
         else:
             # create a list of dataframe blocks for only those with a no opposing current (fair_current == True)
-            blocks = [df.reset_index(drop=True).drop(labels=['faircurrent', 'fc_block'], axis=1) for index, df in fc_frame.groupby('fc_block') if df['faircurrent'].all()]
+            blocks = [df.reset_index(drop=True).drop(labels=['faircurrent'], axis=1) for index, df in fc_frame.groupby('fc_block') if df['faircurrent'].all()]
 
             if len(blocks) > 0:
                 frame = DataFrame(columns=['start_datetime', 'min_datetime', 'end_datetime', 'start_duration', 'min_duration', 'end_duration'])
@@ -324,7 +351,7 @@ class FairCurrentMinimaJob(Job):  # super -> job name, result key, function/obje
         job_name = FairCurrentMinimaFrame.__name__ + ' ' + str(speed)
         result_key = speed
         arguments = [fair_current_frame, route.filepath(FairCurrentMinimaFrame.__name__, speed)]
-        super().__init__(job_name, result_key, FairCurrentMinimaFrame, arguments)
+        super().__init__(job_name, result_key, FairCurrentMinimaFrame, arguments, [])
 
 class ArcsFrame(DataFrame):
 
@@ -393,4 +420,4 @@ class ArcsJob(Job):  # super -> job name, result key, function/object, arguments
         first_day = pd.to_datetime(first_day_string).date()
         last_day = pd.to_datetime(last_day_string).date()
         arguments = [minima_frame, route.filepath(ArcsFrame.__name__, speed), speed, first_day, last_day]
-        super().__init__(job_name, result_key, ArcsFrame, arguments)
+        super().__init__(job_name, result_key, ArcsFrame, arguments, [])
