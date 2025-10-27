@@ -342,6 +342,10 @@ class SavGolMinimaFrame(DataFrame):
             num_dates = self['utc date'].nunique()
         if num_blocks is None:
             num_blocks = len(self)
+        if min_size is None:
+            min_size = self.block_size.min()
+        if max_size is None:
+            max_size = self.block_size.max()
         self.message = f'# utc dates: {num_dates},  # blocks: {num_blocks}, min_size: {min_size},  max_size: {max_size}'
 
 class SavGolMinimaJob(Job):  # super -> job name, result key, function/object, arguments
@@ -401,6 +405,10 @@ class FairCurrentMinimaFrame(DataFrame):
             num_dates = self['utc date'].nunique()
         if num_blocks is None:
             num_blocks = len(self)
+        if min_size is None:
+            min_size = self.block_size.min()
+        if max_size is None:
+            max_size = self.block_size.max()
         self.message = f'# utc dates: {num_dates},  # blocks: {num_blocks},  min_size: {min_size},  max_size: {max_size}'
 
 class FairCurrentMinimaJob(Job):  # super -> job name, result key, function/object, arguments
@@ -421,55 +429,60 @@ class FairCurrentMinimaJob(Job):  # super -> job name, result key, function/obje
 
 class ArcsFrame(DataFrame):
 
-    def __init__(self, minima_frame: DataFrame, file_path: Path, speed: int, first_day: date, last_day: date):
+    write_flag = True
+    _metadata = ['message']
 
-        if file_path.exists():
-            super().__init__(DataFrame(csv_source=file_path))
-            for col in [c for c in self.columns if 'time' in c]:
-                self[col] = self[col].apply(pd.to_datetime)
-        else:
-            arcs = []
-            for i, row in minima_frame.iterrows():
-                row_dict = row.to_dict()
-                try:
-                    arc = Arc(**row_dict)
-                    if arc.start_datetime.date() == arc.end_datetime.date():
-                        if arc.total_angle != 0.0:
-                            arcs.append(arc)
-                    else:
-                        arc = StartArc(**row_dict)
-                        if arc.total_angle != 0.0:
-                            arcs.append(arc)
-                        arc = EndArc(**row_dict)
-                        if arc.total_angle != 0.0:
-                            arcs.append(arc)
-                except Exception as err:
-                    print(f'{err}')
+    @classmethod
+    def frame(cls, min_frame: DataFrame, speed: int, first_day: date, last_day: date):
 
-            frame = DataFrame([arc.arc_dict for arc in arcs])
-            frame.insert(0, 'date', frame.start_datetime.apply(lambda timestamp: timestamp.date()))
-            frame.insert(0, 'start_time', frame.start_datetime.apply(lambda timestamp: timestamp.time()))
-            frame.insert(0, 'min_time', frame.min_datetime.apply(lambda timestamp: timestamp.time() if not pd.isna(timestamp) else timestamp))
-            frame.insert(0, 'end_time', frame.end_datetime.apply(lambda timestamp: timestamp.time()))
-            frame = frame.sort_values(by=['date', 'type', 'start_datetime']).reset_index(drop=True)
-            frame.insert(0, 'idx', frame.groupby(['date', 'type']).cumcount() + 1)
-            frame['idx'] = frame['idx'].astype(str) + ' ' + frame['type']
-            frame.insert(1, 'speed', speed)
+        min_frame = min_frame.drop(labels=['block_size', 'utc date'], axis=1)
+        arcs = []
+        for i, row in min_frame.iterrows():
+            row_dict = row.to_dict()
+            try:
+                arc = Arc(**row_dict)
+                if arc.start_datetime.date() == arc.end_datetime.date():
+                    if arc.total_angle != 0.0:
+                        arcs.append(arc)
+                else:
+                    arc = StartArc(**row_dict)
+                    if arc.total_angle != 0.0:
+                        arcs.append(arc)
+                    arc = EndArc(**row_dict)
+                    if arc.total_angle != 0.0:
+                        arcs.append(arc)
+            except Exception as err:
+                print(f'{err}')
 
-            eligible_dates = frame.groupby('date').filter(lambda x: len(x) >= 3)['date'].unique()
-            start_mask = (frame['date'].isin(eligible_dates)) & (frame['start_angle'] == 0)
-            end_mask = (frame['date'].isin(eligible_dates)) & (frame['end_angle'] == 0)
-            frame.loc[start_mask, 'start_duration_display'] = False
-            frame.loc[end_mask, 'end_duration_display'] = False
+        frame = DataFrame([arc.arc_dict for arc in arcs])
+        frame.insert(0, 'date', frame.start_datetime.apply(lambda timestamp: timestamp.date()))
+        frame.insert(0, 'start_time', frame.start_datetime.apply(lambda timestamp: timestamp.time()))
+        frame.insert(0, 'min_time', frame.min_datetime.apply(lambda timestamp: timestamp.time() if not pd.isna(timestamp) else timestamp))
+        frame.insert(0, 'end_time', frame.end_datetime.apply(lambda timestamp: timestamp.time()))
+        frame = frame.sort_values(by=['date', 'type', 'start_datetime']).reset_index(drop=True)
+        frame.insert(0, 'idx', frame.groupby(['date', 'type']).cumcount() + 1)
+        frame['idx'] = frame['idx'].astype(str) + ' ' + frame['type']
+        frame.insert(1, 'speed', speed)
 
-            min_mask = ((frame['start_angle'] == 0) & (frame['min_angle'] == 0)) | (
-                        (frame['end_angle'] == 0) & (frame['min_angle'] == 0)) | (frame['type'] =='sg')
-            frame.loc[min_mask, 'min_duration_display'] = False
-            frame = frame[(frame['date'] >= first_day) & (frame['date'] <= last_day)]
-            frame.reset_index(drop=True, inplace=True)
-            frame.write(file_path)
+        eligible_dates = frame.groupby('date').filter(lambda x: len(x) >= 3)['date'].unique()
+        start_mask = (frame['date'].isin(eligible_dates)) & (frame['start_angle'] == 0)
+        end_mask = (frame['date'].isin(eligible_dates)) & (frame['end_angle'] == 0)
+        frame.loc[start_mask, 'start_duration_display'] = False
+        frame.loc[end_mask, 'end_duration_display'] = False
 
-            super().__init__(data=frame)
+        min_mask = ((frame['start_angle'] == 0) & (frame['min_angle'] == 0)) | (
+                (frame['end_angle'] == 0) & (frame['min_angle'] == 0)) | (frame['type'] == 'sg')
+        frame.loc[min_mask, 'min_duration_display'] = False
+        frame = frame[(frame['date'] >= first_day) & (frame['date'] <= last_day)]
+        frame.reset_index(drop=True, inplace=True)
+        return cls(frame, num_dates=frame['date'].nunique())
+
+    def __init__(self, *args, **kwargs):
+        num_dates = kwargs.pop('num_dates', None)
+        super().__init__(*args, **kwargs)
+        if num_dates is None:
+            num_dates = self['utc date'].nunique()
+        self.message = f'# dates: {num_dates}'
 
 class ArcsJob(Job):  # super -> job name, result key, function/object, arguments
 
@@ -477,13 +490,19 @@ class ArcsJob(Job):  # super -> job name, result key, function/object, arguments
     def execute_callback(self, result): return super().execute_callback(result)
     def error_callback(self, result): return super().error_callback(result)
 
-    def __init__(self, minima_frame: DataFrame, route: Route, speed: int):
-        job_name = ArcsFrame.__name__ + ' ' + str(speed)
-        result_key = speed
-        year = pd.to_datetime(minima_frame.loc[0]['start_datetime']).year
-        first_day_string = str(fc_globals.TEMPLATES['first_day'].substitute({'year': year}))
-        last_day_string = str(fc_globals.TEMPLATES['last_day'].substitute({'year': year+2}))
-        first_day = pd.to_datetime(first_day_string).date()
-        last_day = pd.to_datetime(last_day_string).date()
-        arguments = [minima_frame, route.filepath(ArcsFrame.__name__, speed), speed, first_day, last_day]
-        super().__init__(job_name, result_key, ArcsFrame, arguments, [])
+    def __init__(self, frame: DataFrame, speed: int):
+            filepath = Route.filepath(ArcsFrame, speed)
+            job_name = f'{ArcsFrame.__name__} {speed}'
+            result_key = tuple([speed, filepath])
+
+            year = pd.to_datetime(frame.loc[0]['start_datetime']).year
+            first_day_string = str(fc_globals.TEMPLATES['first_day'].substitute({'year': year}))
+            last_day_string = str(fc_globals.TEMPLATES['last_day'].substitute({'year': year + 2}))
+
+            first_day = pd.to_datetime(first_day_string).date()
+            last_day = pd.to_datetime(last_day_string).date()
+
+            if filepath.exists():
+                super().__init__(job_name, result_key, ArcsFrame, [], {'csv_source': filepath})
+            else:
+                super().__init__(job_name, result_key, ArcsFrame.frame, [frame, speed, first_day, last_day], {})
