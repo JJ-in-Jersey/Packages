@@ -2,7 +2,7 @@ from tt_singleton.singleton import Singleton
 from tt_semaphore import simple_semaphore as semaphore
 from multiprocessing import Manager, Pool, cpu_count, Process, JoinableQueue
 from time import sleep
-
+from pathlib import Path
 # from tt_date_time_tools.date_time_tools import mins_secs
 # from time import sleep, perf_counter
 
@@ -80,10 +80,13 @@ class Job:
         return tuple([self.result_key, self.execute_function(*self.execute_function_arguments, **self.execute_function_keyword_arguments)])
 
     def execute_callback(self, result):
+        if 'write_flag' in dir(result[1]) and result[1].write_flag:
+            path = Path(result[0][1])
+            if not path.exists():
+                result[1].write(path)
+                print(f'-w    {self.job_name}   writing results', flush=True)
         if 'message' in dir(result[1]) and result[1].message is not None:
-            print(f'-     {self.job_name}     {result[1].message}', flush=True)
-        else:
-            print(f'-     {self.job_name}', flush=True)
+            print(f'-m    {self.job_name}   {result[1].message}', flush=True)
 
     def error_callback(self, result):
         print(f'!     {self.job_name} error: {result}', flush=True)
