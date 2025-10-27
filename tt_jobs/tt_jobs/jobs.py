@@ -106,7 +106,7 @@ class ElapsedTimeJob(Job):  # super -> job name, result key, function/object, ar
 
         filepath = Route.filepath(ElapsedTimeFrame, speed)
         job_name = f'{speed} {seg.name}'
-        result_key = job_name
+        result_key = seg.name
 
         if filepath.exists():
             super().__init__(job_name, result_key, ElapsedTimeFrame, [], {'csv_source': filepath})
@@ -131,10 +131,11 @@ class ElapsedTimeJob(Job):  # super -> job name, result key, function/object, ar
 # noinspection PyTypeChecker
 class TimeStepsFrame(DataFrame):
 
+    write_flag = True
     _metadata = ['message']
 
     @classmethod
-    def frame(cls, et_frame: DataFrame, speed: int) -> DataFrame:
+    def frame(cls, et_frame: DataFrame) -> DataFrame:
 
         frame = DataFrame()
         frame['stamp'] = et_frame['stamp']
@@ -195,32 +196,48 @@ class TimeStepsJob(Job):
     def __init__(self, elapsed_times_frame: DataFrame, speed: int):
 
         filepath = Route.filepath(TimeStepsFrame, speed)
-        job_name = f'{TimeStepsFrame.__name__}  {speed}'
-        result_key = speed
+        job_name = f'{TimeStepsFrame.__name__} {speed}'
+        result_key = tuple([speed, filepath])
 
         if filepath.exists():
             super().__init__(job_name, result_key, ElapsedTimeFrame, [], {'csv_source': filepath})
         else:
-            super().__init__(job_name, result_key, TimeStepsFrame.frame, [elapsed_times_frame, speed], {})
+            super().__init__(job_name, result_key, TimeStepsFrame.frame, [elapsed_times_frame], {})
 
 class SavGolFrame(DataFrame):
 
     savgol_size = 500
     savgol_order = 1
+    write_flag = True
+    _metadata = ['message']
 
-    def __init__(self, timesteps_frame: DataFrame, file_path: Path):
+    @classmethod
+    def frame(cls, tt_frame: DataFrame):
+        frame = tt_frame.copy()
+        frame['midline'] = np.round(savgol_filter(frame.t_time, SavGolFrame.savgol_size, SavGolFrame.savgol_order)).astype('int')
+        frame = frame[frame.t_time.ne(frame.midline)].copy()  # remove values that equal the midline
+        frame.loc[frame.t_time.lt(frame.midline), 'GL'] = True  # less than midline = false
+        frame.loc[frame.t_time.ge(frame.midline), 'GL'] = False  # greater than midline => true
+        frame['block'] = (frame['GL'] != frame['GL'].shift(1)).cumsum()  # index the blocks of True and False
+        frame['block_size'] = frame.groupby('block').transform('size')
+        return cls(frame, num_blocks=frame.block.nunique(), num_dates=frame.date.nunique(), min_size=frame.block_size.min(), max_size=frame.block_size.max())
 
-        if file_path.exists():
-            super().__init__(csv_source=file_path)
-        else:
-            savgol_frame = timesteps_frame.copy()
-            savgol_frame['midline'] = np.round(savgol_filter(savgol_frame.t_time, self.savgol_size, self.savgol_order)).astype('int')
-            savgol_frame = savgol_frame[savgol_frame.t_time.ne(savgol_frame.midline)].copy()  # remove values that equal the midline
-            savgol_frame.loc[savgol_frame.t_time.lt(savgol_frame.midline), 'GL'] = True  # less than midline = false
-            savgol_frame.loc[savgol_frame.t_time.ge(savgol_frame.midline), 'GL'] = False  # greater than midline => true
-            savgol_frame['sg_block'] = (savgol_frame['GL'] != savgol_frame['GL'].shift(1)).cumsum()  # index the blocks of True and False
-            savgol_frame.write(file_path)
-            super().__init__(data=savgol_frame)
+
+    def __init__(self, *args, **kwargs):
+        num_blocks = kwargs.pop('num_blocks', None)
+        num_dates = kwargs.pop('num_dates', None)
+        min_size = kwargs.pop('min_size', None)
+        max_size = kwargs.pop('max_size', None)
+        super().__init__(*args, **kwargs)
+        if num_dates is None:
+            num_dates = self.date.nunique()
+        if num_blocks is None:
+            num_blocks = self.block.nunique()
+        if min_size is None:
+            min_size = self.block_size.min()
+        if max_size is None:
+            max_size = self.block_size.max()
+        self.message = f'# dates: {num_dates},  # blocks: {num_blocks},  # min_size: {min_size},  # max_size: {max_size}'
 
 class SavGolJob(Job):
 
@@ -229,17 +246,22 @@ class SavGolJob(Job):
     def error_callback(self, result): return super().error_callback(result)
 
     def __init__(self, timesteps_frame: DataFrame, speed: int, route: Route):
-        job_name = SavGolFrame.__name__ + ' ' + str(speed)
-        result_key = speed
-        arguments = [timesteps_frame, route.filepath(SavGolFrame.__name__, speed)]
-        super().__init__(job_name, result_key, SavGolFrame, arguments, [])
+        filepath = Route.filepath(SavGolFrame, speed)
+        job_name = f'{SavGolFrame.__name__} {speed}'
+        result_key = tuple([speed, filepath])
+
+        if filepath.exists():
+            super().__init__(job_name, result_key, SavGolFrame, [], {'csv_source': filepath})
+        else:
+            super().__init__(job_name, result_key, SavGolFrame.frame, [timesteps_frame], {})
 
 class FairCurrentFrame(DataFrame):
 
+    write_flag = True
     _metadata = ['message']
 
     @classmethod
-    def frame(cls, ts_frame: DataFrame, speed: int):
+    def frame(cls, ts_frame: DataFrame):
         frame = ts_frame.copy()
         frame['block'] = (frame['faircurrent'] != frame['faircurrent'].shift(1)).cumsum()
         frame['block_size'] = frame.groupby('block').transform('size')
@@ -269,14 +291,13 @@ class FairCurrentJob(Job):
 
     def __init__(self, timesteps_frame: DataFrame, speed: int):
         filepath = Route.filepath(FairCurrentFrame, speed)
-        job_name = f'{FairCurrentFrame.__name__}  {speed}'
-        result_key = speed
+        job_name = f'{FairCurrentFrame.__name__} {speed}'
+        result_key = tuple([speed, filepath])
 
         if filepath.exists():
             super().__init__(job_name, result_key, FairCurrentFrame, [], {'csv_source': filepath})
         else:
-            super().__init__(job_name, result_key, FairCurrentFrame.frame, [timesteps_frame, speed], {})
-
+            super().__init__(job_name, result_key, FairCurrentFrame.frame, [timesteps_frame], {})
 
 class SavGolMinimaFrame(DataFrame):
 
