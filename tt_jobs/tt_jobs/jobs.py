@@ -94,7 +94,7 @@ class ElapsedTimeFrame(DataFrame):
         super().__init__(*args, **kwargs)
         if num_dates is None:
             num_dates = self.date.nunique()
-        self.message = f'# dates: {num_dates}'
+        self.message = f'# utc dates: {num_dates}'
 
 class ElapsedTimeJob(Job):  # super -> job name, result key, function/object, arguments
 
@@ -185,7 +185,7 @@ class TimeStepsFrame(DataFrame):
         super().__init__(*args, **kwargs)
         if num_dates is None:
             num_dates = self.date.nunique()
-        self.message = f'# dates: {num_dates}'
+        self.message = f'# utc dates: {num_dates}'
 
 class TimeStepsJob(Job):
 
@@ -193,7 +193,7 @@ class TimeStepsJob(Job):
     def execute_callback(self, result): return super().execute_callback(result)
     def error_callback(self, result): return super().error_callback(result)
 
-    def __init__(self, elapsed_times_frame: DataFrame, speed: int):
+    def __init__(self, frame: DataFrame, speed: int):
 
         filepath = Route.filepath(TimeStepsFrame, speed)
         job_name = f'{TimeStepsFrame.__name__} {speed}'
@@ -202,7 +202,7 @@ class TimeStepsJob(Job):
         if filepath.exists():
             super().__init__(job_name, result_key, ElapsedTimeFrame, [], {'csv_source': filepath})
         else:
-            super().__init__(job_name, result_key, TimeStepsFrame.frame, [elapsed_times_frame], {})
+            super().__init__(job_name, result_key, TimeStepsFrame.frame, [frame], {})
 
 class SavGolFrame(DataFrame):
 
@@ -237,7 +237,7 @@ class SavGolFrame(DataFrame):
             min_size = self.block_size.min()
         if max_size is None:
             max_size = self.block_size.max()
-        self.message = f'# dates: {num_dates},  # blocks: {num_blocks},  # min_size: {min_size},  # max_size: {max_size}'
+        self.message = f'# utc dates: {num_dates},  # blocks: {num_blocks},  # min_size: {min_size},  # max_size: {max_size}'
 
 class SavGolJob(Job):
 
@@ -245,7 +245,7 @@ class SavGolJob(Job):
     def execute_callback(self, result): return super().execute_callback(result)
     def error_callback(self, result): return super().error_callback(result)
 
-    def __init__(self, timesteps_frame: DataFrame, speed: int, route: Route):
+    def __init__(self, frame: DataFrame, speed: int):
         filepath = Route.filepath(SavGolFrame, speed)
         job_name = f'{SavGolFrame.__name__} {speed}'
         result_key = tuple([speed, filepath])
@@ -253,7 +253,7 @@ class SavGolJob(Job):
         if filepath.exists():
             super().__init__(job_name, result_key, SavGolFrame, [], {'csv_source': filepath})
         else:
-            super().__init__(job_name, result_key, SavGolFrame.frame, [timesteps_frame], {})
+            super().__init__(job_name, result_key, SavGolFrame.frame, [frame], {})
 
 class FairCurrentFrame(DataFrame):
 
@@ -281,7 +281,7 @@ class FairCurrentFrame(DataFrame):
             min_size = self.block_size.min()
         if max_size is None:
             max_size = self.block_size.max()
-        self.message = f'# dates: {num_dates},  # blocks: {num_blocks},  # min_size: {min_size},  # max_size: {max_size}'
+        self.message = f'# utc dates: {num_dates},  # blocks: {num_blocks},  # min_size: {min_size},  # max_size: {max_size}'
 
 class FairCurrentJob(Job):
 
@@ -289,7 +289,7 @@ class FairCurrentJob(Job):
     def execute_callback(self, result): return super().execute_callback(result)
     def error_callback(self, result): return super().error_callback(result)
 
-    def __init__(self, timesteps_frame: DataFrame, speed: int):
+    def __init__(self, frame: DataFrame, speed: int):
         filepath = Route.filepath(FairCurrentFrame, speed)
         job_name = f'{FairCurrentFrame.__name__} {speed}'
         result_key = tuple([speed, filepath])
@@ -297,41 +297,52 @@ class FairCurrentJob(Job):
         if filepath.exists():
             super().__init__(job_name, result_key, FairCurrentFrame, [], {'csv_source': filepath})
         else:
-            super().__init__(job_name, result_key, FairCurrentFrame.frame, [timesteps_frame], {})
+            super().__init__(job_name, result_key, FairCurrentFrame.frame, [frame], {})
 
 class SavGolMinimaFrame(DataFrame):
 
     noise_threshold = 100
+    write_flag = True
+    _metadata = ['message']
 
-    def __init__(self, sg_frame: DataFrame, file_path: Path):
+    @classmethod
+    def frame(cls, sg_frame: DataFrame):
 
-        if file_path.exists():
-            super().__init__(csv_source=file_path)
-        else:
-            # create a list of minima frames (TF = True, below midline) and larger than the noise threshold
-            blocks = [df.reset_index(drop=True).drop(labels=['GL', 'sg_block', 'midline'], axis=1) for index, df in sg_frame.groupby('sg_block') if df['GL'].any() and len(df) > SavGolMinimaFrame.noise_threshold]
+        # create a list of minima frames (TF = True, below midline) and larger than the noise threshold
+        blocks = [df.reset_index(drop=True).drop(labels=['GL', 'midline'], axis=1) for index, df in sg_frame.groupby('block') if df['GL'].any() and len(df) > SavGolMinimaFrame.noise_threshold]
+        frame = DataFrame(columns=['start_datetime', 'min_datetime', 'end_datetime', 'start_duration', 'min_duration', 'end_duration', 'block_size'])
+        for i, df in enumerate(blocks):
+            median_stamp = int(df[df.t_time == df.min().t_time]['stamp'].median())
+            frame.at[i, 'start_utc'] = df.iloc[0].Time
+            frame.at[i, 'min_utc'] = df.iloc[abs(df.stamp - median_stamp).idxmin()].Time
+            frame.at[i, 'end_utc'] = df.iloc[-1].Time
+            frame.at[i, 'start_duration'] = hours_mins(df.iloc[0].t_time * fc_globals.TIMESTEP)
+            frame.at[i, 'min_duration'] = hours_mins(
+                df.iloc[abs(df.stamp - median_stamp).idxmin()].t_time * fc_globals.TIMESTEP)
+            frame.at[i, 'end_duration'] = hours_mins(df.iloc[-1].t_time * fc_globals.TIMESTEP)
+            frame.at[i, 'block_size'] = len(df)
 
-            frame = DataFrame(columns=['start_datetime', 'min_datetime', 'end_datetime', 'start_duration', 'min_duration',
-                                       'end_duration'])
-            for i, df in enumerate(blocks):
-                median_stamp = int(df[df.t_time == df.min().t_time]['stamp'].median())
-                frame.at[i, 'start_utc'] = df.iloc[0].Time
-                frame.at[i, 'min_utc'] = df.iloc[abs(df.stamp - median_stamp).idxmin()].Time
-                frame.at[i, 'end_utc'] = df.iloc[-1].Time
-                frame.at[i, 'start_duration'] = hours_mins(df.iloc[0].t_time * fc_globals.TIMESTEP)
-                frame.at[i, 'min_duration'] = hours_mins(
-                    df.iloc[abs(df.stamp - median_stamp).idxmin()].t_time * fc_globals.TIMESTEP)
-                frame.at[i, 'end_duration'] = hours_mins(df.iloc[-1].t_time * fc_globals.TIMESTEP)
+        frame['utc date'] = pd.to_datetime(frame.start_utc, utc=True).dt.date
 
-            # round to 15 minutes, then convert to eastern time
-            frame.start_datetime = pd.to_datetime(frame.start_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
-            frame.min_datetime = pd.to_datetime(frame.min_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
-            frame.end_datetime = pd.to_datetime(frame.end_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
+        # round to 15 minutes, then convert to eastern time
+        frame.start_datetime = pd.to_datetime(frame.start_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
+        frame.min_datetime = pd.to_datetime(frame.min_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
+        frame.end_datetime = pd.to_datetime(frame.end_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
+        frame.drop(['start_utc', 'min_utc', 'end_utc'], axis=1, inplace=True)
+        frame['type'] = 'sg'
+        return cls(frame, num_blocks=len(frame), num_dates=frame['utc date'].nunique(), min_size=frame.block_size.min(), max_size=frame.block_size.max())
 
-            frame.drop(['start_utc', 'min_utc', 'end_utc'], axis=1, inplace=True)
-            frame['type'] = 'sg'
-            frame.write(file_path)
-            super().__init__(data=frame)
+    def __init__(self, *args, **kwargs):
+        num_blocks = kwargs.pop('num_blocks', None)
+        num_dates = kwargs.pop('num_dates', None)
+        min_size = kwargs.pop('min_size', None)
+        max_size = kwargs.pop('max_size', None)
+        super().__init__(*args, **kwargs)
+        if num_dates is None:
+            num_dates = self['utc date'].nunique()
+        if num_blocks is None:
+            num_blocks = len(self)
+        self.message = f'# utc dates: {num_dates},  # blocks: {num_blocks},  # min_size: {min_size},  # max_size: {max_size}'
 
 class SavGolMinimaJob(Job):  # super -> job name, result key, function/object, arguments
 
@@ -339,46 +350,57 @@ class SavGolMinimaJob(Job):  # super -> job name, result key, function/object, a
     def execute_callback(self, result): return super().execute_callback(result)
     def error_callback(self, result): return super().error_callback(result)
 
-    def __init__(self, savgol_frame: DataFrame, speed: int, route: Route):
-        job_name = SavGolMinimaFrame.__name__ + ' ' + str(speed)
-        result_key = speed
-        arguments = [savgol_frame, route.filepath(SavGolMinimaFrame.__name__, speed)]
-        super().__init__(job_name, result_key, SavGolMinimaFrame, arguments, [])
+    def __init__(self, frame: DataFrame, speed: int):
+        filepath = Route.filepath(SavGolMinimaFrame, speed)
+        job_name = f'{SavGolMinimaFrame.__name__} {speed}'
+        result_key = tuple([speed, filepath])
+
+        if filepath.exists():
+            super().__init__(job_name, result_key, SavGolMinimaFrame, [], {'csv_source': filepath})
+        else:
+            super().__init__(job_name, result_key, SavGolMinimaFrame.frame, [frame], {})
 
 class FairCurrentMinimaFrame(DataFrame):
 
-    def __init__(self, fc_frame: DataFrame, file_path: Path):
+    write_flag = True
+    _metadata = ['message']
 
-        if file_path.exists():
-            super().__init__(csv_source=file_path)
-        else:
-            # create a list of dataframe blocks for only those with a no opposing current (fair_current == True)
-            blocks = [df.reset_index(drop=True).drop(labels=['faircurrent'], axis=1) for index, df in fc_frame.groupby('fc_block') if df['faircurrent'].all()]
+    @classmethod
+    def frame(cls, fc_frame: DataFrame):
 
-            if len(blocks) > 0:
-                frame = DataFrame(columns=['start_datetime', 'min_datetime', 'end_datetime', 'start_duration', 'min_duration', 'end_duration'])
-                for i, df in enumerate(blocks):
-                    median_stamp = int(df[df.t_time == df.min().t_time]['stamp'].median())
-                    frame.at[i, 'start_utc'] = df.iloc[0].Time
-                    frame.at[i, 'min_utc'] = df.iloc[abs(df.stamp - median_stamp).idxmin()].Time
-                    frame.at[i, 'end_utc'] = df.iloc[-1].Time
-                    frame.at[i, 'start_duration'] = hours_mins(df.iloc[0].t_time * fc_globals.TIMESTEP)
-                    frame.at[i, 'min_duration'] = hours_mins(df.iloc[abs(df.stamp - median_stamp).idxmin()].t_time * fc_globals.TIMESTEP)
-                    frame.at[i, 'end_duration'] = hours_mins(df.iloc[-1].t_time * fc_globals.TIMESTEP)
+        blocks = [df.reset_index(drop=True).drop(labels=['faircurrent'], axis=1) for index, df in fc_frame.groupby('block') if df['faircurrent'].any()]
+        frame = DataFrame(columns=['start_datetime', 'min_datetime', 'end_datetime', 'start_duration', 'min_duration', 'end_duration', 'block_size'])
+        for i, df in enumerate(blocks):
+            median_stamp = int(df[df.t_time == df.min().t_time]['stamp'].median())
+            frame.at[i, 'start_utc'] = df.iloc[0].Time
+            frame.at[i, 'min_utc'] = df.iloc[abs(df.stamp - median_stamp).idxmin()].Time
+            frame.at[i, 'end_utc'] = df.iloc[-1].Time
+            frame.at[i, 'start_duration'] = hours_mins(df.iloc[0].t_time * fc_globals.TIMESTEP)
+            frame.at[i, 'min_duration'] = hours_mins(
+                df.iloc[abs(df.stamp - median_stamp).idxmin()].t_time * fc_globals.TIMESTEP)
+            frame.at[i, 'end_duration'] = hours_mins(df.iloc[-1].t_time * fc_globals.TIMESTEP)
+            frame.at[i, 'block_size'] = len(df)
+        frame['utc date'] = pd.to_datetime(frame.start_utc, utc=True).dt.date
 
-                # round to 15 minutes, then convert to eastern time
-                frame.start_datetime = pd.to_datetime(frame.start_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
-                frame.min_datetime = pd.to_datetime(frame.min_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
-                frame.end_datetime = pd.to_datetime(frame.end_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
+        # round to 15 minutes, then convert to eastern time
+        frame.start_datetime = pd.to_datetime(frame.start_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
+        frame.min_datetime = pd.to_datetime(frame.min_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
+        frame.end_datetime = pd.to_datetime(frame.end_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
+        frame.drop(['start_utc', 'min_utc', 'end_utc'], axis=1, inplace=True)
+        frame['type'] = 'fc'
+        return cls(frame, num_blocks=len(frame), num_dates=frame['utc date'].nunique(), min_size=frame.block_size.min(), max_size=frame.block_size.max())
 
-                frame.drop(['start_utc', 'min_utc', 'end_utc'], axis=1, inplace=True)
-                frame['type'] = 'fc'
-                frame.write(file_path)
-                super().__init__(data=frame)
-            else:
-                no_faircurrents = file_path.with_suffix('.no_faircurrents')
-                no_faircurrents.touch()
-                super().__init__()
+    def __init__(self, *args, **kwargs):
+        num_blocks = kwargs.pop('num_blocks', None)
+        num_dates = kwargs.pop('num_dates', None)
+        min_size = kwargs.pop('min_size', None)
+        max_size = kwargs.pop('max_size', None)
+        super().__init__(*args, **kwargs)
+        if num_dates is None:
+            num_dates = self['utc date'].nunique()
+        if num_blocks is None:
+            num_blocks = len(self)
+        self.message = f'# utc dates: {num_dates},  # blocks: {num_blocks},  # min_size: {min_size},  # max_size: {max_size}'
 
 class FairCurrentMinimaJob(Job):  # super -> job name, result key, function/object, arguments
 
@@ -386,11 +408,15 @@ class FairCurrentMinimaJob(Job):  # super -> job name, result key, function/obje
     def execute_callback(self, result): return super().execute_callback(result)
     def error_callback(self, result): return super().error_callback(result)
 
-    def __init__(self, fair_current_frame: DataFrame, speed: int, route: Route):
-        job_name = FairCurrentMinimaFrame.__name__ + ' ' + str(speed)
-        result_key = speed
-        arguments = [fair_current_frame, route.filepath(FairCurrentMinimaFrame.__name__, speed)]
-        super().__init__(job_name, result_key, FairCurrentMinimaFrame, arguments, [])
+    def __init__(self, frame: DataFrame, speed: int):
+            filepath = Route.filepath(FairCurrentMinimaFrame, speed)
+            job_name = f'{FairCurrentMinimaFrame.__name__} {speed}'
+            result_key = tuple([speed, filepath])
+
+            if filepath.exists():
+                super().__init__(job_name, result_key, FairCurrentMinimaFrame, [], {'csv_source': filepath})
+            else:
+                super().__init__(job_name, result_key, FairCurrentMinimaFrame.frame, [frame], {})
 
 class ArcsFrame(DataFrame):
 
