@@ -94,7 +94,7 @@ class ElapsedTimeFrame(DataFrame):
         super().__init__(*args, **kwargs)
         if num_dates is None:
             num_dates = self.date.nunique()
-        self.message = f'# of unique dates: {num_dates}'
+        self.message = f'# dates: {num_dates}'
 
 class ElapsedTimeJob(Job):  # super -> job name, result key, function/object, arguments
 
@@ -128,14 +128,13 @@ class ElapsedTimeJob(Job):  # super -> job name, result key, function/object, ar
             arguments = [start_path, end_path, seg.length, speed, seg.name]
             super().__init__(job_name, result_key, ElapsedTimeFrame.frame, arguments, {})
 
-
 # noinspection PyTypeChecker
 class TimeStepsFrame(DataFrame):
 
     _metadata = ['message']
 
     @classmethod
-    def frame(cls, et_frame: DataFrame):
+    def frame(cls, et_frame: DataFrame, speed: int) -> DataFrame:
 
         frame = DataFrame()
         frame['stamp'] = et_frame['stamp']
@@ -185,7 +184,7 @@ class TimeStepsFrame(DataFrame):
         super().__init__(*args, **kwargs)
         if num_dates is None:
             num_dates = self.date.nunique()
-        self.message = f'# of unique dates: {num_dates}'
+        self.message = f'# dates: {num_dates}'
 
 class TimeStepsJob(Job):
 
@@ -202,8 +201,7 @@ class TimeStepsJob(Job):
         if filepath.exists():
             super().__init__(job_name, result_key, ElapsedTimeFrame, [], {'csv_source': filepath})
         else:
-            super().__init__(job_name, result_key, TimeStepsFrame.frame, [elapsed_times_frame], {})
-
+            super().__init__(job_name, result_key, TimeStepsFrame.frame, [elapsed_times_frame, speed], {})
 
 class SavGolFrame(DataFrame):
 
@@ -238,15 +236,30 @@ class SavGolJob(Job):
 
 class FairCurrentFrame(DataFrame):
 
-    def __init__(self, timesteps_frame: DataFrame, file_path: Path):
+    _metadata = ['message']
 
-        if file_path.exists():
-            super().__init__(csv_source=file_path)
-        else:
-            fc_frame = timesteps_frame.copy()
-            fc_frame['fc_block'] = (fc_frame['faircurrent'] != fc_frame['faircurrent'].shift(1)).cumsum()  # index the blocks of True and False
-            fc_frame.write(file_path)
-            super().__init__(data=fc_frame)
+    @classmethod
+    def frame(cls, ts_frame: DataFrame, speed: int):
+        frame = ts_frame.copy()
+        frame['block'] = (frame['faircurrent'] != frame['faircurrent'].shift(1)).cumsum()
+        frame['block_size'] = frame.groupby('block').transform('size')
+        return cls(frame, num_blocks=frame.block.nunique(), num_dates=frame.date.nunique(), min_size=frame.block_size.min(), max_size=frame.block_size.max())
+
+    def __init__(self, *args, **kwargs):
+        num_blocks = kwargs.pop('num_blocks', None)
+        num_dates = kwargs.pop('num_dates', None)
+        min_size = kwargs.pop('min_size', None)
+        max_size = kwargs.pop('max_size', None)
+        super().__init__(*args, **kwargs)
+        if num_dates is None:
+            num_dates = self.date.nunique()
+        if num_blocks is None:
+            num_blocks = self.block.nunique()
+        if min_size is None:
+            min_size = self.block_size.min()
+        if max_size is None:
+            max_size = self.block_size.max()
+        self.message = f'# dates: {num_dates},  # blocks: {num_blocks},  # min_size: {min_size},  # max_size: {max_size}'
 
 class FairCurrentJob(Job):
 
@@ -254,11 +267,16 @@ class FairCurrentJob(Job):
     def execute_callback(self, result): return super().execute_callback(result)
     def error_callback(self, result): return super().error_callback(result)
 
-    def __init__(self, timesteps_frame: DataFrame, speed: int, route: Route):
-        job_name = FairCurrentFrame.__name__ + ' ' + str(speed)
+    def __init__(self, timesteps_frame: DataFrame, speed: int):
+        filepath = Route.filepath(FairCurrentFrame, speed)
+        job_name = f'{FairCurrentFrame.__name__}  {speed}'
         result_key = speed
-        arguments = [timesteps_frame, route.filepath(FairCurrentFrame.__name__, speed)]
-        super().__init__(job_name, result_key, FairCurrentFrame, arguments, [])
+
+        if filepath.exists():
+            super().__init__(job_name, result_key, FairCurrentFrame, [], {'csv_source': filepath})
+        else:
+            super().__init__(job_name, result_key, FairCurrentFrame.frame, [timesteps_frame, speed], {})
+
 
 class SavGolMinimaFrame(DataFrame):
 
