@@ -237,7 +237,7 @@ class SavGolFrame(DataFrame):
             min_size = self.block_size.min()
         if max_size is None:
             max_size = self.block_size.max()
-        self.message = f'# utc dates: {num_dates},  # blocks: {num_blocks},  # min_size: {min_size},  # max_size: {max_size}'
+        self.message = f'# utc dates: {num_dates},  # blocks: {num_blocks},  min_size: {min_size},  max_size: {max_size}'
 
 class SavGolJob(Job):
 
@@ -281,7 +281,7 @@ class FairCurrentFrame(DataFrame):
             min_size = self.block_size.min()
         if max_size is None:
             max_size = self.block_size.max()
-        self.message = f'# utc dates: {num_dates},  # blocks: {num_blocks},  # min_size: {min_size},  # max_size: {max_size}'
+        self.message = f'# utc dates: {num_dates},  # blocks: {num_blocks}, min_size: {min_size},  max_size: {max_size}'
 
 class FairCurrentJob(Job):
 
@@ -342,7 +342,7 @@ class SavGolMinimaFrame(DataFrame):
             num_dates = self['utc date'].nunique()
         if num_blocks is None:
             num_blocks = len(self)
-        self.message = f'# utc dates: {num_dates},  # blocks: {num_blocks},  # min_size: {min_size},  # max_size: {max_size}'
+        self.message = f'# utc dates: {num_dates},  # blocks: {num_blocks}, min_size: {min_size},  max_size: {max_size}'
 
 class SavGolMinimaJob(Job):  # super -> job name, result key, function/object, arguments
 
@@ -400,7 +400,7 @@ class FairCurrentMinimaFrame(DataFrame):
             num_dates = self['utc date'].nunique()
         if num_blocks is None:
             num_blocks = len(self)
-        self.message = f'# utc dates: {num_dates},  # blocks: {num_blocks},  # min_size: {min_size},  # max_size: {max_size}'
+        self.message = f'# utc dates: {num_dates},  # blocks: {num_blocks},  min_size: {min_size},  max_size: {max_size}'
 
 class FairCurrentMinimaJob(Job):  # super -> job name, result key, function/object, arguments
 
