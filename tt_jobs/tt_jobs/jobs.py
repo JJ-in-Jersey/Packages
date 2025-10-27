@@ -362,13 +362,14 @@ class SavGolMinimaJob(Job):  # super -> job name, result key, function/object, a
 
 class FairCurrentMinimaFrame(DataFrame):
 
+    noise_threshold = 100
     write_flag = True
     _metadata = ['message']
 
     @classmethod
     def frame(cls, fc_frame: DataFrame):
 
-        blocks = [df.reset_index(drop=True).drop(labels=['faircurrent'], axis=1) for index, df in fc_frame.groupby('block') if df['faircurrent'].any()]
+        blocks = [df.reset_index(drop=True).drop(labels=['faircurrent'], axis=1) for index, df in fc_frame.groupby('block') if df['faircurrent'].any() and len(df) > SavGolMinimaFrame.noise_threshold]
         frame = DataFrame(columns=['start_datetime', 'min_datetime', 'end_datetime', 'start_duration', 'min_duration', 'end_duration', 'block_size'])
         for i, df in enumerate(blocks):
             median_stamp = int(df[df.t_time == df.min().t_time]['stamp'].median())
