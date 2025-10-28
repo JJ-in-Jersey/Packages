@@ -427,10 +427,46 @@ class FairCurrentMinimaJob(Job):  # super -> job name, result key, function/obje
             else:
                 super().__init__(job_name, result_key, FairCurrentMinimaFrame.frame, [frame], {})
 
-class ArcsFrame(DataFrame):
 
+class ArcsFrame(DataFrame):
     write_flag = True
     _metadata = ['message']
+
+    @staticmethod
+    def hide_overlapping_durations(frame: DataFrame):
+
+        threshold = 7.5
+        frame['duplicate_supressed'] = False
+        grouped = frame.groupby('date')
+        suppress_start_indices = {}
+        suppress_end_indices = {}
+
+        for date, group in grouped:
+            # Get the 'fc' angles (both start and end) for the current date
+            fc_angles = group[group['type'] == 'fc'][['start_angle', 'end_angle']].values.flatten().tolist()
+            # Get the 'sg' rows (index and angles) for the current date
+            sg_rows = group[group['type'] == 'sg']
+
+            for fc_angle in fc_angles:
+                for index, row in sg_rows.iterrows():
+                    sg_angle_start = row['start_angle']
+                    sg_angle_end = row['end_angle']
+                    if row['start_duration_display']:
+                        if abs(fc_angle - sg_angle_start) <= threshold:
+                            suppress_start_indices[index] = True
+                    if row['end_duration_display']:
+                        if abs(fc_angle - sg_angle_end) <= threshold:
+                            suppress_end_indices[index] = True
+        start_indices = list(suppress_start_indices.keys())
+        if start_indices:
+            frame.loc[start_indices, 'start_duration_display'] = False
+        end_indices = list(suppress_end_indices.keys())
+        if end_indices:
+            frame.loc[end_indices, 'end_duration_display'] = False
+        final_suppression_mask = (frame['start_duration_display'] == False) | (frame['end_duration_display'] == False)
+        frame.loc[final_suppression_mask, 'duplicate_supressed'] = True
+
+        return frame
 
     @classmethod
     def frame(cls, min_frame: DataFrame, speed: int, first_day: date, last_day: date):
@@ -475,15 +511,18 @@ class ArcsFrame(DataFrame):
         frame.loc[min_mask, 'min_duration_display'] = False
         frame = frame[(frame['date'] >= first_day) & (frame['date'] <= last_day)]
         frame.reset_index(drop=True, inplace=True)
+
+        frame = ArcsFrame.hide_overlapping_durations(frame)
+
         return cls(frame, num_dates=frame['date'].nunique())
 
     def __init__(self, *args, **kwargs):
         num_dates = kwargs.pop('num_dates', None)
         super().__init__(*args, **kwargs)
         if num_dates is None:
-            num_dates = self['utc date'].nunique()
+            num_dates = self['date'].nunique()
         self.message = f'# dates: {num_dates}'
-
+        
 class ArcsJob(Job):  # super -> job name, result key, function/object, arguments
 
     def execute(self): return super().execute()
