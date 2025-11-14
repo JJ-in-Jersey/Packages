@@ -24,8 +24,9 @@ TEMPLATES= {
     'FairCurrentMinimaFrame': Template('fair_current_minima $speed.csv'),
     'ArcsFrame': Template('arcs $speed.csv'),
     'MinimaFrame': Template('minima_frame $speed.csv'),
-    'fair currents': Template('fair currents $loc.csv'),
-    'savitsky golay': Template('savitsky golay $loc.csv'),
+    'table': Template('table $loc.csv'),
+    'simple': Template('simple $loc.csv'),
+    'complete': Template('complete $loc.csv'),
     'first_day': Template('$year/12/1'),
     'last_day': Template('$year/1/31')
 }
@@ -33,6 +34,6 @@ TEMPLATES= {
 def make_project_folders():
     makedirs(PROJECT_BASE_FOLDER, exist_ok=True)
     makedirs(STATIONS_FOLDER, exist_ok=True)
-    makedirs(ROUTES_FOLDER.routes_folder, exist_ok=True)
-    makedirs(WAYPOINTS_FOLDER.waypoints_folder, exist_ok=True)
-    makedirs(GPX_FOLDER.gpx_folder, exist_ok=True)
+    makedirs(ROUTES_FOLDER, exist_ok=True)
+    makedirs(WAYPOINTS_FOLDER, exist_ok=True)
+    makedirs(GPX_FOLDER, exist_ok=True)
