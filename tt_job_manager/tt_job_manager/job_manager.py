@@ -87,6 +87,9 @@ class Job:
                 print(f'-w    {self.job_name}   writing results', flush=True)
         if 'message' in dir(result[1]) and result[1].message is not None:
             print(f'-m    {self.job_name}   {result[1].message}', flush=True)
+        else:
+            print(f'-     {self.job_name}', flush=True)
+
 
     def error_callback(self, result):
         print(f'!     {self.job_name} error: {result}', flush=True)
