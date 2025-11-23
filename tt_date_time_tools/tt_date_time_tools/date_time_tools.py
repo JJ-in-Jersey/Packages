@@ -1,5 +1,6 @@
 import dateparser
 from pandas import Timestamp
+from datetime import datetime
 
 
 def hours_mins(secs): return "%d:%02d" % (secs // 3600, secs % 3600 // 60)
@@ -8,11 +9,11 @@ def hours_mins(secs): return "%d:%02d" % (secs // 3600, secs % 3600 // 60)
 def mins_secs(secs): return "%d:%02d" % (secs // 60, secs % 60)
 
 
-def time_to_degrees(time: str | Timestamp | None):
+def time_to_degrees(time: str | Timestamp | datetime| None):
     if isinstance(time, str):
         time = dateparser.parse(time)
         return (time.hour * 15 + time.minute * 0.25) % 360
-    elif isinstance(time, Timestamp):
+    elif isinstance(time, (Timestamp, datetime)):
         return (time.hour * 15 + time.minute * 0.25) % 360
     else:
         raise TypeError('invalid argument type for time_to_degrees')
