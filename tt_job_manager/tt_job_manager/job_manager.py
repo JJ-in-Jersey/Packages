@@ -49,13 +49,16 @@ class QueueManager:
 
                 # check results for complete job and put them on external lookup
                 for key in list(job_key_dict.keys()):
-                    if job_key_dict[key].ready():  # job is complete, but not necessarily successful
+                    if job_key_dict[key].ready():  # job is complete, but not necessarily successf
                         async_return = job_key_dict.pop(key)
                         if async_return.successful():
                             job_result = async_return.get()
                             results_dict[key] = job_result[1]  # results format is tuple of (key, data, init time)
                         else:
-                            results_dict[key] = None
+                            try:
+                                job_result = async_return.get()
+                            except Exception as e:
+                                results_dict[key] = e
                         q.task_done()
                 sleep(1)
         print(f'-     queue manager\n', flush=True)
@@ -76,23 +79,24 @@ class Job:
     def execute(self):
         # init_time = perf_counter()
         print(f'+     {self.job_name}', flush=True)
-        # return tuple([self.result_key, self.execute_function(*self.execute_function_arguments), mins_secs(perf_counter()-init_time)])
-        return tuple([self.result_key, self.execute_function(*self.execute_function_arguments, **self.execute_function_keyword_arguments)])
+        return {'key': self.result_key, 'callback': self.execute_function(*self.execute_function_arguments, **self.execute_function_keyword_arguments)}
 
     def execute_callback(self, result):
+
         if 'write_flag' in dir(result[1]) and result[1].write_flag:
             path = Path(result[0][1])
             if not path.exists():
                 result[1].write(path)
-                print(f'-w    {self.job_name}   writing results', flush=True)
+                print(f'w    {self.job_name}   writing results', flush=True)
         if 'message' in dir(result[1]) and result[1].message is not None:
-            print(f'-m    {self.job_name}   {result[1].message}', flush=True)
+            print(f'm    {self.job_name}   {result[1].message}', flush=True)
         else:
             print(f'-     {self.job_name}', flush=True)
 
 
-    def error_callback(self, result):
-        print(f'!     {self.job_name} error: {result}', flush=True)
+    def error_callback(self, error):
+
+        print(f'<!>   {self.job_name}, {error.__class__.__name__} {error}', flush=True)
 
     def __init__(self, job_name, result_key, function, arguments, keyword_arguments):
         self.job_name = job_name
