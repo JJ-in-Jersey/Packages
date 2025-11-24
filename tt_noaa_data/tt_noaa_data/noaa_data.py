@@ -90,12 +90,13 @@ class OneMonth(DataFrame):
     def __init__(self, month: int, year: int, waypoint: Waypoint):
 
         my_response = None
+        exception_message = f'{self.__class__.__name__} {waypoint.id} month: {month} year: {year}'
 
         if month < 1 or month > 12:
             raise ValueError
 
         try:
-            attempts = 5
+            attempts = 20
             for attempt in range(attempts):
                 my_response = requests.get(self.url(month, year, waypoint))
                 response_not_empty = (my_response.content and my_response.text.strip() and bool(len(my_response.content)))
@@ -103,19 +104,21 @@ class OneMonth(DataFrame):
                 if my_response.ok and response_not_empty and predictions_available:
                         break  # break for loop because of success
                 elif attempt < attempts:
-                        sleep(1)
+                        sleep(2)
                 else:
                     my_response.raise_for_status()
                     if not response_not_empty:
-                        raise EmptyResponse
+                        print(f'IN LOOP {exception_message} attempt: {attempt+1}')
+                        raise EmptyResponse(f'{exception_message} attempt: {attempt+1}')
                     elif not my_response.content:
-                        raise DataNotAvailable
+                        print(f'IN LOOP {exception_message} attempt: {attempt+1}')
+                        raise DataNotAvailable(f'{exception_message} attempt: {attempt+1}')
 
             frame = DataFrame(csv_source=StringIO(my_response.content.decode()))
             frame.columns = frame.columns.str.strip()
 
             if frame.empty or frame.isna().all().all():
-                raise EmptyResponse(f'<!> {waypoint.id} Dataframe empty or NaN')
+                raise EmptyResponse(f'POST LOOP {exception_message} EMPTY FRAME attempt: {attempt+1}')
             frame.Time = to_datetime(frame.Time, utc=True)
             frame['duplicated'] = frame.duplicated(subset='Time')
             frame['stamp'] = frame.Time.apply(dt.timestamp).astype(int)
@@ -124,13 +127,13 @@ class OneMonth(DataFrame):
             frame['timestep_match'] = frame['diff'] == frame['diff'].iloc[1]
 
             if not frame.Time.is_unique:
-                raise DuplicateValues
+                raise DuplicateValues(exception_message)
             if not frame.stamp.is_monotonic_increasing:
-                raise NonMonotonic
+                raise NonMonotonic(exception_message)
             if waypoint.type == 'H' and not frame['timestep_match'][1:].all():
-                raise DataMissing
+                raise DataMissing(exception_message)
         except Exception as e:
-            raise e
+            raise type(e)(f'POST LOOP {exception_message}') from e
 
         super().__init__(data=frame)
 
