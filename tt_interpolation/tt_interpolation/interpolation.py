@@ -137,11 +137,11 @@ class CubicSplineFrame(DataFrame):
     def __init__(self, x: Series | np.ndarray | list, y: Series | np.ndarray | list, spline_x: Series | np.ndarray | list):
 
         if not x.is_unique:
-            raise DuplicateValues(f'<!> Duplicate x values')
+            raise DuplicateValues(f'Duplicate x values')
         if not x.is_monotonic_increasing:
-            raise NonMonotonic(f'<!> x values not monotonic')
+            raise NonMonotonic(f'x values not monotonic')
         if len(x) != len(y):
-            raise LengthMismatch(f'<!> x series and y series have different lengths')
+            raise LengthMismatch(f'x series and y series have different lengths')
 
         cs = CubicSpline(x, y)
         super().__init__(DataFrame({x.name: spline_x, y.name: cs(spline_x)}))
