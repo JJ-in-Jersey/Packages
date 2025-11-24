@@ -1,7 +1,8 @@
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from datetime import date
+from datetime import date, datetime
+from os import remove
 from scipy.signal import savgol_filter
 from sympy import Point
 
@@ -11,7 +12,8 @@ from tt_job_manager.job_manager import Job
 import tt_globals.globals as fc_globals
 from tt_date_time_tools.date_time_tools import hours_mins
 from tt_geometry.geometry import Arc, StartArc, EndArc
-from tt_interpolation.interpolation import Interpolator as VInt
+from tt_interpolation.interpolation import Interpolator as VInt, CubicSplineFrame
+from tt_noaa_data.noaa_data import SixteenMonths
 
 class InterpolatedPoint:
 
@@ -33,6 +35,67 @@ class InterpolatePointJob(Job):
         interpolated_pt_data = tuple([interpolated_pt.name, interpolated_pt.lat, interpolated_pt.lon])
         arguments = [interpolated_pt_data, lats, lons, velos]
         super().__init__(str(index) + ' ' + str(timestamp), timestamp, InterpolatedPoint, arguments, {})
+
+class SplineCSV:
+
+    _metadata = ['message']
+
+    def __init__(self, year: int, waypoint: Waypoint):
+        self.id = waypoint.id
+
+        try:
+            stamp_step = 60  # timestamps in seconds so steps of one minute is 60
+            start_stamp = int(datetime(year=year - 1, month=11, day=1).timestamp())
+            end_stamp = int(datetime(year=year + 1, month=3, day=1).timestamp())
+            stamps = [start_stamp + i * stamp_step for i in range(int((end_stamp - start_stamp)/stamp_step))]
+
+            input_frame = DataFrame(csv_source=waypoint.adjusted_csv_path)
+            cs_frame = CubicSplineFrame(input_frame.stamp, input_frame.Velocity_Major, stamps)
+            cs_frame['Time'] = pd.to_datetime(cs_frame.stamp, unit='s').dt.tz_localize('UTC')
+            cs_frame['Velocity_Major'] = cs_frame.Velocity_Major.round(2)
+            cs_frame.write(waypoint.velocity_csv_path)
+            remove(waypoint.adjusted_csv_path)
+        except Exception as e:
+            self.message = f'<!> {waypoint.id} {type(e).__name__}'
+
+class SplineJob(Job):  # super -> job name, result key, function/object, arguments
+
+    def execute(self): return super().execute()
+    def execute_callback(self, result): return super().execute_callback(result)
+    def error_callback(self, result): return super().error_callback(result)
+
+    def __init__(self, year: int, waypoint: Waypoint):
+        result_key = id(waypoint.id)
+        arguments = tuple([year, waypoint])
+        super().__init__(waypoint.id + ' ' + waypoint.name, result_key, SplineCSV, arguments, {})
+
+class RequestVelocityCSV:
+
+    _metadata = ['message']
+
+    def __init__(self, year: int, waypoint: Waypoint):
+        self.id = waypoint.id
+
+        if waypoint.type == "H":
+            path = waypoint.velocity_csv_path
+        elif waypoint.type == 'S':
+            path = waypoint.adjusted_csv_path
+        else:
+            raise TypeError
+
+        if not path.exists():
+            sixteen_months = SixteenMonths(year, waypoint)
+            sixteen_months.write(path)
+
+class RequestVelocityJob(Job):  # super -> job name, result key, function/object, arguments
+    def execute(self): return super().execute()
+    def execute_callback(self, result): return super().execute_callback(result)
+    def error_callback(self, result): return super().error_callback(result)
+
+    def __init__(self, year, waypoint: Waypoint):
+        result_key = waypoint.id
+        arguments = tuple([year, waypoint])
+        super().__init__(waypoint.id + ' ' + waypoint.name, result_key, RequestVelocityCSV, arguments, {})
 
 class ElapsedTimeFrame(DataFrame):
     # Create a dataframe of elapsed time, in timesteps, to get from the begining to the end of the segment at the starting time
@@ -427,7 +490,6 @@ class FairCurrentMinimaJob(Job):  # super -> job name, result key, function/obje
             else:
                 super().__init__(job_name, result_key, FairCurrentMinimaFrame.frame, [frame], {})
 
-
 class ArcsFrame(DataFrame):
     write_flag = True
     _metadata = ['message']
@@ -436,7 +498,7 @@ class ArcsFrame(DataFrame):
     def hide_overlapping_durations(frame: DataFrame):
 
         threshold = 7.5
-        frame['duplicate_supressed'] = False
+        frame['duplicate_suppressed'] = False
         grouped = frame.groupby('date')
         suppress_start_indices = {}
         suppress_end_indices = {}
@@ -464,7 +526,7 @@ class ArcsFrame(DataFrame):
         if end_indices:
             frame.loc[end_indices, 'end_duration_display'] = False
         final_suppression_mask = (frame['start_duration_display'] == False) | (frame['end_duration_display'] == False)
-        frame.loc[final_suppression_mask, 'duplicate_supressed'] = True
+        frame.loc[final_suppression_mask, 'duplicate_suppressed'] = True
 
         return frame
 
