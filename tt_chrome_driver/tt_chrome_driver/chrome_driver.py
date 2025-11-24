@@ -41,7 +41,7 @@ class ChromeDriver:
         self.folder = download_dir
 
     def page_source(self, url):
-        self.driver.get(url)
+        self.driver.get(url, timeout=30)
         sleep(5)
         source = self.driver.page_source
         self.driver.quit()
@@ -57,7 +57,7 @@ class ChromeDriver:
 
     def install_stable_driver(self):
         downloads = Path(env('user_profile')).joinpath('Downloads')
-        response = requests.get(self.lookup['download_url'])
+        response = requests.get(self.lookup['download_url'], timeout=30)
         zip_file = zipfile.ZipFile(io.BytesIO(response.content), 'r')
         with zip_file as zf:
             zf.extractall(downloads)
