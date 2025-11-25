@@ -166,18 +166,11 @@ class SixteenMonths(DataFrame):
 
         frame = DataFrame()
         try:
-            frame = concat([frame] + [OneMonth(m, year - 1, waypoint) for m in range(11, 13)], axis=0, ignore_index=True)
-            frame = concat([frame] + [OneMonth(m, year, waypoint) for m in range(1, 13)], axis=0, ignore_index=True)
-            frame = concat([frame] + [OneMonth(m, year + 1, waypoint) for m in range(1, 3)], axis=0, ignore_index=True)
-            # for m in range(11,13):
-            #     month = OneMonth(m, year -1, waypoint)
-            #     frame = concat([frame, month], axis=0, ignore_index=True)
-            # for m in range(1,13):
-            #     month = OneMonth(m, year, waypoint)
-            #     frame = concat([frame, month], axis=0, ignore_index=True)
-            # for m in range(1,3):
-            #     month = OneMonth(m, year + 1, waypoint)
-            #     frame = concat([frame, month], axis=0, ignore_index=True)
+            months = []
+            months.extend([OneMonth(m, year - 1, waypoint) for m in range(11, 13)])
+            months.extend([OneMonth(m, year, waypoint) for m in range(1, 13)])
+            months.extend([OneMonth(m, year + 1, waypoint) for m in range(1, 3)])
+            frame = concat(months, axis=0, ignore_index=True)
         except Exception as e:
             raise e
         else:
