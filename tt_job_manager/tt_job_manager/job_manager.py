@@ -2,10 +2,6 @@ from tt_singleton.singleton import Singleton
 from tt_semaphore import simple_semaphore as semaphore
 from multiprocessing import Manager, Pool, cpu_count, Process, JoinableQueue
 from time import sleep
-from pathlib import Path
-# from tt_date_time_tools.date_time_tools import mins_secs
-# from time import sleep, perf_counter
-
 
 class JobManager(metaclass=Singleton):
 
@@ -49,14 +45,14 @@ class QueueManager:
 
                 # check results for complete job and put them on external lookup
                 for key in list(job_key_dict.keys()):
-                    if job_key_dict[key].ready():  # job is complete, but not necessarily successf
+                    if job_key_dict[key].ready():  # job is complete, but not necessarily successful
                         async_return = job_key_dict.pop(key)
                         if async_return.successful():
                             job_result = async_return.get()
-                            results_dict[key] = job_result[1]  # results format is tuple of (key, data, init time)
+                            results_dict[key] = job_result
                         else:
                             try:
-                                job_result = async_return.get()
+                                async_return.get()
                             except Exception as e:
                                 results_dict[key] = e
                         q.task_done()
@@ -79,23 +75,13 @@ class Job:
     def execute(self):
         # init_time = perf_counter()
         print(f'+     {self.job_name}', flush=True)
-        return {'key': self.result_key, 'callback': self.execute_function(*self.execute_function_arguments, **self.execute_function_keyword_arguments)}
+        return self.execute_function(*self.execute_function_arguments, **self.execute_function_keyword_arguments)
 
     def execute_callback(self, result):
-
-        if 'write_flag' in dir(result[1]) and result[1].write_flag:
-            path = Path(result[0][1])
-            if not path.exists():
-                result[1].write(path)
-                print(f'w    {self.job_name}   writing results', flush=True)
-        if 'message' in dir(result[1]) and result[1].message is not None:
-            print(f'm    {self.job_name}   {result[1].message}', flush=True)
-        else:
-            print(f'-     {self.job_name}', flush=True)
+        print(f'-     {self.job_name}', flush=True)
 
 
     def error_callback(self, error):
-
         print(f'<!>   {self.job_name}, {error.__class__.__name__} {error}', flush=True)
 
     def __init__(self, job_name, result_key, function, arguments, keyword_arguments):
