@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from datetime import date, datetime
-from os import remove
 from scipy.signal import savgol_filter
 from sympy import Point
 
@@ -36,27 +35,23 @@ class InterpolatePointJob(Job):
         arguments = [interpolated_pt_data, lats, lons, velos]
         super().__init__(str(index) + ' ' + str(timestamp), timestamp, InterpolatedPoint, arguments, {})
 
-class SplineCSV:
-
-    _metadata = ['message']
+class SplineFrame(DataFrame):
 
     def __init__(self, year: int, waypoint: Waypoint):
         self.id = waypoint.id
+        self.path = waypoint.velocity_csv_path
 
-        try:
-            stamp_step = 60  # timestamps in seconds so steps of one minute is 60
-            start_stamp = int(datetime(year=year - 1, month=11, day=1).timestamp())
-            end_stamp = int(datetime(year=year + 1, month=3, day=1).timestamp())
-            stamps = [start_stamp + i * stamp_step for i in range(int((end_stamp - start_stamp)/stamp_step))]
+        stamp_step = 60  # timestamps in seconds so steps of one minute is 60
+        start_stamp = int(datetime(year=year - 1, month=11, day=1).timestamp())
+        end_stamp = int(datetime(year=year + 1, month=3, day=1).timestamp())
+        stamps = [start_stamp + i * stamp_step for i in range(int((end_stamp - start_stamp)/stamp_step))]
 
-            input_frame = DataFrame(csv_source=waypoint.adjusted_csv_path)
-            cs_frame = CubicSplineFrame(input_frame.stamp, input_frame.Velocity_Major, stamps)
-            cs_frame['Time'] = pd.to_datetime(cs_frame.stamp, unit='s').dt.tz_localize('UTC')
-            cs_frame['Velocity_Major'] = cs_frame.Velocity_Major.round(2)
-            cs_frame.write(waypoint.velocity_csv_path)
-            remove(waypoint.adjusted_csv_path)
-        except Exception as e:
-            self.message = f'<!> {waypoint.id} {type(e).__name__}'
+        input_frame = DataFrame(csv_source=waypoint.adjusted_csv_path)
+        cs_frame = CubicSplineFrame(input_frame.stamp, input_frame.Velocity_Major, stamps)
+        cs_frame['Time'] = pd.to_datetime(cs_frame.stamp, unit='s').dt.tz_localize('UTC')
+        cs_frame['Velocity_Major'] = cs_frame.Velocity_Major.round(2)
+
+        super().__init__(data=cs_frame)
 
 class SplineJob(Job):  # super -> job name, result key, function/object, arguments
 
@@ -65,27 +60,23 @@ class SplineJob(Job):  # super -> job name, result key, function/object, argumen
     def error_callback(self, result): return super().error_callback(result)
 
     def __init__(self, year: int, waypoint: Waypoint):
-        result_key = id(waypoint.id)
+        result_key = waypoint.id
         arguments = tuple([year, waypoint])
-        super().__init__(waypoint.id + ' ' + waypoint.name, result_key, SplineCSV, arguments, {})
+        super().__init__(waypoint.id + ' ' + waypoint.name, result_key, SplineFrame, arguments, {})
 
-class RequestVelocityCSV:
-
-    _metadata = ['message']
+class RequestVelocityFrame(SixteenMonths):
 
     def __init__(self, year: int, waypoint: Waypoint):
-        self.id = waypoint.id
+        super().__init__(year, waypoint)
 
+        self.id = waypoint.id
         if waypoint.type == "H":
-            path = waypoint.velocity_csv_path
+            self.path = waypoint.velocity_csv_path
         elif waypoint.type == 'S':
-            path = waypoint.adjusted_csv_path
+            self.path = waypoint.adjusted_csv_path
         else:
             raise TypeError
 
-        if not path.exists():
-            sixteen_months = SixteenMonths(year, waypoint)
-            sixteen_months.write(path)
 
 class RequestVelocityJob(Job):  # super -> job name, result key, function/object, arguments
     def execute(self): return super().execute()
@@ -95,7 +86,7 @@ class RequestVelocityJob(Job):  # super -> job name, result key, function/object
     def __init__(self, year, waypoint: Waypoint):
         result_key = waypoint.id
         arguments = tuple([year, waypoint])
-        super().__init__(waypoint.id + ' ' + waypoint.name, result_key, RequestVelocityCSV, arguments, {})
+        super().__init__(waypoint.id + ' ' + waypoint.name, result_key, RequestVelocityFrame, arguments, {})
 
 class ElapsedTimeFrame(DataFrame):
     # Create a dataframe of elapsed time, in timesteps, to get from the begining to the end of the segment at the starting time
