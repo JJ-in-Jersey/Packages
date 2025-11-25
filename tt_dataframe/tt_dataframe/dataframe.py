@@ -32,16 +32,16 @@ class DataFrame(PandasDataFrame):
             super().__setattr__(name, value)
 
     def __getattribute__(self, name):
-        # Try normal attribute lookup first
         try:
             return super().__getattribute__(name)
         except AttributeError:
-            # Fall back to attrs dict
-            attrs = super().__getattribute__('attrs')
-            if name in attrs:
-                return attrs[name]
-            raise  # Re-raise the AttributeError if not found in attrs either
-
+            try:
+                attrs = super().__getattribute__('attrs')
+                if name in attrs:
+                    return attrs[name]
+            except AttributeError:
+                pass  # attrs doesn't exist, that's okay
+            raise  # Re-raise the original AttributeError
     def reconstruct_tuple_column(self, column_name, *col_types):
         """
         Args:
