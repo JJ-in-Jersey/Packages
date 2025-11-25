@@ -14,7 +14,6 @@ import tt_globals.globals as fc_globals
 class BaseWaypoint:
 
     raw_csv_name = 'raw_frame.csv'
-    adjusted_csv_name = 'adjusted_raw_frame.csv'
     velocity_csv_name = 'velocity_frame.csv'
     spline_csv_name = 'cubic_spline_frame.csv'
 
@@ -77,8 +76,8 @@ class BaseWaypoint:
             self.folder = Path(station['folder'])
         else:
             self.folder = fc_globals.WAYPOINTS_FOLDER.joinpath(self.name)
+            
         self.raw_csv_path = self.folder.joinpath(self.raw_csv_name)
-        self.adjusted_csv_path = self.folder.joinpath(self.adjusted_csv_name)
         self.spline_csv_path = self.folder.joinpath(self.spline_csv_name)
         self.velocity_csv_path = self.folder.joinpath(self.velocity_csv_name)
         makedirs(self.folder, exist_ok=True)
