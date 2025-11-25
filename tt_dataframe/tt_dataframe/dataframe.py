@@ -42,6 +42,7 @@ class DataFrame(PandasDataFrame):
             except AttributeError:
                 pass  # attrs doesn't exist, that's okay
             raise  # Re-raise the original AttributeError
+
     def reconstruct_tuple_column(self, column_name, *col_types):
         """
         Args:
