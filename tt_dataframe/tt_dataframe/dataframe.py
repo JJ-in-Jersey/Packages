@@ -17,6 +17,31 @@ class DataFrame(PandasDataFrame):
     def _constructor(self):
         return DataFrame
 
+    def __setattr__(self, name, value):
+        pandas_attrs = set(dir(PandasDataFrame))
+
+        if (name.startswith('_') or
+                name not in pandas_attrs or
+                not hasattr(self, '_data')):
+            # Custom attributes go into attrs dict for pickle compatibility
+            if hasattr(self, '_data') and not name.startswith('_'):
+                self.attrs[name] = value
+            else:
+                object.__setattr__(self, name, value)
+        else:
+            super().__setattr__(name, value)
+
+    def __getattribute__(self, name):
+        # Try normal attribute lookup first
+        try:
+            return super().__getattribute__(name)
+        except AttributeError:
+            # Fall back to attrs dict
+            attrs = super().__getattribute__('attrs')
+            if name in attrs:
+                return attrs[name]
+            raise  # Re-raise the AttributeError if not found in attrs either
+
     def reconstruct_tuple_column(self, column_name, *col_types):
         """
         Args:
