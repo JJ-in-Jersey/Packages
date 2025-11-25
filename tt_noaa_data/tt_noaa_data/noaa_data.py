@@ -119,7 +119,7 @@ class OneMonth(DataFrame):
 
             if frame.empty or frame.isna().all().all():
                 raise EmptyResponse(f'POST LOOP {exception_message} EMPTY FRAME attempt: {attempt+1}')
-            frame.Time = to_datetime(frame.Time, utc=True)
+            frame['Time'] = to_datetime(frame.Time, utc=True)
             frame['duplicated'] = frame.duplicated(subset='Time')
             frame['stamp'] = frame.Time.apply(dt.timestamp).astype(int)
             frame['diff'] = frame.stamp.diff()
