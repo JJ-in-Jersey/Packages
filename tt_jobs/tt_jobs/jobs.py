@@ -38,25 +38,29 @@ class InterpolatePointJob(Job):
 class SplineFrame(DataFrame):
 
     def __init__(self, year: int, waypoint: Waypoint):
-        self.id = waypoint.id
-        self.path = waypoint.velocity_csv_path
 
         stamp_step = 60  # timestamps in seconds so steps of one minute is 60
         start_stamp = int(datetime(year=year - 1, month=11, day=1).timestamp())
         end_stamp = int(datetime(year=year + 1, month=3, day=1).timestamp())
         stamps = [start_stamp + i * stamp_step for i in range(int((end_stamp - start_stamp)/stamp_step))]
 
-        input_frame = DataFrame(csv_source=waypoint.adjusted_csv_path)
+        input_frame = DataFrame(csv_source=waypoint.raw_csv_path)
         cs_frame = CubicSplineFrame(input_frame.stamp, input_frame.Velocity_Major, stamps)
         cs_frame['Time'] = pd.to_datetime(cs_frame.stamp, unit='s').dt.tz_localize('UTC')
         cs_frame['Velocity_Major'] = cs_frame.Velocity_Major.round(2)
 
         super().__init__(data=cs_frame)
+        
+        self.id = waypoint.id
+        self.type = waypoint.type
+        self.path = waypoint.velocity_csv_path
 
 class SplineJob(Job):  # super -> job name, result key, function/object, arguments
 
     def execute(self): return super().execute()
-    def execute_callback(self, result): return super().execute_callback(result)
+    def execute_callback(self, result):
+        result.write(result.path)
+        return super().execute_callback(result)
     def error_callback(self, result): return super().error_callback(result)
 
     def __init__(self, year: int, waypoint: Waypoint):
@@ -70,17 +74,14 @@ class RequestVelocityFrame(SixteenMonths):
         super().__init__(year, waypoint)
 
         self.id = waypoint.id
-        if waypoint.type == "H":
-            self.path = waypoint.velocity_csv_path
-        elif waypoint.type == 'S':
-            self.path = waypoint.adjusted_csv_path
-        else:
-            raise TypeError
-
+        self.type = waypoint.type
+        self.path = waypoint.raw_csv_path
 
 class RequestVelocityJob(Job):  # super -> job name, result key, function/object, arguments
     def execute(self): return super().execute()
-    def execute_callback(self, result): return super().execute_callback(result)
+    def execute_callback(self, result):
+        result.write(result.path)
+        return super().execute_callback(result)
     def error_callback(self, result): return super().error_callback(result)
 
     def __init__(self, year, waypoint: Waypoint):
