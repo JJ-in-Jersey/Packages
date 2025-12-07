@@ -1,11 +1,11 @@
 
-python %userprofile%/PycharmProjects/Packages/bin/cleanup.py
+py %userprofile%/PycharmProjects/Packages/bin/cleanup.py
 
-pip cache purge
-pip freeze > %TMP%\pip_freeze
-pip uninstall -y -r %TMP%\pip_freeze
-pip list
+py -m pip cache purge
+py -m pip freeze > %TMP%\pip_freeze
+py -m pip uninstall -y -r %TMP%\pip_freeze
+py -m pip list
 
-python %userprofile%/PycharmProjects/Packages/bin/cleanup.py
+py %userprofile%/PycharmProjects/Packages/bin/cleanup.py
 
 pause
