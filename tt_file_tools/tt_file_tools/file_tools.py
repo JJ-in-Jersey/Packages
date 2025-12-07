@@ -64,26 +64,28 @@ def list_all_files(folder_path):
 
 class FileTree(Dictionary):
 
-
-    def find_keys(self, target_key, target_value=None, _found_keys=None):
+    def find_keys(self, keys_values: dict, contains: bool=False, _found_keys=None):
         """
         retrieve key/value pairs that match the target_key
-        :param target_key: key to be found
-        :param target_value: value of found key
+        :param keys_values: keys and values to check
+        :param contains: flag for exact match vs contains
         :param _found_keys: list of found items, passed to next recursion
         :return _found_keys: list of found item tuples (key, value)
         """
         if _found_keys is None:
             _found_keys = []
 
-        for key, value in self.items():
-            if key == target_key:
-                if target_value is None:
-                    _found_keys.append(self)
-                elif value == target_value:
-                    _found_keys.append(self)
-            if isinstance(value, FileTree):
-                value.find_keys(target_key, target_value, _found_keys)
+        if contains:
+            match = all(k in self and str(v) in str(self[k]) for k, v in keys_values.items())
+        else:
+            match = keys_values.items() <= self.items()
+
+        if match:
+            _found_keys.append(self)
+
+        for v in self.values():
+            if isinstance(v, FileTree):
+                v.find_keys(keys_values, contains, _found_keys)
         return _found_keys
 
     def delete_key(self, key_path: str):
