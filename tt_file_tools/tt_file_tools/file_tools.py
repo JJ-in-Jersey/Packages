@@ -76,7 +76,7 @@ class FileTree(Dictionary):
             _found_keys = []
 
         if contains:
-            match = all(k in self and str(v) in str(self[k]) for k, v in keys_values.items())
+            match = all(k in self and str(v) in self[k] for k, v in keys_values.items())
         else:
             match = keys_values.items() <= self.items()
 
@@ -179,8 +179,8 @@ class GoogleDriveTree(FileTree):
                 base[name] = GoogleDriveTree({'path': path, 'id': google_drive_id, 'type': 'folder'})
 
                 for file in files:
-                    path = path + '/' + file[0]
-                    base[name][file[0]] = GoogleDriveTree({'path': path, 'id': file[1], 'size': file[2], 'type': Path(path).suffix})
+                    filepath = path + '/' + file[0]
+                    base[name][file[0]] = GoogleDriveTree({'path': filepath, 'id': file[1], 'size': file[2], 'type': Path(filepath).suffix})
 
                 print(f"{indent}📁 {name}: {len(dirs)} folders, {len(files)} files")
 
