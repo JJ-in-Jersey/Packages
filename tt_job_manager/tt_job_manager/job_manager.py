@@ -77,8 +77,11 @@ class Job:
         print(f'+     {self.job_name}', flush=True)
         return self.execute_function(*self.execute_function_arguments, **self.execute_function_keyword_arguments)
 
-    def execute_callback(self, result):
-        print(f'-     {self.job_name}', flush=True)
+    def execute_callback(self, result, message: str = None):
+        if message is not None:
+            print(f'-     {self.job_name}  {message}', flush=True)
+        else:
+            print(f'-     {self.job_name}', flush=True)
 
 
     def error_callback(self, error):
