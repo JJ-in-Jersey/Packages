@@ -28,7 +28,7 @@ class InterpolatedPoint:
 class InterpolatePointJob(Job):
 
     def execute(self): return super().execute()
-    def execute_callback(self, result): return super().execute_callback(result)
+    def execute_callback(self, result, message: str = None): return super().execute_callback(result)
     def error_callback(self, result): return super().error_callback(result)
 
     def __init__(self, interpolated_pt: Waypoint, lats: list, lons: list, velos: list, timestamp: int, index: int):
@@ -45,8 +45,6 @@ class SplineFrame(DataFrame):
         if waypoint.type == 'S':
             stamp_step = 60  # timestamps in seconds so steps of one minute is 60
             start_stamp = int(datetime(year=year - 1, month=11, day=1, tzinfo=ZoneInfo("GMT")).timestamp())
-            extra_start_stamp = int(pd.to_datetime({'year': year - 1, 'month': 11, 'day': 11, 'hour': 0, 'minute': 0}, utc=True).timestamp())
-            print(start_stamp, extra_start_stamp)
             end_stamp = int(datetime(year=year + 1, month=3, day=1, tzinfo=ZoneInfo("GMT")).timestamp())
             stamps = [start_stamp + i * stamp_step for i in range(int((end_stamp - start_stamp)/stamp_step))]
             cs_frame = CubicSplineFrame(input_frame.stamp, input_frame.Velocity_Major, stamps)
@@ -55,20 +53,17 @@ class SplineFrame(DataFrame):
             super().__init__(data=cs_frame)
         else:
             super().__init__(data=input_frame)
-        
-        self.id = waypoint.id
-        self.type = waypoint.type
-        self.path = waypoint.velocity_csv_path
 
 class SplineJob(Job):  # super -> job name, result key, function/object, arguments
 
     def execute(self): return super().execute()
-    def execute_callback(self, result):
-        result.write(result.path)
+    def execute_callback(self, result, message:str = None):
+        result.write(self.filepath)
         return super().execute_callback(result)
     def error_callback(self, result): return super().error_callback(result)
 
     def __init__(self, year: int, waypoint: Waypoint):
+        self.filepath = waypoint.velocity_csv_name
         result_key = waypoint.id
         arguments = tuple([year, waypoint])
         super().__init__(waypoint.id + ' ' + waypoint.name, result_key, SplineFrame, arguments, {})
@@ -79,18 +74,15 @@ class RequestVelocityFrame(SixteenMonths):
     def __init__(self, year: int, waypoint: Waypoint):
         super().__init__(year, waypoint)
 
-        self.id = waypoint.id
-        self.type = waypoint.type
-        self.path = waypoint.raw_csv_path
-
 class RequestVelocityJob(Job):  # super -> job name, result key, function/object, arguments
     def execute(self): return super().execute()
-    def execute_callback(self, result):
-        result.write(result.path)
+    def execute_callback(self, result, message:str = None):
+        result.write(self.filepath)
         return super().execute_callback(result)
     def error_callback(self, result): return super().error_callback(result)
 
     def __init__(self, year, waypoint: Waypoint):
+        self.filepath = waypoint.raw_csv_path
         result_key = waypoint.id
         arguments = tuple([year, waypoint])
         super().__init__(waypoint.id + ' ' + waypoint.name, result_key, RequestVelocityFrame, arguments, {})
@@ -98,8 +90,6 @@ class RequestVelocityJob(Job):  # super -> job name, result key, function/object
 class ElapsedTimeFrame(DataFrame):
     # Create a dataframe of elapsed time, in timesteps, to get from the begining to the end of the segment at the starting time
     # departure_time, number of timesteps to end of segment
-
-    _metadata = ['message']
 
     @staticmethod
     def distance(water_vf, water_vi, boat_speed, ts_in_hr):
@@ -148,19 +138,17 @@ class ElapsedTimeFrame(DataFrame):
         frame[name + ' error'] = [round(t[1], 4) for t in timestep_and_error]
         frame[name + ' faircurrent'] = fair_current_flag
 
-        return cls(frame, num_dates=frame.date.nunique())
+        return frame
 
     def __init__(self, *args, **kwargs):
-        num_dates = kwargs.pop('num_dates', None)
         super().__init__(*args, **kwargs)
-        if num_dates is None:
-            num_dates = self.date.nunique()
-        self.message = f'# utc dates: {num_dates}'
 
 class ElapsedTimeJob(Job):  # super -> job name, result key, function/object, arguments
 
     def execute(self): return super().execute()
-    def execute_callback(self, result): return super().execute_callback(result)
+    def execute_callback(self, result, message: str = None):
+        message = f'#utc dates: {result.date.nunique()}'
+        return super().execute_callback(result, message)
     def error_callback(self, result): return super().error_callback(result)
 
     def __init__(self, seg: Segment, speed: int):
@@ -192,9 +180,6 @@ class ElapsedTimeJob(Job):  # super -> job name, result key, function/object, ar
 # noinspection PyTypeChecker
 class TimeStepsFrame(DataFrame):
 
-    write_flag = True
-    _metadata = ['message']
-
     @classmethod
     def frame(cls, et_frame: DataFrame) -> DataFrame:
 
@@ -203,10 +188,6 @@ class TimeStepsFrame(DataFrame):
         frame['Time'] = et_frame['Time']
         frame['Time'] = pd.to_datetime(frame.Time, utc=True)
         frame['date'] = frame['Time'].dt.date
-
-        # simple_frame = DataFrame()
-        # simple_frame['stamp'] = et_frame['stamp']
-        # simple_frame['Time'] = et_frame['Time']
 
         seg_cols = [c for c in et_frame.columns.to_list() if Segment.prefix in c]
         timestep_cols = [c for c in seg_cols if 'timesteps' in c]
@@ -235,33 +216,27 @@ class TimeStepsFrame(DataFrame):
         frame['error'] = frame[error_cols].sum(axis=1)
         frame['faircurrent'] = frame[faircurrent_cols].all(axis=1)
 
-        # simple_frame['t_time'] = frame[timestep_cols].sum(axis=1)
-        # simple_frame['error'] = frame[error_cols].sum(axis=1)
-        # simple_frame['faircurrent'] = frame[faircurrent_cols].all(axis=1)
-
-        return cls(frame, num_dates=frame.date.nunique())
+        return frame
 
     def __init__(self, *args, **kwargs):
-        num_dates = kwargs.pop('num_dates', None)
         super().__init__(*args, **kwargs)
-        if num_dates is None:
-            num_dates = self.date.nunique()
-        self.message = f'# utc dates: {num_dates}'
 
 class TimeStepsJob(Job):
 
     def execute(self): return super().execute()
-    def execute_callback(self, result): return super().execute_callback(result)
+    def execute_callback(self, result, message: str = None):
+        result.write(self.filepath)
+        message = f'#utc dates: {result.date.nunique()}'
+        return super().execute_callback(result, message)
     def error_callback(self, result): return super().error_callback(result)
 
     def __init__(self, frame: DataFrame, speed: int):
-
-        filepath = Route.filepath(TimeStepsFrame, speed)
+        self.filepath = Route.filepath(TimeStepsFrame, speed)
         job_name = f'{TimeStepsFrame.__name__} {speed}'
-        result_key = tuple([speed, filepath])
+        result_key = speed
 
-        if filepath.exists():
-            super().__init__(job_name, result_key, ElapsedTimeFrame, [], {'csv_source': filepath})
+        if self.filepath.exists():
+            super().__init__(job_name, result_key, ElapsedTimeFrame, [], {'csv_source': self.filepath})
         else:
             super().__init__(job_name, result_key, TimeStepsFrame.frame, [frame], {})
 
@@ -269,8 +244,6 @@ class SavGolFrame(DataFrame):
 
     savgol_size = 500
     savgol_order = 1
-    write_flag = True
-    _metadata = ['message']
 
     @classmethod
     def frame(cls, tt_frame: DataFrame):
@@ -281,90 +254,65 @@ class SavGolFrame(DataFrame):
         frame.loc[frame.t_time.ge(frame.midline), 'GL'] = False  # greater than midline => true
         frame['block'] = (frame['GL'] != frame['GL'].shift(1)).cumsum()  # index the blocks of True and False
         frame['block_size'] = frame.groupby('block').transform('size')
-        return cls(frame, num_blocks=frame.block.nunique(), num_dates=frame.date.nunique(), min_size=frame.block_size.min(), max_size=frame.block_size.max())
 
+        return frame
 
     def __init__(self, *args, **kwargs):
-        num_blocks = kwargs.pop('num_blocks', None)
-        num_dates = kwargs.pop('num_dates', None)
-        min_size = kwargs.pop('min_size', None)
-        max_size = kwargs.pop('max_size', None)
         super().__init__(*args, **kwargs)
-        if num_dates is None:
-            num_dates = self.date.nunique()
-        if num_blocks is None:
-            num_blocks = self.block.nunique()
-        if min_size is None:
-            min_size = self.block_size.min()
-        if max_size is None:
-            max_size = self.block_size.max()
-        self.message = f'# utc dates: {num_dates},  # blocks: {num_blocks},  min_size: {min_size},  max_size: {max_size}'
 
 class SavGolJob(Job):
 
     def execute(self): return super().execute()
-    def execute_callback(self, result): return super().execute_callback(result)
+    def execute_callback(self, result, message:str = None):
+        result.write(self.filepath)
+        message = f'#utc dates: {result.date.nunique()},  #blocks: {result.block.nunique()},  min_size: {result.block_size.min()},  max_size: {result.block_size.max()}'
+        return super().execute_callback(result, message)
     def error_callback(self, result): return super().error_callback(result)
 
     def __init__(self, frame: DataFrame, speed: int):
-        filepath = Route.filepath(SavGolFrame, speed)
+        self.filepath = Route.filepath(SavGolFrame, speed)
         job_name = f'{SavGolFrame.__name__} {speed}'
-        result_key = tuple([speed, filepath])
+        result_key = speed
 
-        if filepath.exists():
-            super().__init__(job_name, result_key, SavGolFrame, [], {'csv_source': filepath})
+        if self.filepath.exists():
+            super().__init__(job_name, result_key, SavGolFrame, [], {'csv_source': self.filepath})
         else:
             super().__init__(job_name, result_key, SavGolFrame.frame, [frame], {})
 
 class FairCurrentFrame(DataFrame):
-
-    write_flag = True
-    _metadata = ['message']
 
     @classmethod
     def frame(cls, ts_frame: DataFrame):
         frame = ts_frame.copy()
         frame['block'] = (frame['faircurrent'] != frame['faircurrent'].shift(1)).cumsum()
         frame['block_size'] = frame.groupby('block').transform('size')
-        return cls(frame, num_blocks=frame.block.nunique(), num_dates=frame.date.nunique(), min_size=frame.block_size.min(), max_size=frame.block_size.max())
-
+        return frame
+        
     def __init__(self, *args, **kwargs):
-        num_blocks = kwargs.pop('num_blocks', None)
-        num_dates = kwargs.pop('num_dates', None)
-        min_size = kwargs.pop('min_size', None)
-        max_size = kwargs.pop('max_size', None)
         super().__init__(*args, **kwargs)
-        if num_dates is None:
-            num_dates = self.date.nunique()
-        if num_blocks is None:
-            num_blocks = self.block.nunique()
-        if min_size is None:
-            min_size = self.block_size.min()
-        if max_size is None:
-            max_size = self.block_size.max()
-        self.message = f'# utc dates: {num_dates},  # blocks: {num_blocks}, min_size: {min_size},  max_size: {max_size}'
 
 class FairCurrentJob(Job):
 
     def execute(self): return super().execute()
-    def execute_callback(self, result): return super().execute_callback(result)
+    def execute_callback(self, result, message: str = None):
+        result.write(self.filepath)
+        message = f'#utc dates: {result.date.nunique()}, #blocks: {result.block.nunique()}, min_size: {result.block_size.min()}, max_size: {result.block_size.max()}'
+        return super().execute_callback(result, message)
     def error_callback(self, result): return super().error_callback(result)
 
     def __init__(self, frame: DataFrame, speed: int):
-        filepath = Route.filepath(FairCurrentFrame, speed)
+        self.filepath = Route.filepath(FairCurrentFrame, speed)
         job_name = f'{FairCurrentFrame.__name__} {speed}'
-        result_key = tuple([speed, filepath])
+        result_key = speed
 
-        if filepath.exists():
-            super().__init__(job_name, result_key, FairCurrentFrame, [], {'csv_source': filepath})
+        if self.filepath.exists():
+            super().__init__(job_name, result_key, FairCurrentFrame, [], {'csv_source': self.filepath})
         else:
             super().__init__(job_name, result_key, FairCurrentFrame.frame, [frame], {})
 
 class SavGolMinimaFrame(DataFrame):
 
     noise_threshold = 100
-    write_flag = True
-    _metadata = ['message']
 
     @classmethod
     def frame(cls, sg_frame: DataFrame):
@@ -386,50 +334,38 @@ class SavGolMinimaFrame(DataFrame):
         frame['utc date'] = pd.to_datetime(frame.start_utc, utc=True).dt.date
 
         # round to 15 minutes, then convert to eastern time
-        frame.start_datetime = pd.to_datetime(frame.start_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
-        frame.min_datetime = pd.to_datetime(frame.min_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
-        frame.end_datetime = pd.to_datetime(frame.end_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
+        frame['start_datetime'] = pd.to_datetime(frame.start_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
+        frame['min_datetime'] = pd.to_datetime(frame.min_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
+        frame['end_datetime'] = pd.to_datetime(frame.end_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
         frame.drop(['start_utc', 'min_utc', 'end_utc'], axis=1, inplace=True)
         frame['type'] = 'sg'
-        return cls(frame, num_blocks=len(frame), num_dates=frame['utc date'].nunique(), min_size=frame.block_size.min(), max_size=frame.block_size.max())
+        return frame
 
     def __init__(self, *args, **kwargs):
-        num_blocks = kwargs.pop('num_blocks', None)
-        num_dates = kwargs.pop('num_dates', None)
-        min_size = kwargs.pop('min_size', None)
-        max_size = kwargs.pop('max_size', None)
         super().__init__(*args, **kwargs)
-        if num_dates is None:
-            num_dates = self['utc date'].nunique()
-        if num_blocks is None:
-            num_blocks = len(self)
-        if min_size is None:
-            min_size = self.block_size.min()
-        if max_size is None:
-            max_size = self.block_size.max()
-        self.message = f'# utc dates: {num_dates},  # blocks: {num_blocks}, min_size: {min_size},  max_size: {max_size}'
 
 class SavGolMinimaJob(Job):  # super -> job name, result key, function/object, arguments
 
     def execute(self): return super().execute()
-    def execute_callback(self, result): return super().execute_callback(result)
+    def execute_callback(self, result, message: str = None):
+        result.write(self.filepath)
+        message = f'#utc dates: {result['utc date'].nunique()},  #blocks: {len(result)},  min_size: {result.block_size.min()},  max_size: {result.block_size.max()}'
+        return super().execute_callback(result, message)
     def error_callback(self, result): return super().error_callback(result)
 
     def __init__(self, frame: DataFrame, speed: int):
-        filepath = Route.filepath(SavGolMinimaFrame, speed)
+        self.filepath = Route.filepath(SavGolMinimaFrame, speed)
         job_name = f'{SavGolMinimaFrame.__name__} {speed}'
-        result_key = tuple([speed, filepath])
+        result_key = speed
 
-        if filepath.exists():
-            super().__init__(job_name, result_key, SavGolMinimaFrame, [], {'csv_source': filepath})
+        if self.filepath.exists():
+            super().__init__(job_name, result_key, SavGolMinimaFrame, [], {'csv_source': self.filepath})
         else:
             super().__init__(job_name, result_key, SavGolMinimaFrame.frame, [frame], {})
 
 class FairCurrentMinimaFrame(DataFrame):
 
     noise_threshold = 100
-    write_flag = True
-    _metadata = ['message']
 
     @classmethod
     def frame(cls, fc_frame: DataFrame):
@@ -449,48 +385,37 @@ class FairCurrentMinimaFrame(DataFrame):
         frame['utc date'] = pd.to_datetime(frame.start_utc, utc=True).dt.date
 
         # round to 15 minutes, then convert to eastern time
-        frame.start_datetime = pd.to_datetime(frame.start_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
-        frame.min_datetime = pd.to_datetime(frame.min_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
-        frame.end_datetime = pd.to_datetime(frame.end_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
+        frame['start_datetime'] = pd.to_datetime(frame.start_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
+        frame['min_datetime'] = pd.to_datetime(frame.min_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
+        frame['end_datetime'] = pd.to_datetime(frame.end_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
         frame.drop(['start_utc', 'min_utc', 'end_utc'], axis=1, inplace=True)
         frame['type'] = 'fc'
-        return cls(frame, num_blocks=len(frame), num_dates=frame['utc date'].nunique(), min_size=frame.block_size.min(), max_size=frame.block_size.max())
+
+        return frame
 
     def __init__(self, *args, **kwargs):
-        num_blocks = kwargs.pop('num_blocks', None)
-        num_dates = kwargs.pop('num_dates', None)
-        min_size = kwargs.pop('min_size', None)
-        max_size = kwargs.pop('max_size', None)
         super().__init__(*args, **kwargs)
-        if num_dates is None:
-            num_dates = self['utc date'].nunique()
-        if num_blocks is None:
-            num_blocks = len(self)
-        if min_size is None:
-            min_size = self.block_size.min()
-        if max_size is None:
-            max_size = self.block_size.max()
-        self.message = f'# utc dates: {num_dates},  # blocks: {num_blocks},  min_size: {min_size},  max_size: {max_size}'
 
 class FairCurrentMinimaJob(Job):  # super -> job name, result key, function/object, arguments
 
     def execute(self): return super().execute()
-    def execute_callback(self, result): return super().execute_callback(result)
+    def execute_callback(self, result, message: str = None):
+        result.write(self.filepath)
+        message = f'#utc dates: {result['utc date'].nunique()},  #blocks: {len(result)},  min_size:{result.block_size.min()},  max_size:{result.block_size.max()}'
+        return super().execute_callback(result, message)
     def error_callback(self, result): return super().error_callback(result)
 
     def __init__(self, frame: DataFrame, speed: int):
-            filepath = Route.filepath(FairCurrentMinimaFrame, speed)
+            self.filepath = Route.filepath(FairCurrentMinimaFrame, speed)
             job_name = f'{FairCurrentMinimaFrame.__name__} {speed}'
-            result_key = tuple([speed, filepath])
+            result_key = speed
 
-            if filepath.exists():
-                super().__init__(job_name, result_key, FairCurrentMinimaFrame, [], {'csv_source': filepath})
+            if self.filepath.exists():
+                super().__init__(job_name, result_key, FairCurrentMinimaFrame, [], {'csv_source': self.filepath})
             else:
                 super().__init__(job_name, result_key, FairCurrentMinimaFrame.frame, [frame], {})
 
 class ArcsFrame(DataFrame):
-    write_flag = True
-    _metadata = ['message']
 
     @staticmethod
     def hide_overlapping_durations(frame: DataFrame):
@@ -573,26 +498,24 @@ class ArcsFrame(DataFrame):
         frame.reset_index(drop=True, inplace=True)
 
         frame = ArcsFrame.hide_overlapping_durations(frame)
-
-        return cls(frame, num_dates=frame['date'].nunique())
+        return frame
 
     def __init__(self, *args, **kwargs):
-        num_dates = kwargs.pop('num_dates', None)
         super().__init__(*args, **kwargs)
-        if num_dates is None:
-            num_dates = self['date'].nunique()
-        self.message = f'# dates: {num_dates}'
         
 class ArcsJob(Job):  # super -> job name, result key, function/object, arguments
 
     def execute(self): return super().execute()
-    def execute_callback(self, result): return super().execute_callback(result)
+    def execute_callback(self, result, message: str = None):
+        result.write(self.filepath)
+        message = f'#dates: {result['date'].nunique()}'
+        return super().execute_callback(result, message)
     def error_callback(self, result): return super().error_callback(result)
 
     def __init__(self, frame: DataFrame, speed: int):
-            filepath = Route.filepath(ArcsFrame, speed)
+            self.filepath = Route.filepath(ArcsFrame, speed)
             job_name = f'{ArcsFrame.__name__} {speed}'
-            result_key = tuple([speed, filepath])
+            result_key = speed
 
             year = pd.to_datetime(frame.loc[0]['start_datetime']).year
             first_day_string = str(fc_globals.TEMPLATES['first_day'].substitute({'year': year}))
@@ -601,7 +524,7 @@ class ArcsJob(Job):  # super -> job name, result key, function/object, arguments
             first_day = pd.to_datetime(first_day_string).date()
             last_day = pd.to_datetime(last_day_string).date()
 
-            if filepath.exists():
-                super().__init__(job_name, result_key, ArcsFrame, [], {'csv_source': filepath})
+            if self.filepath.exists():
+                super().__init__(job_name, result_key, ArcsFrame, [], {'csv_source': self.filepath})
             else:
                 super().__init__(job_name, result_key, ArcsFrame.frame, [frame, speed, first_day, last_day], {})
