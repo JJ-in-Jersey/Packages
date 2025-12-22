@@ -482,7 +482,6 @@ class ArcsFrame(DataFrame):
         frame.insert(0, 'end_time', frame.end_datetime.apply(lambda timestamp: timestamp.time()))
         frame = frame.sort_values(by=['date', 'type', 'start_datetime']).reset_index(drop=True)
         frame.insert(0, 'idx', frame.groupby(['date', 'type']).cumcount() + 1)
-        frame['idx'] = frame['idx'].astype(str) + ' ' + frame['type']
         frame.insert(1, 'speed', speed)
 
         eligible_dates = frame.groupby('date').filter(lambda x: len(x) >= 3)['date'].unique()
