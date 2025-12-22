@@ -164,7 +164,7 @@ class SixteenMonths(DataFrame):
 
     def __init__(self, year: int, waypoint: Waypoint):
 
-        frame = DataFrame()
+        # frame = DataFrame()
         try:
             months = []
             months.extend([OneMonth(m, year - 1, waypoint) for m in range(11, 13)])
