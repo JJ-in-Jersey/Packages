@@ -37,7 +37,7 @@ def dir_abbrevs(compass_heading: int):
     elif 67.5 > compass_heading > 22.5:
         dir_names = tuple(['NE', 'SW'])
     elif 112.5 > compass_heading > 67.5:
-        dir_names = tuple(['east', 'west'])
+        dir_names = tuple(['E', 'W'])
     elif 157.5 > compass_heading > 112.5:
         dir_names = tuple(['SE', 'NW'])
     elif 202.5 > compass_heading > 157.5:
