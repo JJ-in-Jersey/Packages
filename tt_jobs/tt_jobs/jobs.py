@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from datetime import date, datetime
+
 from scipy.signal import savgol_filter
 from sympy import Point
 from zoneinfo import ZoneInfo
@@ -319,25 +320,31 @@ class SavGolMinimaFrame(DataFrame):
 
         # create a list of minima frames (TF = True, below midline) and larger than the noise threshold
         blocks = [df.reset_index(drop=True).drop(labels=['GL', 'midline'], axis=1) for index, df in sg_frame.groupby('block') if df['GL'].any() and len(df) > SavGolMinimaFrame.noise_threshold]
-        frame = DataFrame(columns=['start_datetime', 'min_datetime', 'end_datetime', 'start_duration', 'min_duration', 'end_duration', 'block_size'])
+        frame = DataFrame(columns=['start_datetime', 'min_datetime', 'end_datetime', 'start_duration', 'min_duration', 'end_duration',
+                                   'start_arrival_utc', 'min_arrival_utc', 'end_arrival_utc', 'block_size'])
         for i, df in enumerate(blocks):
             median_stamp = int(df[df.t_time == df.min().t_time]['stamp'].median())
-            frame.at[i, 'start_utc'] = df.iloc[0].Time
-            frame.at[i, 'min_utc'] = df.iloc[abs(df.stamp - median_stamp).idxmin()].Time
-            frame.at[i, 'end_utc'] = df.iloc[-1].Time
+            frame.at[i, 'start_utc'] = pd.to_datetime(df.iloc[0].Time, utc=True)
+            frame.at[i, 'min_utc'] = pd.to_datetime(df.iloc[abs(df.stamp - median_stamp).idxmin()].Time, utc=True)
+            frame.at[i, 'end_utc'] = pd.to_datetime(df.iloc[-1].Time, utc=True)
             frame.at[i, 'start_duration'] = hours_mins(df.iloc[0].t_time * fc_globals.TIMESTEP)
-            frame.at[i, 'min_duration'] = hours_mins(
-                df.iloc[abs(df.stamp - median_stamp).idxmin()].t_time * fc_globals.TIMESTEP)
+            frame.at[i, 'min_duration'] = hours_mins(df.iloc[abs(df.stamp - median_stamp).idxmin()].t_time * fc_globals.TIMESTEP)
             frame.at[i, 'end_duration'] = hours_mins(df.iloc[-1].t_time * fc_globals.TIMESTEP)
+            frame.at[i, 'start_arrival_utc'] = frame.at[i, 'start_utc'] + pd.Timedelta(frame.at[i, 'start_duration'] + ':00')
+            frame.at[i, 'min_arrival_utc'] = frame.at[i, 'min_utc'] + pd.Timedelta(frame.at[i, 'min_duration'] + ':00')
+            frame.at[i, 'end_arrival_utc'] = frame.at[i, 'end_utc'] + pd.Timedelta(frame.at[i, 'end_duration'] + ':00')
             frame.at[i, 'block_size'] = len(df)
 
         frame['utc date'] = pd.to_datetime(frame.start_utc, utc=True).dt.date
 
         # round to 15 minutes, then convert to eastern time
-        frame['start_datetime'] = pd.to_datetime(frame.start_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
-        frame['min_datetime'] = pd.to_datetime(frame.min_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
-        frame['end_datetime'] = pd.to_datetime(frame.end_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
-        frame.drop(['start_utc', 'min_utc', 'end_utc'], axis=1, inplace=True)
+        frame['start_datetime'] = frame.start_utc.dt.round('15min').dt.tz_convert('US/Eastern')
+        frame['min_datetime'] = frame.min_utc.dt.round('15min').dt.tz_convert('US/Eastern')
+        frame['end_datetime'] = frame.end_utc.dt.round('15min').dt.tz_convert('US/Eastern')
+        frame['start_arrival'] = frame.start_arrival_utc.dt.round('15min').dt.tz_convert('US/Eastern')
+        frame['min_arrival'] = frame.min_arrival_utc.dt.round('15min').dt.tz_convert('US/Eastern')
+        frame['end_arrival'] = frame.end_arrival_utc.dt.round('15min').dt.tz_convert('US/Eastern')
+        frame.drop(['start_utc', 'min_utc', 'end_utc', 'start_arrival_utc', 'min_arrival_utc', 'end_arrival_utc'], axis=1, inplace=True)
         frame['type'] = 'sg'
         return frame
 
@@ -371,26 +378,31 @@ class FairCurrentMinimaFrame(DataFrame):
     def frame(cls, fc_frame: DataFrame):
 
         blocks = [df.reset_index(drop=True).drop(labels=['faircurrent'], axis=1) for index, df in fc_frame.groupby('block') if df['faircurrent'].any() and len(df) > FairCurrentMinimaFrame.noise_threshold]
-        frame = DataFrame(columns=['start_datetime', 'min_datetime', 'end_datetime', 'start_duration', 'min_duration', 'end_duration', 'block_size'])
+        frame = DataFrame(columns=['start_datetime', 'min_datetime', 'end_datetime', 'start_duration', 'min_duration', 'end_duration',
+                                   'start_arrival_utc', 'min_arrival_utc', 'end_arrival_utc', 'block_size'])
         for i, df in enumerate(blocks):
             median_stamp = int(df[df.t_time == df.min().t_time]['stamp'].median())
-            frame.at[i, 'start_utc'] = df.iloc[0].Time
-            frame.at[i, 'min_utc'] = df.iloc[abs(df.stamp - median_stamp).idxmin()].Time
-            frame.at[i, 'end_utc'] = df.iloc[-1].Time
+            frame.at[i, 'start_utc'] = pd.to_datetime(df.iloc[0].Time, utc=True)
+            frame.at[i, 'min_utc'] = pd.to_datetime(df.iloc[abs(df.stamp - median_stamp).idxmin()].Time, utc=True)
+            frame.at[i, 'end_utc'] = pd.to_datetime(df.iloc[-1].Time, utc=True)
             frame.at[i, 'start_duration'] = hours_mins(df.iloc[0].t_time * fc_globals.TIMESTEP)
-            frame.at[i, 'min_duration'] = hours_mins(
-                df.iloc[abs(df.stamp - median_stamp).idxmin()].t_time * fc_globals.TIMESTEP)
+            frame.at[i, 'min_duration'] = hours_mins(df.iloc[abs(df.stamp - median_stamp).idxmin()].t_time * fc_globals.TIMESTEP)
             frame.at[i, 'end_duration'] = hours_mins(df.iloc[-1].t_time * fc_globals.TIMESTEP)
+            frame.at[i, 'start_arrival_utc'] = frame.at[i, 'start_utc'] + pd.Timedelta(frame.at[i, 'start_duration'] + ':00')
+            frame.at[i, 'min_arrival_utc'] = frame.at[i, 'min_utc'] + pd.Timedelta(frame.at[i, 'min_duration'] + ':00')
+            frame.at[i, 'end_arrival_utc'] = frame.at[i, 'end_utc'] + pd.Timedelta(frame.at[i, 'end_duration'] + ':00')
             frame.at[i, 'block_size'] = len(df)
         frame['utc date'] = pd.to_datetime(frame.start_utc, utc=True).dt.date
 
         # round to 15 minutes, then convert to eastern time
-        frame['start_datetime'] = pd.to_datetime(frame.start_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
-        frame['min_datetime'] = pd.to_datetime(frame.min_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
-        frame['end_datetime'] = pd.to_datetime(frame.end_utc, utc=True).dt.round('15min').dt.tz_convert('US/Eastern')
-        frame.drop(['start_utc', 'min_utc', 'end_utc'], axis=1, inplace=True)
+        frame['start_datetime'] = frame.start_utc.dt.round('15min').dt.tz_convert('US/Eastern')
+        frame['min_datetime'] = frame.min_utc.dt.round('15min').dt.tz_convert('US/Eastern')
+        frame['end_datetime'] = frame.end_utc.dt.round('15min').dt.tz_convert('US/Eastern')
+        frame['start_arrival'] = frame.start_arrival_utc.dt.round('15min').dt.tz_convert('US/Eastern')
+        frame['min_arrival'] = frame.min_arrival_utc.dt.round('15min').dt.tz_convert('US/Eastern')
+        frame['end_arrival'] = frame.end_arrival_utc.dt.round('15min').dt.tz_convert('US/Eastern')
+        frame.drop(['start_utc', 'min_utc', 'end_utc', 'start_arrival_utc', 'min_arrival_utc', 'end_arrival_utc'], axis=1, inplace=True)
         frame['type'] = 'fc'
-
         return frame
 
     def __init__(self, *args, **kwargs):
