@@ -20,6 +20,7 @@ TEMPLATES= {
     'TimeStepsFrame': Template('transit_timesteps $speed.csv'),
     'SavGolFrame': Template('savitsky_golay $speed.csv'),
     'FairCurrentFrame': Template('fair_current $speed.csv'),
+    'HellGateFrame': Template('hell_gate $speed.csv'),
     'SavGolMinimaFrame': Template('savitsky_golay_minima $speed.csv'),
     'FairCurrentMinimaFrame': Template('fair_current_minima $speed.csv'),
     'ArcsFrame': Template('arcs $speed.csv'),
