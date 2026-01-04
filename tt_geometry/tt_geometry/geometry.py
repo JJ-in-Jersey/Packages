@@ -3,7 +3,8 @@ import pandas as pd
 
 class Arc:
 
-    arguments = {'start_datetime', 'start_duration', 'min_datetime', 'min_duration', 'end_datetime', 'end_duration', 'type'}
+    arguments = {'start_datetime', 'start_duration', 'min_datetime', 'min_duration', 'end_datetime', 'end_duration',
+                 'start_arrival', 'min_arrival', 'end_arrival', 'type'}
 
     @property
     def arc_dict(self):
@@ -25,6 +26,8 @@ class Arc:
         self.end_angle = time_to_degrees(self.end_datetime)
         self.total_angle = min(abs(self.end_angle - self.start_angle), 360 - abs(self.end_angle - self.start_angle))
 
+
+# noinspection PyPackages
 class StartArc(Arc):
 
     def __init__(self, **kwargs):
@@ -35,6 +38,8 @@ class StartArc(Arc):
             kwargs['min_datetime'] = kwargs['start_datetime']
         super().__init__(**kwargs)
 
+
+# noinspection PyPackages
 class EndArc(Arc):
 
     def __init__(self, **kwargs):
