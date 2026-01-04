@@ -160,6 +160,7 @@ class Segment:
         self.name = Segment.prefix + ' ' + str(self.start.index) + '-' + str(self.end.index)
 
 
+# noinspection PyUnresolvedReferences
 class Route:
 
     name = code = folder = waypoints = heading = direction = dir_abbrevs = edges = segments = length = None
