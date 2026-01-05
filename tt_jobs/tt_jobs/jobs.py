@@ -88,6 +88,7 @@ class RequestVelocityJob(Job):  # super -> job name, result key, function/object
         arguments = tuple([year, waypoint])
         super().__init__(waypoint.id + ' ' + waypoint.name, result_key, RequestVelocityFrame, arguments, {})
 
+# noinspection PyTypeChecker
 class ElapsedTimeFrame(DataFrame):
     # Create a dataframe of elapsed time, in timesteps, to get from the begining to the end of the segment at the starting time
     # departure_time, number of timesteps to end of segment
@@ -217,6 +218,8 @@ class TimeStepsFrame(DataFrame):
         frame['error'] = frame[error_cols].sum(axis=1)
         frame['faircurrent'] = frame[faircurrent_cols].all(axis=1)
 
+        frame = frame.loc[:, ~frame.columns.str.contains('Segment')]
+
         return frame
 
     def __init__(self, *args, **kwargs):
@@ -247,8 +250,8 @@ class SavGolFrame(DataFrame):
     savgol_order = 1
 
     @classmethod
-    def frame(cls, tt_frame: DataFrame):
-        frame = tt_frame.copy()
+    def frame(cls, ts_frame: DataFrame):
+        frame = ts_frame.copy()
         frame['midline'] = np.round(savgol_filter(frame.t_time, SavGolFrame.savgol_size, SavGolFrame.savgol_order)).astype('int')
         frame = frame[frame.t_time.ne(frame.midline)].copy()  # remove values that equal the midline
         frame.loc[frame.t_time.lt(frame.midline), 'GL'] = True  # less than midline = false
@@ -311,6 +314,58 @@ class FairCurrentJob(Job):
         else:
             super().__init__(job_name, result_key, FairCurrentFrame.frame, [frame], {})
 
+# noinspection PyTypeChecker
+class HellGateFrame(DataFrame):
+
+    hell_gate_folder = 'H NYH1924'
+    hell_gate_path = fc_globals.WAYPOINTS_FOLDER.joinpath(hell_gate_folder).joinpath(Waypoint.velocity_csv_name)
+
+    @classmethod
+    def frame(cls, ts_frame: DataFrame):
+        hg_dataframe = DataFrame(csv_source=HellGateFrame.hell_gate_path)
+        hg_dataframe = hg_dataframe[['stamp', 'Velocity_Major']]
+        hg_frame = pd.merge(ts_frame, hg_dataframe, how='inner', on='stamp')
+
+        mask = (hg_frame['Velocity_Major'] >= -0.25) & (hg_frame['Velocity_Major'] <= 0.25)
+        hg_frame['block'] = (~mask).cumsum()
+        hg_frame = hg_frame[mask].groupby('block').agg(
+            start_stamp = ('stamp', 'min'), start_datetime = ('Time', 'min'), end_stamp = ('stamp', 'max'), end_datetime = ('Time', 'max')
+        ).reset_index(drop=True)
+
+        hg_frame = pd.merge(hg_frame, hg_dataframe, left_on='start_stamp', right_on='stamp').rename(columns={'Velocity_Major': 'start_velo'}).drop(columns='stamp')
+        hg_frame = pd.merge(hg_frame, hg_dataframe, left_on='end_stamp', right_on='stamp').rename(columns={'Velocity_Major': 'end_velo'}).drop(columns='stamp')
+
+        hg_frame.loc[(hg_frame['start_velo'] > 0) & (hg_frame['end_velo'] < 0), 'type'] = 'hg+'
+        hg_frame.loc[(hg_frame['start_velo'] < 0) & (hg_frame['end_velo'] > 0), 'type'] = 'hg-'
+        hg_frame.drop(columns=['start_stamp', 'end_stamp', 'start_velo', 'end_velo'], inplace=True)
+
+        return DataFrame(hg_frame)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+class HellGateJob(Job):
+
+    def execute(self): return super().execute()
+    def execute_callback(self, result, message: str = None):
+        result.write(self.filepath)
+        # message = f'#utc dates: {pd.concat([result['start_date'], result['end_date']]).nunique()}, #blocks: {result.block.nunique()}, min_size: {result.block_size.min()}, max_size: {result.block_size.max()}'
+        # return super().execute_callback(result, message)
+        return super().execute_callback(result)
+
+    def error_callback(self, result): return super().error_callback(result)
+
+    def __init__(self, frame: DataFrame, speed: int):
+        self.filepath = Route.filepath(HellGateFrame, speed)
+        job_name = f'{HellGateFrame.__name__} {speed}'
+        result_key = speed
+
+        if self.filepath.exists():
+            super().__init__(job_name, result_key, HellGateFrame, [], {'csv_source': self.filepath})
+        else:
+            super().__init__(job_name, result_key, HellGateFrame.frame, [frame], {})
+
+# noinspection PyUnresolvedReferences,PyTypeChecker
 class SavGolMinimaFrame(DataFrame):
 
     noise_threshold = 100
@@ -341,9 +396,9 @@ class SavGolMinimaFrame(DataFrame):
         frame['start_datetime'] = frame.start_utc.dt.round('15min').dt.tz_convert('US/Eastern')
         frame['min_datetime'] = frame.min_utc.dt.round('15min').dt.tz_convert('US/Eastern')
         frame['end_datetime'] = frame.end_utc.dt.round('15min').dt.tz_convert('US/Eastern')
-        frame['start_arrival'] = frame.start_arrival_utc.dt.round('15min').dt.tz_convert('US/Eastern')
-        frame['min_arrival'] = frame.min_arrival_utc.dt.round('15min').dt.tz_convert('US/Eastern')
-        frame['end_arrival'] = frame.end_arrival_utc.dt.round('15min').dt.tz_convert('US/Eastern')
+        frame['start_arrival'] = pd.to_datetime(frame.start_arrival_utc).dt.round('15min').dt.tz_convert('US/Eastern')
+        frame['min_arrival'] = pd.to_datetime(frame.min_arrival_utc).dt.round('15min').dt.tz_convert('US/Eastern')
+        frame['end_arrival'] = pd.to_datetime(frame.end_arrival_utc).dt.round('15min').dt.tz_convert('US/Eastern')
         frame.drop(['start_utc', 'min_utc', 'end_utc', 'start_arrival_utc', 'min_arrival_utc', 'end_arrival_utc'], axis=1, inplace=True)
         frame['type'] = 'sg'
         return frame
@@ -370,10 +425,12 @@ class SavGolMinimaJob(Job):  # super -> job name, result key, function/object, a
         else:
             super().__init__(job_name, result_key, SavGolMinimaFrame.frame, [frame], {})
 
+# noinspection PyUnresolvedReferences,PyTypeChecker
 class FairCurrentMinimaFrame(DataFrame):
 
     noise_threshold = 100
 
+    # noinspection PyTypeChecker
     @classmethod
     def frame(cls, fc_frame: DataFrame):
 
@@ -398,9 +455,9 @@ class FairCurrentMinimaFrame(DataFrame):
         frame['start_datetime'] = frame.start_utc.dt.round('15min').dt.tz_convert('US/Eastern')
         frame['min_datetime'] = frame.min_utc.dt.round('15min').dt.tz_convert('US/Eastern')
         frame['end_datetime'] = frame.end_utc.dt.round('15min').dt.tz_convert('US/Eastern')
-        frame['start_arrival'] = frame.start_arrival_utc.dt.round('15min').dt.tz_convert('US/Eastern')
-        frame['min_arrival'] = frame.min_arrival_utc.dt.round('15min').dt.tz_convert('US/Eastern')
-        frame['end_arrival'] = frame.end_arrival_utc.dt.round('15min').dt.tz_convert('US/Eastern')
+        frame['start_arrival'] = pd.to_datetime(frame.start_arrival_utc).dt.round('15min').dt.tz_convert('US/Eastern')
+        frame['min_arrival'] = pd.to_datetime(frame.min_arrival_utc).dt.round('15min').dt.tz_convert('US/Eastern')
+        frame['end_arrival'] = pd.to_datetime(frame.end_arrival_utc).dt.round('15min').dt.tz_convert('US/Eastern')
         frame.drop(['start_utc', 'min_utc', 'end_utc', 'start_arrival_utc', 'min_arrival_utc', 'end_arrival_utc'], axis=1, inplace=True)
         frame['type'] = 'fc'
         return frame
