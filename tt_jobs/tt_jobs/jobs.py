@@ -314,7 +314,6 @@ class FairCurrentJob(Job):
         else:
             super().__init__(job_name, result_key, FairCurrentFrame.frame, [frame], {})
 
-
 # noinspection PyTypeChecker,PyUnresolvedReferences
 class HellGateFrame(DataFrame):
 
@@ -338,8 +337,8 @@ class HellGateFrame(DataFrame):
 
         hg_frame = pd.merge(hg_frame, hg_dataframe, left_on='start_stamp', right_on='stamp').rename(columns={'Velocity_Major': 'start_velo'}).drop(columns='stamp')
         hg_frame = pd.merge(hg_frame, hg_dataframe, left_on='end_stamp', right_on='stamp').rename(columns={'Velocity_Major': 'end_velo'}).drop(columns='stamp')
-        hg_frame['start_datetime'] = hg_frame.start_datetime.dt.round('15min').dt.tz_convert('US/Eastern')
-        hg_frame['end_datetime'] = hg_frame.end_datetime.dt.round('15min').dt.tz_convert('US/Eastern')
+        # hg_frame['start_datetime'] = hg_frame.start_datetime.dt.round('15min').dt.tz_convert('US/Eastern')
+        # hg_frame['end_datetime'] = hg_frame.end_datetime.dt.round('15min').dt.tz_convert('US/Eastern')
         hg_frame.loc[(hg_frame['start_velo'] > 0) & (hg_frame['end_velo'] < 0), 'type'] = 'hg+'
         hg_frame.loc[(hg_frame['start_velo'] < 0) & (hg_frame['end_velo'] > 0), 'type'] = 'hg-'
         hg_frame.drop(columns=['start_stamp', 'end_stamp', 'start_velo', 'end_velo'], inplace=True)
@@ -557,6 +556,9 @@ class ArcsFrame(DataFrame):
         frame = frame.sort_values(by=['date', 'type', 'start_datetime']).reset_index(drop=True)
         frame.insert(0, 'idx', frame.groupby(['date', 'type']).cumcount() + 1)
         frame.insert(1, 'speed', speed)
+
+        hg_mask = frame['type'].str.contains('hg', na=False)
+        frame.loc[hg_mask, ['start_duration_display', 'min_duration_display', 'end_duration_display']] = False
 
         eligible_dates = frame.groupby('date').filter(lambda x: len(x) >= 3)['date'].unique()
         start_mask = (frame['date'].isin(eligible_dates)) & (frame['start_angle'] == 0)
