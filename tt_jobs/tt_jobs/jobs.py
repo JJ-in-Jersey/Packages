@@ -317,19 +317,19 @@ class FairCurrentJob(Job):
 # noinspection PyTypeChecker,PyUnresolvedReferences
 class HellGateFrame(DataFrame):
 
-    max_speed = 0.25
+    max_speed = 1
     min_speed = -max_speed
     hell_gate_folder = 'H NYH1924'
     hell_gate_path = fc_globals.WAYPOINTS_FOLDER.joinpath(hell_gate_folder).joinpath(Waypoint.velocity_csv_name)
 
     @classmethod
-    def frame(cls, ts_frame: DataFrame):
+    def frame(cls, ts_frame: DataFrame, speed: int):
         hg_dataframe = DataFrame(csv_source=HellGateFrame.hell_gate_path)
         hg_dataframe = hg_dataframe[['stamp', 'Velocity_Major']]
         hg_frame = pd.merge(ts_frame, hg_dataframe, how='inner', on='stamp')
         hg_frame['time_utc'] = pd.to_datetime(hg_frame.Time, utc=True)
 
-        mask = (hg_frame['Velocity_Major'] >= HellGateFrame.min_speed) & (hg_frame['Velocity_Major'] <= HellGateFrame.max_speed)
+        mask = (hg_frame['Velocity_Major'] > HellGateFrame.min_speed) & (hg_frame['Velocity_Major'] < HellGateFrame.max_speed)
         hg_frame['block'] = (~mask).cumsum()
         hg_frame = hg_frame[mask].groupby('block').agg(
             start_stamp = ('stamp', 'min'), start_datetime = ('time_utc', 'min'), end_stamp = ('stamp', 'max'), end_datetime = ('time_utc', 'max')
@@ -337,10 +337,11 @@ class HellGateFrame(DataFrame):
 
         hg_frame = pd.merge(hg_frame, hg_dataframe, left_on='start_stamp', right_on='stamp').rename(columns={'Velocity_Major': 'start_velo'}).drop(columns='stamp')
         hg_frame = pd.merge(hg_frame, hg_dataframe, left_on='end_stamp', right_on='stamp').rename(columns={'Velocity_Major': 'end_velo'}).drop(columns='stamp')
-        # hg_frame['start_datetime'] = hg_frame.start_datetime.dt.round('15min').dt.tz_convert('US/Eastern')
-        # hg_frame['end_datetime'] = hg_frame.end_datetime.dt.round('15min').dt.tz_convert('US/Eastern')
-        hg_frame.loc[(hg_frame['start_velo'] > 0) & (hg_frame['end_velo'] < 0), 'type'] = 'hg+'
-        hg_frame.loc[(hg_frame['start_velo'] < 0) & (hg_frame['end_velo'] > 0), 'type'] = 'hg-'
+        if speed < 0:
+            hg_frame = hg_frame[(hg_frame['start_velo'] > 0) & (hg_frame['end_velo'] < 0)]
+        elif speed > 0:
+            hg_frame = hg_frame[(hg_frame['start_velo'] < 0) & (hg_frame['end_velo'] > 0)]
+        hg_frame['type'] = 'hg'
         hg_frame.drop(columns=['start_stamp', 'end_stamp', 'start_velo', 'end_velo'], inplace=True)
 
         return DataFrame(hg_frame)
@@ -367,7 +368,7 @@ class HellGateJob(Job):
         if self.filepath.exists():
             super().__init__(job_name, result_key, HellGateFrame, [], {'csv_source': self.filepath})
         else:
-            super().__init__(job_name, result_key, HellGateFrame.frame, [frame], {})
+            super().__init__(job_name, result_key, HellGateFrame.frame, [frame, speed], {})
 
 # noinspection PyUnresolvedReferences,PyTypeChecker
 class SavGolMinimaFrame(DataFrame):
