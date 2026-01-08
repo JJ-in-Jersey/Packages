@@ -25,7 +25,7 @@ TEMPLATES= {
     'FairCurrentMinimaFrame': Template('fair_current_minima $speed.csv'),
     'ArcsFrame': Template('arcs $speed.csv'),
     'MinimaFrame': Template('minima_frame $speed.csv'),
-    'complete': Template('complete $loc.csv'),
+    'transit_time': Template('transit_time $loc.csv'),
     'first_day': Template('$year/12/1'),
     'last_day': Template('$year/1/31')
 }
