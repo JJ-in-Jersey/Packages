@@ -8,6 +8,7 @@ py -m pip install scipy-stubs
 py -m pip install google-api-python-client
 py -m pip install google-auth-httplib2
 py -m pip install google-auth-oauthlib
+py -m pip install inputimeout
 
 cd %userprofile%/PycharmProjects/Packages
 
