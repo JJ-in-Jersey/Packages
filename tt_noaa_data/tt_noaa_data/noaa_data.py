@@ -96,7 +96,7 @@ class OneMonth(DataFrame):
             raise ValueError
 
         try:
-            attempts = 20
+            attempts = 3
             for attempt in range(attempts):
                 my_response = requests.get(self.url(month, year, waypoint))
                 response_not_empty = (my_response.content and my_response.text.strip() and bool(len(my_response.content)))
@@ -104,7 +104,7 @@ class OneMonth(DataFrame):
                 if my_response.ok and response_not_empty and predictions_available:
                         break  # break for loop because of success
                 elif attempt < attempts:
-                        sleep(2)
+                        sleep(1)
                 else:
                     my_response.raise_for_status()
                     if not response_not_empty:
