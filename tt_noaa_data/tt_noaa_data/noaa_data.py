@@ -13,7 +13,9 @@ from tt_dictionary.dictionary import Dictionary
 from tt_file_tools.file_tools import SoupFromXMLResponse, print_file_exists
 import tt_globals.globals as fc_globals
 from tt_gpx.gpx import Waypoint
-from tt_exceptions.exceptions import DataNotAvailable, EmptyResponse, DuplicateValues, NonMonotonic, DataMissing
+from tt_exceptions.exceptions import EmptyResponse, DuplicateValues, NonMonotonic, DataMissing
+
+from tt_exceptions.exceptions import PredictionsNotAvailable
 
 
 class StationDict(Dictionary):
@@ -57,7 +59,7 @@ class StationDict(Dictionary):
                                     self[station_id]['bins'] = bin_dict
                                 break
                             except requests.exceptions.RequestException:
-                                sleep(2)
+                                sleep(1)
                     print_file_exists(self.write(fc_globals.STATIONS_FILE))
                     break
                 except requests.exceptions.RequestException:
@@ -89,51 +91,49 @@ class OneMonth(DataFrame):
 
     def __init__(self, month: int, year: int, waypoint: Waypoint):
 
-        my_response = None
+        frame = None
         exception_message = f'{self.__class__.__name__} {waypoint.id} month: {month} year: {year}'
 
         if month < 1 or month > 12:
             raise ValueError
 
-        try:
-            attempts = 3
-            for attempt in range(attempts):
+        attempts = 10
+        for attempt in range(attempts):
+            try:
                 my_response = requests.get(self.url(month, year, waypoint))
-                response_not_empty = (my_response.content and my_response.text.strip() and bool(len(my_response.content)))
-                predictions_available = not 'predictions are not available' in my_response.content.decode()
-                if my_response.ok and response_not_empty and predictions_available:
-                        break  # break for loop because of success
-                elif attempt < attempts:
-                        sleep(1)
+                # check response
+                my_response.raise_for_status()
+                if 'predictions are not available' in my_response.content.decode():
+                    raise PredictionsNotAvailable(f'{exception_message} attempt: {attempt + 1}')
+
+                # create frame
+                frame = DataFrame(csv_source=StringIO(my_response.content.decode()))
+                frame.columns = frame.columns.str.strip()
+
+                # check frame
+                if frame.empty or frame.isna().all().all():
+                    raise EmptyResponse(f'{exception_message} attempt: {attempt + 1}')
+
+                frame['Time'] = to_datetime(frame.Time, utc=True)
+                frame['duplicated'] = frame.duplicated(subset='Time')
+                frame['stamp'] = frame.Time.apply(dt.timestamp).astype(int)
+                frame['diff'] = frame.stamp.diff()
+                frame['diff_sign'] = sign(frame['diff'])
+                frame['timestep_match'] = frame['diff'] == frame['diff'].iloc[1]
+
+                if not frame.Time.is_unique:
+                    raise DuplicateValues(exception_message)
+                if not frame.stamp.is_monotonic_increasing:
+                    raise NonMonotonic(exception_message)
+                if waypoint.type == 'H' and not frame['timestep_match'][1:].all():
+                    raise DataMissing(exception_message)
+
+                break  # break for success
+            except Exception as e:
+                if attempt < attempts and e.__class__.__name__ != 'DuplicateValues' and e.__class__.__name__ != 'NonMonotonic':
+                    sleep(1)
                 else:
-                    my_response.raise_for_status()
-                    if not response_not_empty:
-                        print(f'IN LOOP {exception_message} attempt: {attempt+1}')
-                        raise EmptyResponse(f'{exception_message} attempt: {attempt+1}')
-                    elif not my_response.content:
-                        print(f'IN LOOP {exception_message} attempt: {attempt+1}')
-                        raise DataNotAvailable(f'{exception_message} attempt: {attempt+1}')
-
-            frame = DataFrame(csv_source=StringIO(my_response.content.decode()))
-            frame.columns = frame.columns.str.strip()
-
-            if frame.empty or frame.isna().all().all():
-                raise EmptyResponse(f'POST LOOP {exception_message} EMPTY FRAME attempt: {attempt+1}')
-            frame['Time'] = to_datetime(frame.Time, utc=True)
-            frame['duplicated'] = frame.duplicated(subset='Time')
-            frame['stamp'] = frame.Time.apply(dt.timestamp).astype(int)
-            frame['diff'] = frame.stamp.diff()
-            frame['diff_sign'] = sign(frame['diff'])
-            frame['timestep_match'] = frame['diff'] == frame['diff'].iloc[1]
-
-            if not frame.Time.is_unique:
-                raise DuplicateValues(exception_message)
-            if not frame.stamp.is_monotonic_increasing:
-                raise NonMonotonic(exception_message)
-            if waypoint.type == 'H' and not frame['timestep_match'][1:].all():
-                raise DataMissing(exception_message)
-        except Exception as e:
-            raise type(e)(f'POST LOOP {exception_message}') from e
+                    raise type(e)(f'{exception_message}') from e
 
         super().__init__(data=frame)
 
