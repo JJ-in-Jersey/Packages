@@ -55,7 +55,7 @@ class SplineFrame(DataFrame):
         else:
             super().__init__(data=input_frame)
 
-class SplineJob(Job):  # super -> job name, result key, function/object, arguments
+class SplineJob(Job):  # super -> job name, result key, function/object, arguments`
 
     def execute(self): return super().execute()
     def execute_callback(self, result, message:str = None):
@@ -64,7 +64,7 @@ class SplineJob(Job):  # super -> job name, result key, function/object, argumen
     def error_callback(self, result): return super().error_callback(result)
 
     def __init__(self, year: int, waypoint: Waypoint):
-        self.filepath = waypoint.velocity_csv_name
+        self.filepath = waypoint.velocity_csv_path
         result_key = waypoint.id
         arguments = tuple([year, waypoint])
         super().__init__(waypoint.id + ' ' + waypoint.name, result_key, SplineFrame, arguments, {})
@@ -90,7 +90,7 @@ class RequestVelocityJob(Job):  # super -> job name, result key, function/object
 
 # noinspection PyTypeChecker
 class ElapsedTimeFrame(DataFrame):
-    # Create a dataframe of elapsed time, in timesteps, to get from the begining to the end of the segment at the starting time
+    # Create a dataframe of elapsed time, in timesteps, to get from the beginning to the end of the segment at the starting time
     # departure_time, number of timesteps to end of segment
 
     @staticmethod
@@ -370,7 +370,7 @@ class HellGateJob(Job):
         else:
             super().__init__(job_name, result_key, HellGateFrame.frame, [frame, speed], {})
 
-# noinspection PyUnresolvedReferences,PyTypeChecker
+# noinspection PyUnresolvedReferences,PyTypeChecker,DuplicatedCode
 class SavGolMinimaFrame(DataFrame):
 
     noise_threshold = 100
@@ -430,7 +430,7 @@ class SavGolMinimaJob(Job):  # super -> job name, result key, function/object, a
         else:
             super().__init__(job_name, result_key, SavGolMinimaFrame.frame, [frame], {})
 
-# noinspection PyUnresolvedReferences,PyTypeChecker
+# noinspection PyUnresolvedReferences,PyTypeChecker,DuplicatedCode
 class FairCurrentMinimaFrame(DataFrame):
 
     noise_threshold = 100
@@ -516,6 +516,7 @@ class ArcsFrame(DataFrame):
                     if row['end_duration_display']:
                         if abs(fc_angle - sg_angle_end) <= threshold:
                             suppress_end_indices[index] = True
+
         start_indices = list(suppress_start_indices.keys())
         if start_indices:
             frame.loc[start_indices, 'start_duration_display'] = False
