@@ -1,10 +1,10 @@
 python %userprofile%/PycharmProjects/Packages/bin/cleanup.py
 
-pip cache purge
+python -m pip cache purge
 cd %userprofile%/PycharmProjects/Packages
 
-pip uninstall tt_exceptions -y
-pip install ./tt_exceptions
+python -m pip uninstall tt_exceptions -y
+python -m pip install ./tt_exceptions
 
 python %userprofile%/PycharmProjects/Packages/bin/cleanup.py
 pause
