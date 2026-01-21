@@ -6,6 +6,10 @@ from datetime import date, datetime
 from scipy.signal import savgol_filter
 from sympy import Point
 from zoneinfo import ZoneInfo
+import requests
+from io import StringIO
+from os import remove
+from time import sleep
 
 from tt_dataframe.dataframe import DataFrame
 from tt_gpx.gpx import Route, Waypoint, Segment
@@ -15,6 +19,8 @@ from tt_date_time_tools.date_time_tools import hours_mins
 from tt_geometry.geometry import Arc, StartArc, EndArc
 from tt_interpolation.interpolation import Interpolator as VInt, CubicSplineFrame
 from tt_noaa_data.noaa_data import SixteenMonths
+from tt_file_tools.file_tools import SoupFromXMLResponse
+from tt_dictionary.dictionary import Dictionary
 
 class InterpolatedPoint:
 
@@ -69,6 +75,39 @@ class SplineJob(Job):  # super -> job name, result key, function/object, argumen
         arguments = tuple([year, waypoint])
         super().__init__(waypoint.id + ' ' + waypoint.name, result_key, SplineFrame, arguments, {})
 
+class RequestBinDictionary(Dictionary):
+
+    def __init__(self, station_id: str):
+        my_request = "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations/" + station_id + "/bins.xml?units=english"
+        attempts = 3
+        for attempt in range(attempts):
+            try:
+                my_response = requests.get(my_request)
+                my_response.raise_for_status()
+                bins_tree = SoupFromXMLResponse(StringIO(my_response.content.decode())).soup
+                bin_count = int(bins_tree.find("nbr_of_bins").text)
+                if bin_count and bins_tree.find('Bin').find('depth') is not None:
+                    for tag in bins_tree.findall('Bin'):
+                        self[int(tag.num.text)] = float(tag.depth.text)
+                    self.sort()
+                break
+            except requests.exceptions.RequestException as e:
+                if attempt < attempts:
+                    sleep(1)
+                else:
+                    raise e
+        super().__init__()
+
+class RequestBinJob(Job):  # super -> job name, result key, function/object, arguments
+    def execute(self): return super().execute()
+    def execute_callback(self, result, message:str = None): return super().execute_callback(result)
+    def error_callback(self, result): return super().error_callback(result)
+
+    def __init__(self, station_id: str):
+        result_key = station_id
+        arguments = tuple([station_id])
+        super().__init__(station_id, result_key, RequestBinDictionary, arguments, {})
+
 class RequestVelocityFrame(SixteenMonths):
 
     # requests are all GMT
@@ -83,6 +122,8 @@ class RequestVelocityJob(Job):  # super -> job name, result key, function/object
     def error_callback(self, result): return super().error_callback(result)
 
     def __init__(self, year, waypoint: Waypoint):
+        if waypoint.velocity_csv_path.exists():
+            remove(waypoint.velocity_csv_path)
         self.filepath = waypoint.raw_csv_path
         result_key = waypoint.id
         arguments = tuple([year, waypoint])
@@ -489,6 +530,8 @@ class FairCurrentMinimaJob(Job):  # super -> job name, result key, function/obje
             else:
                 super().__init__(job_name, result_key, FairCurrentMinimaFrame.frame, [frame], {})
 
+
+# noinspection PyShadowingNames,PyTypeChecker
 class ArcsFrame(DataFrame):
 
     @staticmethod

@@ -2,7 +2,6 @@ from collections import defaultdict
 from pathlib import Path
 import json
 
-
 # noinspection PyInconsistentReturns
 class Dictionary(dict):
 
@@ -10,18 +9,15 @@ class Dictionary(dict):
     def _constructor(self):
         return self.__class__
 
-
     @classmethod
     def _convert_to_this(cls, json_dict: dict):
         return cls(json_dict)
 
-
-    def write(self, pathname: Path):
+    def write(self, pathname: Path, indent: int = 2):
         print(f'writing dictionary as json to "{pathname}"')
         with open(pathname, 'w', encoding='utf-8') as f:
-            json.dump(self, f)
+            json.dump(self, f, indent=indent, ensure_ascii=False)
         return pathname
-
 
     def __init__(self, *args, json_source: Path = None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -38,6 +34,9 @@ class Dictionary(dict):
             except json.JSONDecodeError as e:
                 print(e)
 
+    def sort(self, reverse=False):
+        sorted_items = sorted(self.items(), reverse=reverse)
+        return self._constructor(sorted_items)
 
     def invert(self):
         # create new dictionary

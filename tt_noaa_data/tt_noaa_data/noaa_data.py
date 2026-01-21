@@ -1,11 +1,9 @@
 from dateutil.relativedelta import relativedelta
 from datetime import datetime as dt
 from pandas import concat, to_datetime
-from numpy import sign
 from time import sleep
 import requests
 from io import StringIO
-
 from os.path import basename
 
 from tt_dataframe.dataframe import DataFrame
@@ -13,10 +11,7 @@ from tt_dictionary.dictionary import Dictionary
 from tt_file_tools.file_tools import SoupFromXMLResponse, print_file_exists
 import tt_globals.globals as fc_globals
 from tt_gpx.gpx import Waypoint
-from tt_exceptions.exceptions import EmptyResponse, DuplicateValues, NonMonotonic, DataMissing
-
-from tt_exceptions.exceptions import PredictionsNotAvailable
-
+from tt_exceptions.exceptions import EmptyResponse, DuplicateValues, NonMonotonic, PredictionsNotAvailable
 
 class StationDict(Dictionary):
 
@@ -113,20 +108,14 @@ class OneMonth(DataFrame):
                 # check frame
                 if frame.empty or frame.isna().all().all():
                     raise EmptyResponse(f'{exception_message} attempt: {attempt + 1}')
-
                 frame['Time'] = to_datetime(frame.Time, utc=True)
-                frame['duplicated'] = frame.duplicated(subset='Time')
-                frame['stamp'] = frame.Time.apply(dt.timestamp).astype(int)
-                frame['diff'] = frame.stamp.diff()
-                frame['diff_sign'] = sign(frame['diff'])
-                frame['timestep_match'] = frame['diff'] == frame['diff'].iloc[1]
-
-                if not frame.Time.is_unique:
+                if frame['Time'].duplicated().any():
                     raise DuplicateValues(exception_message)
-                if not frame.stamp.is_monotonic_increasing:
+                if not frame['Time'].is_monotonic_increasing:
                     raise NonMonotonic(exception_message)
-                if waypoint.type == 'H' and not frame['timestep_match'][1:].all():
-                    raise DataMissing(exception_message)
+
+                frame.drop(columns=['Depth', 'Bin'], inplace=True)
+                frame['stamp'] = frame.Time.apply(dt.timestamp).astype(int)
 
                 break  # break for success
             except Exception as e:
@@ -163,8 +152,6 @@ class OneMonth(DataFrame):
 class SixteenMonths(DataFrame):
 
     def __init__(self, year: int, waypoint: Waypoint):
-
-        # frame = DataFrame()
         try:
             months = []
             months.extend([OneMonth(m, year - 1, waypoint) for m in range(11, 13)])
