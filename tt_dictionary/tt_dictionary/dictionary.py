@@ -36,7 +36,8 @@ class Dictionary(dict):
 
     def sort(self, reverse=False):
         sorted_items = sorted(self.items(), reverse=reverse)
-        return self._constructor(sorted_items)
+        self.clear()
+        self.update(sorted_items)
 
     def invert(self):
         # create new dictionary
