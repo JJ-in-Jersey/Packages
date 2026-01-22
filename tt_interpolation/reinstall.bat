@@ -1,10 +1,10 @@
 python %userprofile%/PycharmProjects/Packages/bin/cleanup.py
 
-pip cache purge
+python -m pip cache purge
 cd %userprofile%/PycharmProjects/Packages
 
-pip uninstall tt_interpolation -y
-pip install ./tt_interpolation
+python -m pip uninstall tt_interpolation -y
+python -m pip install ./tt_interpolation
 
 python %userprofile%/PycharmProjects/Packages/bin/cleanup.py
 pause
