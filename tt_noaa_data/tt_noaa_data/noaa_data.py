@@ -111,9 +111,9 @@ class OneMonth(DataFrame):
                 if frame.empty or frame.isna().all().all():
                     raise EmptyResponse(f'{exception_message} attempt: {attempt + 1}')
                 if frame['Time'].duplicated().any():
-                    raise DuplicateValues(exception_message)
+                    raise DuplicateValues(f'{exception_message} attempt: {attempt + 1}')
                 if not frame['Time'].is_monotonic_increasing:
-                    raise NonMonotonic(exception_message)
+                    raise NonMonotonic(f'{exception_message} attempt: {attempt + 1}')
 
                 frame['Time'] = to_datetime(frame.Time, utc=True)
                 frame.drop(columns=['Depth', 'Bin'], inplace=True)
@@ -121,7 +121,7 @@ class OneMonth(DataFrame):
 
                 break  # break for success
             except Exception as e:
-                if isinstance(e, (DuplicateValues, NonMonotonic)):
+                if isinstance(e, (PredictionsNotAvailable, DuplicateValues, NonMonotonic)):
                     raise
                 if attempt < attempts - 1:
                     sleep(min(2 ** attempt, 8))
