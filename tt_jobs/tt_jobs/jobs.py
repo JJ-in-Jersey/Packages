@@ -78,6 +78,8 @@ class SplineJob(Job):  # super -> job name, result key, function/object, argumen
 class RequestBinDictionary(Dictionary):
 
     def __init__(self, station_id: str):
+        super().__init__()
+
         my_request = "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations/" + station_id + "/bins.xml?units=english"
         attempts = 3
         for attempt in range(attempts):
@@ -87,7 +89,7 @@ class RequestBinDictionary(Dictionary):
                 bins_tree = SoupFromXMLResponse(StringIO(my_response.content.decode())).soup
                 bin_count = int(bins_tree.find("nbr_of_bins").text)
                 if bin_count and bins_tree.find('Bin').find('depth') is not None:
-                    for tag in bins_tree.findall('Bin'):
+                    for tag in bins_tree.find_all('Bin'):
                         self[int(tag.num.text)] = float(tag.depth.text)
                     self.sort()
                 break
@@ -96,7 +98,6 @@ class RequestBinDictionary(Dictionary):
                     sleep(1)
                 else:
                     raise e
-        super().__init__()
 
 class RequestBinJob(Job):  # super -> job name, result key, function/object, arguments
     def execute(self): return super().execute()
