@@ -163,7 +163,7 @@ class Segment:
 # noinspection PyUnresolvedReferences
 class Route:
 
-    name = code = folder = waypoints = heading = direction = dir_abbrevs = edges = segments = length = None
+    name = code = folder = waypoints = heading = directions = dir_abbrevs = edges = segments = length = None
 
     @classmethod
     def filepath(cls, name: Union[str, Type[Any]], speed: int):
