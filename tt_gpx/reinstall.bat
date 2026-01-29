@@ -1,10 +1,10 @@
 python %userprofile%/PycharmProjects/Packages/bin/cleanup.py
 
-pip cache purge
+python -m pip cache purge
 cd %userprofile%/PycharmProjects/Packages
 
-pip uninstall tt_gpx -y
-pip install ./tt_gpx
+python -m pip uninstall tt_gpx -y
+python -m pip install ./tt_gpx
 
 python %userprofile%/PycharmProjects/Packages/bin/cleanup.py
 pause

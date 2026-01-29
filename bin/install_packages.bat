@@ -9,6 +9,7 @@ py -m pip install google-api-python-client
 py -m pip install google-auth-httplib2
 py -m pip install google-auth-oauthlib
 py -m pip install inputimeout
+py -m pip install psutil
 
 cd %userprofile%/PycharmProjects/Packages
 
