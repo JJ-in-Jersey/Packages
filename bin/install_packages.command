@@ -9,6 +9,7 @@ pip3 install scipy-stubs
 pip3 install google-api-python-client
 pip3 install google-auth-httplib2
 pip3 install google-auth-oauthlib
+pip3 install inputimeout
 
 cd $HOME/PycharmProjects/Packages
 
