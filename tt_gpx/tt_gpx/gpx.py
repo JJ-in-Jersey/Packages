@@ -5,11 +5,9 @@ from shutil import rmtree as delete_folder
 from pathlib import Path
 from bs4 import BeautifulSoup as Soup
 from num2words import num2words
-from typing import Union, Type, Any
 
 from tt_navigation.navigation import distance, directions, Heading, dir_abbrevs
-from tt_file_tools.file_tools import SoupFromXMLFile
-import tt_globals.globals as fc_globals
+import tt_globals.globals as Globals
 
 class BaseWaypoint:
 
@@ -23,30 +21,22 @@ class BaseWaypoint:
     symbol_codes = {'Symbol-Pin-Yellow': 'W', 'Symbol-Pin-White': 'L', 'Symbol-Pin-Orange': 'E', 'Symbol-Pin-Blue': 'P'}
     ordinal_number = 0
 
-    def write_gpx(self):
-        soup = SoupFromXMLFile(fc_globals.TEMPLATES_FOLDER.joinpath('waypoint_template.gpx')).soup
-        soup.find('name').string = self.name
-        soup.find('wpt')['lat'] = self.lat
-        soup.find('wpt')['lon'] = self.lon
-        soup.find('type').string = self.type
-        soup.find('sym').string = self.symbol
 
-        id_tag = soup.new_tag('id')
-        id_tag.string = self.id
-        soup.find('name').insert_after(id_tag)
+    def create_wpt_xml(self):
+        xml_snippet = f"""<wpt lat="{self.lat}" lon="{self.lon}">
+    <name>{self.name}</name>
+    <id>{self.id}</id>
+    <sym>{self.symbol}</sym>
+    <type>{self.type}</type>
+</wpt>"""
+        return xml_snippet
 
-        if self.folder is not None:
-            self.folder = Path(self.folder)
-            folder_tag = soup.new_tag('folder')
-            folder_tag.string = str(self.folder.absolute())
-            soup.find('name').insert_after(folder_tag)
 
-        desc_tag = soup.new_tag('desc')
-        desc_tag.string = self.id
-        soup.find('name').insert_after(desc_tag)
-
-        with open(fc_globals.GPX_FOLDER.joinpath(self.id + '.gpx'), 'w') as a_file:
-            a_file.write(str(soup))
+    def write_wpt_gpx(self):
+        wpt_xml = self.create_wpt_xml()
+        file_content = f"{GpxFile.gpx_header}\n{wpt_xml}\n{GpxFile.gpx_footer}"
+        with open(Globals.GPX_FOLDER.joinpath(self.id + '.gpx'), 'w') as a_file:
+            a_file.write(file_content)
 
 
     def empty_folder(self):
@@ -75,7 +65,7 @@ class BaseWaypoint:
         if bool(station['folder']):
             self.folder = Path(station['folder'])
         else:
-            self.folder = fc_globals.WAYPOINTS_FOLDER.joinpath(self.name)
+            self.folder = Globals.WAYPOINTS_FOLDER.joinpath(self.name)
             
         self.raw_csv_path = self.folder.joinpath(self.raw_csv_name)
         self.spline_csv_path = self.folder.joinpath(self.spline_csv_name)
@@ -166,13 +156,13 @@ class Route:
     name = code = folder = waypoints = heading = directions = dir_abbrevs = edges = segments = length = None
 
     @classmethod
-    def filepath(cls, name: Union[str, Type[Any]], speed: int):
+    def filepath(cls, name: str | type, speed: int):
         new_folder_path = Route.folder.joinpath(num2words(speed))
         makedirs(new_folder_path, exist_ok=True)
         if isinstance(name, str):
-            return new_folder_path.joinpath(fc_globals.TEMPLATES[name].substitute({'speed': speed}))
+            return new_folder_path.joinpath(Globals.TEMPLATES[name].substitute({'speed': speed}))
         elif isinstance(name, type):
-            return new_folder_path.joinpath(fc_globals.TEMPLATES[name.__name__].substitute({'speed': speed}))
+            return new_folder_path.joinpath(Globals.TEMPLATES[name.__name__].substitute({'speed': speed}))
         else:
             raise TypeError('argument must be str or type')
 
@@ -180,7 +170,7 @@ class Route:
 
         Route.name = tree.find('name').string
         Route.code = ''.join(word[0] for word in self.name.upper().split())
-        Route.folder = fc_globals.PROJECT_BASE_FOLDER.joinpath(self.code)
+        Route.folder = Globals.PROJECT_BASE_FOLDER.joinpath(self.code)
 
         Route.waypoints = []
         for tag in tree.find_all('rtept'):
@@ -215,6 +205,21 @@ class Route:
 
 class GpxFile:
 
+    gpx_header = """<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<gpx version="1.1" creator="Fair Currents"
+    xmlns="http://www.topografix.com/GPX/1/1"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+    	http://www.topografix.com/GPX/1/1
+        http://www.topografix.com/GPX/1/1/gpx.xsd
+    	http://www.garmin.com/xmlschemas/TrackPointExtension/v2
+        http://www.garmin.com/xmlschemas/TrackPointExtensionv2.xsd
+        http://www.garmin.com/xmlschemas/GpxExtensions/v3
+    	http://www.garmin.com/xmlschemas/GpxExtensionsv3.xsd"
+    xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v2"
+    xmlns:gpxx="http://www.garmin.com/xmlschemas/GpxExtensions/v3">"""
+    gpx_footer = '</gpx>'
+
     @staticmethod
     def write_clean_gpx(filepath, tree):
         new_filepath = filepath.parent.joinpath(filepath.stem + ' new.gpx')
@@ -230,7 +235,7 @@ class GpxFile:
         self.type = None
 
         with open(filepath, 'r') as f:
-            gpxfile = f.read()
-        self.tree = Soup(gpxfile, preserve_whitespace_tags=['name', 'type', 'sym', 'text'], features='xml')
+            gpx_file = f.read()
+        self.tree = Soup(gpx_file, preserve_whitespace_tags=['name', 'type', 'sym', 'text'], features='xml')
 
         # GpxFile.write_clean_gpx(filepath, self.tree)
