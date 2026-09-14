@@ -21,7 +21,7 @@ class StationDict(Dictionary):
     def _convert_to_this(cls, json_dict: dict):
         return dict(json_dict)
 
-    def __init__(self, job_manager: JobManager = None):
+    def __init__(self, job_manager: JobManager | None = None):
         if fc_globals.STATIONS_FILE.exists():
             super().__init__(json_source=fc_globals.STATIONS_FILE)
             return
